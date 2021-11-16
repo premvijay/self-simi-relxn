@@ -31,9 +31,9 @@ for s in [0.5,1,1.5,2]:#[:2]:
 
     color_this = plt.cm.jet(s/2)
     # linestyles = [":","-.","--","-"]
-    linestyles = [(0, (1, 3)), (0, (2, 3)), (0, (3, 3)), (0, (4, 3)), (0, (5, 3))]
+    linestyles = [(0, (1, 3)), (0, (2, 3)), (0, (3, 3)), (0, (4, 3)), (0, (5, 1,1,1))]
     ls_cycler = cycle(linestyles)
-    for n in range(21):
+    for n in range(11):
         def ode_func(xi, arg):
             lam = arg[0]
             v = arg[1]
@@ -58,7 +58,7 @@ for s in [0.5,1,1.5,2]:#[:2]:
         #     return quad(Integ, 0, np.inf)[0]
         
         l_range = np.linspace(0,1, 200)
-        l_range = np.logspace(-2.5,0, 200)
+        l_range = np.logspace(-2,0, 200)
         Integ_fac_vals = np.exp(-xi*2*s/3)
         # @np.vectorize
         # def M(l):
@@ -73,7 +73,7 @@ for s in [0.5,1,1.5,2]:#[:2]:
 
         
 
-        if n in [1,3,5,8,20]:
+        if n in [1,3,5,8,10]:
             # xi = np.linspace(0,4,100)
             # lam = res.sol(xi)[0]
             # plt.plot(xi,lam)
@@ -84,24 +84,26 @@ for s in [0.5,1,1.5,2]:#[:2]:
             
             ls = next(ls_cycler)
             
-            ax4.plot(xi,lam, color=color_this, ls=ls)
+            ax4.plot(xi,lam, color=color_this, ls=ls, lw=1)
             # plt.plot(xi,lamF, color=color_this, label=f's={s}')
             # plt.plot(res1.t, res1.y[0], color=color_this)
             # plt.plot(res.t, res.y[1], color=color_this)
 
             lam = np.linspace(0,1,200)
             if s==0.5:
-                ax5.plot([],[], color='k', ls=ls, label=f'n={n}')
-                ax4.plot([],[], color='k', ls=ls, label=f'n={n}')
+                ax5.plot([],[], color='k', ls=ls, label=f'n={n}', lw=1)
+                ax4.plot([],[], color='k', ls=ls, label=f'n={n}', lw=1)
             
-            ax5.plot(l_range, M_vals, color=color_this, ls=ls)
-            ax6.plot(l_range[1:], np.diff(M_vals)/l_range[1:]**2, color=color_this, ls=ls)
+            ax5.plot(l_range, M_vals, color=color_this, ls=ls, lw=1)
+            ax6.plot(l_range[1:], np.diff(M_vals)/l_range[1:]**2, color=color_this, ls=ls, lw=1)
         
     ax5.plot(lam, M_pred(lam), color=color_this, ls='-', label=f's={s}')
     ax4.plot([],[], color=color_this, label=f's={s}')
-    ax6.set_xscale('log')
+
         
     # ax5.plot(l_range, M_vals)
+
+ax4.set_xlim(0,6)
 ax4.xaxis.get_ticklocs(minor=True)     # []
 ax4.minorticks_on()
 ax4.grid(b=True, which='both', axis='x')
@@ -114,9 +116,9 @@ ax5.set_ylabel(r'$M$')
 ax5.legend()
 
 ax6.set_xscale('log')
-ax5.set_xlabel(r'$\lambda$')
-ax5.set_ylabel(r'$\rho$')
-ax5.legend()
+ax6.set_xlabel(r'$\lambda$')
+ax6.set_ylabel(r'$\rho$')
+ax6.legend()
 plt.show()
 
 # fig4.savefig('Eds-CDM_shells.pdf')
