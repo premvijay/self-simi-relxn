@@ -15,7 +15,7 @@ fig4, ax4 = plt.subplots(1, dpi=120, figsize=(10,7))
 fig5, (ax5,ax6) = plt.subplots(1,2, dpi=120, figsize=(14,7))
 
 
-for s in [0.5,1,1.5,2]:#[::2]:
+for s in [0.5,1,1.5,2,3]:#[1::2]:
     de = 2* (1+s/3) /3
 
     def M0(l):
@@ -29,7 +29,7 @@ for s in [0.5,1,1.5,2]:#[::2]:
 
     M = M_pred
 
-    color_this = plt.cm.jet(s/2)
+    color_this = plt.cm.jet(s/3)
     # linestyles = [":","-.","--","-"]
     linestyles = [(0, (1, 3)), (0, (2, 3)), (0, (3, 3)), (0, (4, 3)), (0, (5, 1,1,1))]
     ls_cycler = cycle(linestyles)
@@ -40,7 +40,7 @@ for s in [0.5,1,1.5,2]:#[::2]:
             # print(lam, (v, -2/9 * M(lam)/lam**2 - de*(de-1)*lam - (2*de-1)*v + 1e-50/lam**10))
             # if lam<1e-5: v=-v
             try:
-                return (v, -2/9 * (3*np.pi/4)**2* M(lam)/lam**2 - de*(de-1)*lam - (2*de-1)*v + 1e-50/lam**30)
+                return (v, -2/9 * (3*np.pi/4)**2* M(lam)/lam**2 - de*(de-1)*lam - (2*de-1)*v + 1e-65/lam**30)
             except:
                 print(lam,s, v, xi)
                 raise Exception
@@ -79,7 +79,7 @@ for s in [0.5,1,1.5,2]:#[::2]:
             Int_M = np.exp((-2*s/3)*roots)
             M_val = np.sum(Int_M[::2]) - np.sum(Int_M[1::2])
             M_vals.append(M_val)
-            Int_rho = np.exp((-2*s/3)*roots) / v_xi(roots)
+            Int_rho = - np.exp((-2*s/3)*roots) / v_xi(roots) / l**2
             rho_vals.append(np.sum(Int_rho))
         M_vals[-1] = 1
 
@@ -117,7 +117,7 @@ for s in [0.5,1,1.5,2]:#[::2]:
             
             ax5.plot(l_range, M_vals, color=color_this, ls=ls, lw=1)
             # ax6.plot(l_range[1:], np.diff(M_vals)/l_range[1:]**2, color=color_this, ls=ls, lw=1)
-            ax6.plot(l_range, rho_vals, color=color_this, ls=ls, lw=1)
+            if n==10: ax6.plot(l_range, rho_vals, color=color_this, ls=ls, lw=1)
         
     ax5.plot(lam, M_pred(lam), color=color_this, ls='-', label=f's={s}')
     ax4.plot([],[], color=color_this, label=f's={s}')
@@ -138,6 +138,7 @@ ax5.set_ylabel(r'$M$')
 ax5.legend()
 
 ax6.set_xscale('log')
+ax6.set_yscale('log')
 ax6.set_xlabel(r'$\lambda$')
 ax6.set_ylabel(r'$\rho$')
 ax6.legend()
