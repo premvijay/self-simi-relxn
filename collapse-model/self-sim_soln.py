@@ -2,7 +2,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.integrate import solve_ivp, cumtrapz, quad, trapezoid, cumulative_trapezoid
-from scipy.interpolate import interp1d
+from scipy.interpolate import interp1d, InterpolatedUnivariateSpline
 from itertools import cycle
 plt.style.use('seaborn-darkgrid')
 # %%
@@ -15,7 +15,7 @@ fig4, ax4 = plt.subplots(1, dpi=120, figsize=(10,7))
 fig5, (ax5,ax6) = plt.subplots(1,2, dpi=120, figsize=(14,7))
 
 
-for s in [0.5,1,1.5,2]:#[:2]:
+for s in [0.5,1,1.5,2]:#[::2]:
     de = 2* (1+s/3) /3
 
     def M0(l):
@@ -58,18 +58,33 @@ for s in [0.5,1,1.5,2]:#[:2]:
         #     return quad(Integ, 0, np.inf)[0]
         
         l_range = np.linspace(0,1, 200)
-        l_range = np.logspace(-2,0, 200)
-        Integ_fac_vals = np.exp(-xi*2*s/3)
+        l_range = np.logspace(-2,0, 300)
+        
         # @np.vectorize
         # def M(l):
-        grid_lam, grid_l_range = np.meshgrid(lam, l_range)
-        Integ_vals = Integ_fac_vals * np.heaviside(grid_l_range-grid_lam, 1)
-        M_vals = np.trapz(Integ_vals, xi) #grid_l_range, axis=0)
-        M_vals += quad(lambda xi : np.exp(-xi*2*s/3), xi[-1], np.inf)[0]*l_range
+
+        # Integ_fac_vals = np.exp(-xi*2*s/3)
+        # grid_lam, grid_l_range = np.meshgrid(lam, l_range)
+        # Integ_vals = Integ_fac_vals * np.heaviside(grid_l_range-grid_lam, 1)
+        # M_vals = np.trapz(Integ_vals, xi) #grid_l_range, axis=0)
+        # M_vals += quad(lambda xi : np.exp(-xi*2*s/3), xi[-1], np.inf)[0]*l_range
+
+        M_vals = []
+        for l in l_range:
+            spl = InterpolatedUnivariateSpline(xi, lam-l)
+            roots = spl.roots()
+            Int = np.exp((-2*s/3)*roots)
+            M_val = np.sum(Int[::2]) - np.sum(Int[1::2])
+            M_vals.append(M_val)
+
+        M_vals = np.asarray(M_vals)
+        M_vals[-1] = 1
 
         M_vals /= M_vals[-1]
 
         M = interp1d(l_range, M_vals, fill_value="extrapolate")
+
+
 
         
 
@@ -89,8 +104,8 @@ for s in [0.5,1,1.5,2]:#[:2]:
             # plt.plot(res1.t, res1.y[0], color=color_this)
             # plt.plot(res.t, res.y[1], color=color_this)
 
-            lam = np.linspace(0,1,200)
-            if s==0.5:
+            # lam = np.linspace(0,1,200)
+            if s==1:
                 ax5.plot([],[], color='k', ls=ls, label=f'n={n}', lw=1)
                 ax4.plot([],[], color='k', ls=ls, label=f'n={n}', lw=1)
             
@@ -121,8 +136,10 @@ ax6.set_ylabel(r'$\rho$')
 ax6.legend()
 plt.show()
 
-# fig4.savefig('Eds-CDM_shells.pdf')
-# fig5.savefig('Eds-CDM_M_lam.pdf')
+
+#%%
+fig4.savefig('Eds-CDM_shells.pdf')
+fig5.savefig('Eds-CDM_M_lam.pdf')
 # %%
 
 # %%
