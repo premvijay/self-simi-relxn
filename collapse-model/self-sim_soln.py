@@ -51,6 +51,7 @@ for s in [0.5,1,1.5,2]:#[::2]:
 
         xi = res.t
         lam = res.y[0]
+        v = res.y[1]
 
         # @np.vectorize
         # def M(l):
@@ -70,15 +71,20 @@ for s in [0.5,1,1.5,2]:#[::2]:
         # M_vals += quad(lambda xi : np.exp(-xi*2*s/3), xi[-1], np.inf)[0]*l_range
 
         M_vals = []
+        rho_vals = []
+        v_xi = interp1d(xi, v, fill_value="extrapolate")
         for l in l_range:
             spl = InterpolatedUnivariateSpline(xi, lam-l)
             roots = spl.roots()
-            Int = np.exp((-2*s/3)*roots)
-            M_val = np.sum(Int[::2]) - np.sum(Int[1::2])
+            Int_M = np.exp((-2*s/3)*roots)
+            M_val = np.sum(Int_M[::2]) - np.sum(Int_M[1::2])
             M_vals.append(M_val)
+            Int_rho = np.exp((-2*s/3)*roots) / v_xi(roots)
+            rho_vals.append(np.sum(Int_rho))
+        M_vals[-1] = 1
 
         M_vals = np.asarray(M_vals)
-        M_vals[-1] = 1
+        rho_vals = np.asarray(rho_vals)
 
         M_vals /= M_vals[-1]
 
@@ -110,7 +116,8 @@ for s in [0.5,1,1.5,2]:#[::2]:
                 ax4.plot([],[], color='k', ls=ls, label=f'n={n}', lw=1)
             
             ax5.plot(l_range, M_vals, color=color_this, ls=ls, lw=1)
-            ax6.plot(l_range[1:], np.diff(M_vals)/l_range[1:]**2, color=color_this, ls=ls, lw=1)
+            # ax6.plot(l_range[1:], np.diff(M_vals)/l_range[1:]**2, color=color_this, ls=ls, lw=1)
+            ax6.plot(l_range, rho_vals, color=color_this, ls=ls, lw=1)
         
     ax5.plot(lam, M_pred(lam), color=color_this, ls='-', label=f's={s}')
     ax4.plot([],[], color=color_this, label=f's={s}')
