@@ -11,8 +11,8 @@ plt.style.use('seaborn-darkgrid')
 
 # %%
 s = 1
-fig4, ax4 = plt.subplots(1, dpi=120, figsize=(10,7))
-fig5, (ax5,ax6) = plt.subplots(1,2, dpi=120, figsize=(14,7))
+fig4, ax4 = plt.subplots(1, dpi=200, figsize=(10,7))
+fig5, (ax5,ax6) = plt.subplots(1,2, dpi=200, figsize=(14,7))
 
 
 for s in [0.5,1,1.5,2,3]:#[1::2]:
@@ -133,6 +133,10 @@ ax4.set_xlabel(r'$\xi$')
 ax4.set_ylabel(r'$\lambda$')
 ax4.legend()
 
+ax5.set_xlim(8e-2,1)
+ax5.set_ylim(2e-1,1)
+ax5.set_xscale('log')
+ax5.set_yscale('log')
 ax5.set_xlabel(r'$\lambda$')
 ax5.set_ylabel(r'$M$')
 ax5.legend()
