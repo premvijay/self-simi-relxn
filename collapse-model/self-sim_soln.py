@@ -46,7 +46,7 @@ for s in [0.5,1,1.5,2,3][1::5]:
                 raise Exception
 
 
-        res = solve_ivp(ode_func, (0,4), np.array([1,-de]), method='Radau', t_eval=(np.arange(0,256,0.01))**(1/4), max_step=0.001, dense_output=False)
+        res = solve_ivp(ode_func, (0,4), np.array([1,-de]), method='Radau', t_eval=(np.arange(0,256,0.005))**(1/4), max_step=0.001, dense_output=False)
         # res1 = solve_ivp(fun, (res.t[-1],15), np.array([res.y[0][-1],-res.y[1][-1]]), max_step=0.1, dense_output=True)
 
         xi = res.t
@@ -71,6 +71,7 @@ for s in [0.5,1,1.5,2,3][1::5]:
         # M_vals += quad(lambda xi : np.exp(-xi*2*s/3), xi[-1], np.inf)[0]*l_range
 
         M_vals = []
+        # M_vals_er = []
         rho_vals = []
         v_xi = interp1d(xi, v, fill_value="extrapolate")
         for l in l_range:
@@ -79,11 +80,16 @@ for s in [0.5,1,1.5,2,3][1::5]:
             Int_M = np.exp((-2*s/3)*roots)
             M_val = np.sum(Int_M[::2]) - np.sum(Int_M[1::2])
             M_vals.append(M_val)
+            # if roots.shape[0]>1:
+            #     M_vals_er.append(Int_M[-2]-Int_M[-1])
+            # else:
+            #     M_vals_er.append(0)
             Int_rho = - np.exp((-2*s/3)*roots) / v_xi(roots) / l**2
             rho_vals.append(np.sum(Int_rho))
         M_vals[-1] = 1
 
         M_vals = np.asarray(M_vals)
+        # M_vals_er = np.asarray(M_vals_er)
         rho_vals = np.asarray(rho_vals)
 
         M_vals /= M_vals[-1]
@@ -98,8 +104,8 @@ for s in [0.5,1,1.5,2,3][1::5]:
             # xi = np.linspace(0,4,100)
             # lam = res.sol(xi)[0]
             # plt.plot(xi,lam)
-            xi = res.t
-            lam = res.y[0]
+            # xi = res.t
+            # lam = res.y[0]
             tau = np.exp(xi)
             lamF = lam*tau**de
             
