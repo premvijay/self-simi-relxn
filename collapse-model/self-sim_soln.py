@@ -126,7 +126,7 @@ for s in [0.5,1,1.5,2,3]:#[1::2]:
             
             ax5.plot(l_range, M_vals, color=color_this, ls=ls, lw=1)
             # ax6.plot(l_range[1:], np.diff(M_vals)/l_range[1:]**2, color=color_this, ls=ls, lw=1)
-            if n==5: ax6.plot(l_range[1:], rho_vals, color=color_this, ls='-', lw=1)
+            if n==6: ax6.plot(l_range[1:], rho_vals, color=color_this, ls='-', lw=1)
         
     # ax5.plot(lam, M_pred(lam), color=color_this, ls='-', label=f's={s}')
     ax4.plot([],[], color=color_this, label=f's={s}')
@@ -145,7 +145,7 @@ ax4.set_ylabel(r'$\lambda$')
 ax4.legend()
 
 ax5.set_xlim(8e-2,1)
-ax5.set_ylim(2e-1,1)
+ax5.set_ylim(1e-1,1)
 ax5.set_xscale('log')
 ax5.set_yscale('log')
 ax5.set_xlabel(r'$\lambda$')
@@ -163,6 +163,8 @@ plt.show()
 
 
 #%%
+# fig4.tight_layout()
+# fig5.tight_layout()
 fig4.savefig('Eds-CDM_shells.pdf')
 fig5.savefig('Eds-CDM_M_lam.pdf')
 # %%
