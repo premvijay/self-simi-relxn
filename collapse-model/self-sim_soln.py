@@ -15,7 +15,7 @@ fig4, ax4 = plt.subplots(1, dpi=200, figsize=(10,7))
 fig5, (ax5,ax6) = plt.subplots(1,2, dpi=200, figsize=(14,7))
 
 
-for s in [0.5,1,1.5,2,3]:#[1::2]:
+for s in [0.5,1,1.5,2,3][1::5]:
     de = 2* (1+s/3) /3
 
     def M0(l):
@@ -29,24 +29,24 @@ for s in [0.5,1,1.5,2,3]:#[1::2]:
 
     M = M_pred
 
-    color_this = plt.cm.jet(s/3)
+    color_this = plt.cm.jet(s/1)
     # linestyles = [":","-.","--","-"]
     linestyles = [(0, (1, 3)), (0, (2, 3)), (0, (3, 3)), (0, (4, 3)), (0, (5, 1,1,1))]
     ls_cycler = cycle(linestyles)
-    for n in range(11):
+    for n in range(6):
         def ode_func(xi, arg):
             lam = arg[0]
             v = arg[1]
             # print(lam, (v, -2/9 * M(lam)/lam**2 - de*(de-1)*lam - (2*de-1)*v + 1e-50/lam**10))
             # if lam<1e-5: v=-v
             try:
-                return (v, -2/9 * (3*np.pi/4)**2* M(lam)/lam**2 - de*(de-1)*lam - (2*de-1)*v + 1e-65/lam**30)
+                return (v, -2/9 * (3*np.pi/4)**2* M(lam)/lam**2 - de*(de-1)*lam - (2*de-1)*v + 1e-38/lam**9)
             except:
                 print(lam,s, v, xi)
                 raise Exception
 
 
-        res = solve_ivp(ode_func, (0,10), np.array([1,-de]), max_step=0.01, dense_output=True)
+        res = solve_ivp(ode_func, (0,4), np.array([1,-de]), method='Radau', t_eval=(np.arange(0,256,0.01))**(1/4), max_step=0.001, dense_output=False)
         # res1 = solve_ivp(fun, (res.t[-1],15), np.array([res.y[0][-1],-res.y[1][-1]]), max_step=0.1, dense_output=True)
 
         xi = res.t
@@ -59,7 +59,7 @@ for s in [0.5,1,1.5,2,3]:#[1::2]:
         #     return quad(Integ, 0, np.inf)[0]
         
         l_range = np.linspace(0,1, 200)
-        l_range = np.logspace(-2,0, 300)
+        l_range = np.logspace(-2.5,0, 300)
         
         # @np.vectorize
         # def M(l):
@@ -94,7 +94,7 @@ for s in [0.5,1,1.5,2,3]:#[1::2]:
 
         
 
-        if n in [1,3,5,8,10]:
+        if n in [0,1,2,3,5,8,10]:
             # xi = np.linspace(0,4,100)
             # lam = res.sol(xi)[0]
             # plt.plot(xi,lam)
@@ -104,6 +104,7 @@ for s in [0.5,1,1.5,2,3]:#[1::2]:
             lamF = lam*tau**de
             
             ls = next(ls_cycler)
+            if n==5: ls='-'
             
             ax4.plot(xi,lam, color=color_this, ls=ls, lw=1)
             # plt.plot(xi,lamF, color=color_this, label=f's={s}')
@@ -117,7 +118,7 @@ for s in [0.5,1,1.5,2,3]:#[1::2]:
             
             ax5.plot(l_range, M_vals, color=color_this, ls=ls, lw=1)
             # ax6.plot(l_range[1:], np.diff(M_vals)/l_range[1:]**2, color=color_this, ls=ls, lw=1)
-            if n==10: ax6.plot(l_range, rho_vals, color=color_this, ls=ls, lw=1)
+            if n==5: ax6.plot(l_range, rho_vals, color=color_this, ls='-', lw=1)
         
     ax5.plot(lam, M_pred(lam), color=color_this, ls='-', label=f's={s}')
     ax4.plot([],[], color=color_this, label=f's={s}')
@@ -125,7 +126,8 @@ for s in [0.5,1,1.5,2,3]:#[1::2]:
         
     # ax5.plot(l_range, M_vals)
 
-ax4.set_xlim(0,6)
+ax4.set_xlim(0,4)
+ax4.set_ylim(0,1)
 ax4.xaxis.get_ticklocs(minor=True)     # []
 ax4.minorticks_on()
 ax4.grid(b=True, which='both', axis='x')
