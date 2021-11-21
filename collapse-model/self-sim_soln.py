@@ -15,7 +15,7 @@ fig4, ax4 = plt.subplots(1, dpi=200, figsize=(10,7))
 fig5, (ax5,ax6) = plt.subplots(1,2, dpi=200, figsize=(14,7))
 
 
-for s in [0.5,1,1.5,2,3][1::5]:
+for s in [0.5,1,1.5,2,3]:#[1::2]:
     de = 2* (1+s/3) /3
 
     def M0(l):
@@ -29,18 +29,18 @@ for s in [0.5,1,1.5,2,3][1::5]:
 
     M = M_pred
 
-    color_this = plt.cm.jet(s/1)
+    color_this = plt.cm.jet(s/3)
     # linestyles = [":","-.","--","-"]
     linestyles = [(0, (1, 3)), (0, (2, 3)), (0, (3, 3)), (0, (4, 3)), (0, (5, 1,1,1))]
-    ls_cycler = cycle(linestyles)
-    for n in range(6):
+    ls_cycler = cycle(linestyles[::2])
+    for n in range(7):
         def ode_func(xi, arg):
             lam = arg[0]
             v = arg[1]
             # print(lam, (v, -2/9 * M(lam)/lam**2 - de*(de-1)*lam - (2*de-1)*v + 1e-50/lam**10))
             # if lam<1e-5: v=-v
             try:
-                return (v, -2/9 * (3*np.pi/4)**2* M(lam)/lam**2 - de*(de-1)*lam - (2*de-1)*v + 1e-38/lam**9)
+                return (v, -2/9 * (3*np.pi/4)**2* M(lam)/lam**2 - de*(de-1)*lam - (2*de-1)*v + 1e-40/lam**9)
             except:
                 print(lam,s, v, xi)
                 raise Exception
@@ -58,8 +58,8 @@ for s in [0.5,1,1.5,2,3][1::5]:
         #     Integ = lambda xi : np.exp(-xi*2*s/3) * np.heaviside(l-res.sol(xi)[0], 1)
         #     return quad(Integ, 0, np.inf)[0]
         
-        l_range = np.linspace(0,1, 200)
-        l_range = np.logspace(-2.5,0, 300)
+        # l_range = np.linspace(0,1, 200)
+        # l_range = np.logspace(-2.5,0, 300)
         
         # @np.vectorize
         # def M(l):
@@ -70,11 +70,13 @@ for s in [0.5,1,1.5,2,3][1::5]:
         # M_vals = np.trapz(Integ_vals, xi) #grid_l_range, axis=0)
         # M_vals += quad(lambda xi : np.exp(-xi*2*s/3), xi[-1], np.inf)[0]*l_range
 
-        M_vals = []
+        l_range = [0]
+        M_vals = [0]
         # M_vals_er = []
         rho_vals = []
         v_xi = interp1d(xi, v, fill_value="extrapolate")
-        for l in l_range:
+        for l in np.logspace(-2.5,0, 300):
+            l_range.append(l)
             spl = InterpolatedUnivariateSpline(xi, lam-l)
             roots = spl.roots()
             Int_M = np.exp((-2*s/3)*roots)
@@ -84,7 +86,7 @@ for s in [0.5,1,1.5,2,3][1::5]:
             #     M_vals_er.append(Int_M[-2]-Int_M[-1])
             # else:
             #     M_vals_er.append(0)
-            Int_rho = - np.exp((-2*s/3)*roots) / v_xi(roots) / l**2
+            Int_rho = 2/9*s * (3*np.pi/4)**2 * np.exp((-2*s/3)*roots) / np.abs(v_xi(roots)) / l**2
             rho_vals.append(np.sum(Int_rho))
         M_vals[-1] = 1
 
@@ -100,7 +102,7 @@ for s in [0.5,1,1.5,2,3][1::5]:
 
         
 
-        if n in [0,1,2,3,5,8,10]:
+        if n in [2,4,6,8,10]:
             # xi = np.linspace(0,4,100)
             # lam = res.sol(xi)[0]
             # plt.plot(xi,lam)
@@ -110,7 +112,7 @@ for s in [0.5,1,1.5,2,3][1::5]:
             lamF = lam*tau**de
             
             ls = next(ls_cycler)
-            if n==5: ls='-'
+            if n==6: ls='-'
             
             ax4.plot(xi,lam, color=color_this, ls=ls, lw=1)
             # plt.plot(xi,lamF, color=color_this, label=f's={s}')
@@ -118,16 +120,17 @@ for s in [0.5,1,1.5,2,3][1::5]:
             # plt.plot(res.t, res.y[1], color=color_this)
 
             # lam = np.linspace(0,1,200)
-            if s==1:
+            if s==0.5:
                 ax5.plot([],[], color='k', ls=ls, label=f'n={n}', lw=1)
                 ax4.plot([],[], color='k', ls=ls, label=f'n={n}', lw=1)
             
             ax5.plot(l_range, M_vals, color=color_this, ls=ls, lw=1)
             # ax6.plot(l_range[1:], np.diff(M_vals)/l_range[1:]**2, color=color_this, ls=ls, lw=1)
-            if n==5: ax6.plot(l_range, rho_vals, color=color_this, ls='-', lw=1)
+            if n==5: ax6.plot(l_range[1:], rho_vals, color=color_this, ls='-', lw=1)
         
-    ax5.plot(lam, M_pred(lam), color=color_this, ls='-', label=f's={s}')
+    # ax5.plot(lam, M_pred(lam), color=color_this, ls='-', label=f's={s}')
     ax4.plot([],[], color=color_this, label=f's={s}')
+    ax5.plot([],[], color=color_this, label=f's={s}')
 
         
     # ax5.plot(l_range, M_vals)
@@ -149,6 +152,8 @@ ax5.set_xlabel(r'$\lambda$')
 ax5.set_ylabel(r'$M$')
 ax5.legend()
 
+ax6.set_xlim(10**-1.5,1)
+ax6.set_ylim(0.7,10**5)
 ax6.set_xscale('log')
 ax6.set_yscale('log')
 ax6.set_xlabel(r'$\lambda$')
