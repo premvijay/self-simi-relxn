@@ -33,7 +33,7 @@ for s in [0.5,1,1.5,2,3]:#[1::2]:
     # linestyles = [":","-.","--","-"]
     linestyles = [(0, (1, 3)), (0, (2, 3)), (0, (3, 3)), (0, (4, 3)), (0, (5, 1,1,1))]
     ls_cycler = cycle(linestyles[::2])
-    for n in range(7):
+    for n in range(5):
         def ode_func(xi, arg):
             lam = arg[0]
             v = arg[1]
@@ -126,11 +126,19 @@ for s in [0.5,1,1.5,2,3]:#[1::2]:
             
             ax5.plot(l_range, M_vals, color=color_this, ls=ls, lw=1)
             # ax6.plot(l_range[1:], np.diff(M_vals)/l_range[1:]**2, color=color_this, ls=ls, lw=1)
-            if n==6: ax6.plot(l_range[1:], rho_vals, color=color_this, ls='-', lw=1)
+            if n==4: ax6.plot(l_range[1:], rho_vals, color=color_this, ls='-', lw=1)
         
     # ax5.plot(lam, M_pred(lam), color=color_this, ls='-', label=f's={s}')
     ax4.plot([],[], color=color_this, label=f's={s}')
     ax5.plot([],[], color=color_this, label=f's={s}')
+
+    eps = 1/s
+    Mta = (3*np.pi/4)**2
+    tht = np.linspace(0.01, 2*np.pi,300)
+    Mn = ((tht-np.sin(tht))/np.pi)**(-2/3*s)
+    M = Mta * Mn
+    lam = (1-np.cos(tht))/2 * Mn**(1/3+eps)
+    ax5.plot(lam,Mn, color=color_this, ls='-')
 
         
     # ax5.plot(l_range, M_vals)
@@ -165,8 +173,32 @@ plt.show()
 #%%
 # fig4.tight_layout()
 # fig5.tight_layout()
-fig4.savefig('Eds-CDM_shells.pdf')
+# fig4.savefig('Eds-CDM_shells.pdf')
 fig5.savefig('Eds-CDM_M_lam.pdf')
 # %%
+
+# %%
+s = 1
+fig7, (ax71,ax72) = plt.subplots(1,2, dpi=200, figsize=(14,7))
+for s in [0.2,0.5,1,2,5]:
+    eps = 1/s
+    Mta = (3*np.pi/4)**2
+    tht = np.linspace(0.01, 2*np.pi,300)
+    Mn = ((tht-np.sin(tht))/np.pi)**(-2/3*s)
+    M = Mta * Mn
+    lam = (1-np.cos(tht))/2 * Mn**(1/3+eps)
+    D = ( 3*np.pi/8 * (1-np.cos(tht)) * Mn**(3*eps/2-1) * np.sin(tht) * Mta**-2 )**-1
+    D_num = np.gradient(M,lam)/lam**2
+    ax71.plot(lam,M, label=r'$\epsilon=$'+f'{eps}')
+    # ax72.plot(lam,D, label=r'$\epsilon=$'+f'{eps}')
+    ax72.plot(lam,D_num, label=r'$\epsilon=$'+f'{eps}')
+ax71.legend()
+ax72.legend()
+ax71.set_ylim(0,30)
+ax71.set_xlim(0,3)
+ax72.set_xscale('log')
+ax72.set_yscale('log')
+ax72.set_xlim(1e-2,1e1)
+ax72.set_ylim(1e-1,1e3)
 
 # %%
