@@ -5,6 +5,7 @@ from scipy.integrate import solve_ivp, cumtrapz, quad, trapezoid, cumulative_tra
 from scipy.interpolate import interp1d, InterpolatedUnivariateSpline
 from itertools import cycle
 plt.style.use('seaborn-darkgrid')
+import pandas as pd
 # %%
 
 # %%
@@ -15,7 +16,7 @@ fig4, ax4 = plt.subplots(1, dpi=200, figsize=(10,7))
 fig5, (ax5,ax6) = plt.subplots(1,2, dpi=200, figsize=(14,7))
 
 
-for s in [0.5,1,1.5,2,3]:#[1::2]:
+for s in [0.5,1,1.5,2,3][1::]:
     de = 2* (1+s/3) /3
 
     def M0(l):
@@ -33,7 +34,7 @@ for s in [0.5,1,1.5,2,3]:#[1::2]:
     # linestyles = [":","-.","--","-"]
     linestyles = [(0, (1, 3)), (0, (2, 3)), (0, (3, 3)), (0, (4, 3)), (0, (5, 1,1,1))]
     ls_cycler = cycle(linestyles[::2])
-    for n in range(5):
+    for n in range(11):
         def ode_func(xi, arg):
             lam = arg[0]
             v = arg[1]
@@ -46,7 +47,7 @@ for s in [0.5,1,1.5,2,3]:#[1::2]:
                 raise Exception
 
 
-        res = solve_ivp(ode_func, (0,4), np.array([1,-de]), method='Radau', t_eval=(np.arange(0,256,0.005))**(1/4), max_step=0.001, dense_output=False)
+        res = solve_ivp(ode_func, (0,4), np.array([1,-de]), method='Radau', t_eval=(np.arange(0,256,0.005))**(1/4), max_step=0.001, dense_output=False, vectorized=True)
         # res1 = solve_ivp(fun, (res.t[-1],15), np.array([res.y[0][-1],-res.y[1][-1]]), max_step=0.1, dense_output=True)
 
         xi = res.t
@@ -99,7 +100,8 @@ for s in [0.5,1,1.5,2,3]:#[1::2]:
         M = interp1d(l_range, M_vals, fill_value="extrapolate")
 
 
-
+        df = pd.DataFrame(data={'l':l_range, 'M':M_vals, 'rho':np.insert(rho_vals,0,0)})
+        df.to_hdf(f'profiles_dmo_{s}.hdf5', 'main')
         
 
         if n in [2,4,6,8,10]:
@@ -120,13 +122,13 @@ for s in [0.5,1,1.5,2,3]:#[1::2]:
             # plt.plot(res.t, res.y[1], color=color_this)
 
             # lam = np.linspace(0,1,200)
-            if s==0.5:
+            if s==1:
                 ax5.plot([],[], color='k', ls=ls, label=f'n={n}', lw=1)
                 ax4.plot([],[], color='k', ls=ls, label=f'n={n}', lw=1)
             
             ax5.plot(l_range, M_vals, color=color_this, ls=ls, lw=1)
             # ax6.plot(l_range[1:], np.diff(M_vals)/l_range[1:]**2, color=color_this, ls=ls, lw=1)
-            if n==4: ax6.plot(l_range[1:], rho_vals, color=color_this, ls='-', lw=1)
+            if n==10: ax6.plot(l_range[1:], rho_vals, color=color_this, ls='-', lw=1)
         
     # ax5.plot(lam, M_pred(lam), color=color_this, ls='-', label=f's={s}')
     ax4.plot([],[], color=color_this, label=f's={s}')
@@ -173,7 +175,7 @@ plt.show()
 #%%
 # fig4.tight_layout()
 # fig5.tight_layout()
-# fig4.savefig('Eds-CDM_shells.pdf')
+fig4.savefig('Eds-CDM_shells.pdf')
 fig5.savefig('Eds-CDM_M_lam.pdf')
 # %%
 
