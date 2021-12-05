@@ -82,7 +82,7 @@ def get_soln(thtsh):
     lamsh, V1, D1, M1 = preshock(thtsh)
     bcs = shock_jump(lamsh, V1, D1, M1)
     # print(thtsh)
-    return solve_ivp(odefunc, (lamsh,1e-4), bcs, max_step=0.001, vectorized=True)
+    return solve_ivp(odefunc, (lamsh,1e-5), bcs, max_step=0.001, vectorized=True)
 def M0(thtsh):
     res = get_soln(thtsh)
     M0val = res.y[2][-1]
@@ -91,11 +91,11 @@ def M0(thtsh):
 #%%
 # thtshsol = fsolve(M0, 1.5*np.pi)
 s = 1
-gam = 5/3
+gam = 4/3
 # fig4, ax4 = plt.subplots(1, dpi=200, figsize=(10,7))
 fig5, axs5 = plt.subplots(2,2, dpi=200, figsize=(14,12), sharex=True)
 # thtsh_s = []
-for s in [0.5,1,2,3,5]:
+for s in [0.5,1,2,3.5,5]:
     de = 2* (1+s/3) /3
     thtshsol = bisect(M0, 1.1*np.pi, 1.9*np.pi)
     res = get_soln(thtshsol)
@@ -116,7 +116,7 @@ for s in [0.5,1,2,3,5]:
     M_all = np.concatenate([M_post, M_pre][::-1])
     P_all = np.concatenate([P_post, P_pre][::-1])
 
-    color_this = plt.cm.jet(s/5)
+    color_this = plt.cm.turbo(s/5)
 
     axs5[0,0].plot(lamsh_all,-V_all, color=color_this, label=f's={s}')
     axs5[0,1].plot(lamsh_all,D_all, color=color_this)
