@@ -86,24 +86,108 @@ def get_soln(thtsh):
 def M0(thtsh):
     res = get_soln(thtsh)
     M0val = res.y[2][-1]
-    return M0val-1e-1 #if M0val>0 else -(-M0val)**(1/11)
+    return M0val-1e-2 #if M0val>0 else -(-M0val)**(1/11)
 
 #%%
 # thtshsol = fsolve(M0, 1.5*np.pi)
 s = 1
 gam = 5/3
 # fig4, ax4 = plt.subplots(1, dpi=200, figsize=(10,7))
-fig5, axs5 = plt.subplots(2,2, dpi=200, figsize=(14,12))
-
+fig5, axs5 = plt.subplots(2,2, dpi=200, figsize=(14,12), sharex=True)
+# thtsh_s = []
 for s in [0.5,1,2,3,5]:
     de = 2* (1+s/3) /3
     thtshsol = bisect(M0, 1.1*np.pi, 1.9*np.pi)
     res = get_soln(thtshsol)
 
-    axs5[0,0].loglog(res.t,-res.y[0], label=f's={s}')
-    axs5[0,1].loglog(res.t,res.y[1])
-    axs5[1,0].plot(res.t,res.y[2])
-    axs5[1,1].loglog(res.t,res.y[3])
+    lamsh_post = res.t
+    V_post, D_post, M_post, P_post = res.y
+
+    thtsh_preange = np.arange(1.1*np.pi, thtshsol,0.01)
+
+    lamsh_pre, V_pre, D_pre, M_pre = preshock(thtsh_preange)
+    P_pre = lamsh_pre*0
+
+    lamsh = lamsh_pre.min()
+
+    lamsh_all = np.concatenate([lamsh_post, lamsh_pre][::-1])
+    V_all = np.concatenate([V_post, V_pre][::-1])
+    D_all = np.concatenate([D_post, D_pre][::-1])
+    M_all = np.concatenate([M_post, M_pre][::-1])
+    P_all = np.concatenate([P_post, P_pre][::-1])
+
+    color_this = plt.cm.jet(s/5)
+
+    axs5[0,0].plot(lamsh_all,-V_all, color=color_this, label=f's={s}')
+    axs5[0,1].plot(lamsh_all,D_all, color=color_this)
+    axs5[1,0].plot(lamsh_all,M_all, color=color_this)
+    axs5[1,1].plot(lamsh_all,P_all, color=color_this)
+
+    # axs5[0,0].plot(lamsh_post,-V_post, color=color_this, label=f's={s}')
+    # axs5[0,1].plot(lamsh_post,D_post, color=color_this)
+    # axs5[1,0].plot(lamsh_post,M_post, color=color_this)
+    # axs5[1,1].plot(lamsh_post,P_post, color=color_this)
+
+
+    # axs5[0,0].plot(lamsh_pre,-V_pre, color=color_this)
+    # axs5[0,1].plot(lamsh_pre,D_pre, color=color_this)
+    # axs5[1,0].plot(lamsh_pre,M_pre, color=color_this)
+    # axs5[1,1].plot(lamsh_pre,P_pre, color=color_this)
+
+    # axs5[0,0].axvline(lamsh, -V_post[0], -V_pre[-1], color=color_this)
+    # axs5[0,1].axvline(lamsh, D_post[0], D_pre[-1], color=color_this)
+    # # axs5[1,0].axvline(lamsh, color=color_this)
+    # axs5[1,1].axvline(lamsh, P_post[0], P_pre[-1], color=color_this)
+
+    
+axs5[0,0].set_xscale('log')
+axs5[0,0].set_xlim(1e-4,1)
+axs5[0,0].legend()
+
+if gam>1.66:
+    axs5[0,0].set_xlim(1e-2,1)
+    axs5[0,1].set_ylim(1e-1,1e6)
+    axs5[1,1].set_ylim(1e0,1e7)
+
+axs5[0,0].set_ylabel('-V')
+axs5[0,1].set_ylabel('D')
+axs5[1,0].set_ylabel('M')
+axs5[1,1].set_ylabel('P')
+
+# axs5[0,0].set_yscale('log')
+axs5[0,1].set_yscale('log')
+axs5[1,0].set_yscale('log')
+axs5[1,1].set_yscale('log')
+
+fig5.savefig(f'Eds-gas-{gam:.02f}_profiles.pdf')
+
+
+
+
+#%%
+
+
+# axs5[0,0].
+# axs5[0,1].
+# axs5[1,0].
+# axs5[1,1].
+
+# axx5.
+
+
+#%%
+
+
+
+
+
+
+
+
+
+
+
+
 
 # %%
 plt.plot(res.t, res.y[2])
@@ -111,6 +195,9 @@ plt.plot(res.t, res.y[2])
 # plt.yscale('log')
 # plt.xlim(1e-2,1)
 # plt.ylim(1e0)
+
+
+
 
 
 
