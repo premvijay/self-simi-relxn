@@ -92,13 +92,23 @@ def M0(thtsh):
 # thtshsol = fsolve(M0, 1.5*np.pi)
 s = 1
 gam = 5/3
+fb = 0.2
 # fig4, ax4 = plt.subplots(1, dpi=200, figsize=(10,7))
-fig5, axs5 = plt.subplots(2,2, dpi=200, figsize=(14,12), sharex=True)
-fig6, ax6 = plt.subplots(1)
-# thtsh_s = []
-for s in [0.5,1,2,3,5][1:4]:
+thtsh_sols = {}
+for s in [0.5,1,2,3,5][:]:
     de = 2* (1+s/3) /3
     thtshsol = bisect(M0, 1.1*np.pi, 1.9*np.pi)
+    thtsh_sols[s] = thtshsol
+
+#%%
+
+
+fig5, axs5 = plt.subplots(2,2, dpi=200, figsize=(14,12), sharex=True)
+fig6, ax6 = plt.subplots(1)
+
+for s in [0.5,1,2,3,5][2:4]:
+    de = 2* (1+s/3) /3
+    thtshsol = thtsh_sols[s]
     res = get_soln(thtshsol)
 
     lamsh_post = res.t
@@ -117,7 +127,7 @@ for s in [0.5,1,2,3,5][1:4]:
     M_all = np.concatenate([M_post, M_pre][::-1])
     P_all = np.concatenate([P_post, P_pre][::-1])
 
-    color_this = plt.cm.turbo(s/5)
+    color_this = plt.cm.turbo(s/3)
 
     axs5[0,0].plot(lam_all,-V_all, color=color_this, label=f's={s}')
     axs5[0,1].plot(lam_all,D_all, color=color_this)
@@ -170,6 +180,16 @@ for s in [0.5,1,2,3,5][1:4]:
 
     ax6.plot(tau,lamF)
 
+    dmo_prfl = pd.read_hdf(f'profiles_dmo_{s}.hdf5')
+
+    Mta = (3*np.pi/4)**2
+    M_dmo = interp1d(dmo_prfl['l'], dmo_prfl['M']*Mta, fill_value="extrapolate")
+    D_dmo = interp1d(dmo_prfl['l'].iloc[1:], dmo_prfl['rho'].iloc[1:], fill_value="extrapolate")
+
+    axs5[1,0].plot(lam_all, M_dmo(lam_all), color=color_this, ls='dashed')
+
+
+
     
 axs5[0,0].set_xscale('log')
 axs5[0,0].set_xlim(1e-4,1)
@@ -178,6 +198,7 @@ axs5[0,0].legend()
 if gam>1.66:
     axs5[0,0].set_xlim(1e-2,1)
     axs5[0,1].set_ylim(1e-1,1e6)
+    axs5[1,0].set_ylim(1e-2,1e1)
     axs5[1,1].set_ylim(1e0,1e7)
 
 axs5[0,0].set_ylabel('-V')
@@ -239,7 +260,7 @@ plt.plot(thtshs, M0s)
 
 
 # %%
-lamsh = 3.2e-1
+# lamsh = 3.2e-1
 prfl = pd.read_hdf(f'profiles_dmo_{s}.hdf5')
 # %%
 prfl
