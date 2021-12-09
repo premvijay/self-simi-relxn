@@ -90,15 +90,15 @@ def M0(thtsh):
 
 #%%
 # thtshsol = fsolve(M0, 1.5*np.pi)
-s = 1
+s = 3
 gam = 5/3
 fb = 0.2
 # fig4, ax4 = plt.subplots(1, dpi=200, figsize=(10,7))
 thtsh_sols = {}
-for s in [0.5,1,2,3,5][:]:
-    de = 2* (1+s/3) /3
-    thtshsol = bisect(M0, 1.1*np.pi, 1.9*np.pi)
-    thtsh_sols[s] = thtshsol
+# for s in [0.5,1,2,3,5][:]:
+de = 2* (1+s/3) /3
+thtshsol = bisect(M0, 1.1*np.pi, 1.9*np.pi)
+thtsh_sols[s] = thtshsol
 
 #%%
 
@@ -106,89 +106,89 @@ for s in [0.5,1,2,3,5][:]:
 fig5, axs5 = plt.subplots(2,2, dpi=200, figsize=(14,12), sharex=True)
 fig6, ax6 = plt.subplots(1)
 
-for s in [0.5,1,2,3,5][2:4]:
-    de = 2* (1+s/3) /3
-    thtshsol = thtsh_sols[s]
-    res = get_soln(thtshsol)
+# for s in [0.5,1,2,3,5][2:4]:
+de = 2* (1+s/3) /3
+thtshsol = thtsh_sols[s]
+res = get_soln(thtshsol)
 
-    lamsh_post = res.t
-    V_post, D_post, M_post, P_post = res.y
+lamsh_post = res.t
+V_post, D_post, M_post, P_post = res.y
 
-    thtsh_preange = np.arange(1.1*np.pi, thtshsol,0.01)
+thtsh_preange = np.arange(1.1*np.pi, thtshsol,0.01)
 
-    lamsh_pre, V_pre, D_pre, M_pre = preshock(thtsh_preange)
-    P_pre = lamsh_pre*0
+lamsh_pre, V_pre, D_pre, M_pre = preshock(thtsh_preange)
+P_pre = lamsh_pre*0
 
-    lamsh = lamsh_pre.min()
+lamsh = lamsh_pre.min()
 
-    lam_all = np.concatenate([lamsh_post, lamsh_pre][::-1])
-    V_all = np.concatenate([V_post, V_pre][::-1])
-    D_all = np.concatenate([D_post, D_pre][::-1])
-    M_all = np.concatenate([M_post, M_pre][::-1])
-    P_all = np.concatenate([P_post, P_pre][::-1])
+lam_all = np.concatenate([lamsh_post, lamsh_pre][::-1])
+V_all = np.concatenate([V_post, V_pre][::-1])
+D_all = np.concatenate([D_post, D_pre][::-1])
+M_all = np.concatenate([M_post, M_pre][::-1])
+P_all = np.concatenate([P_post, P_pre][::-1])
 
-    color_this = plt.cm.turbo(s/3)
+color_this = plt.cm.turbo(s/3)
 
-    axs5[0,0].plot(lam_all,-V_all, color=color_this, label=f's={s}')
-    axs5[0,1].plot(lam_all,D_all, color=color_this)
-    axs5[1,0].plot(lam_all,M_all, color=color_this)
-    axs5[1,1].plot(lam_all,P_all, color=color_this)
+axs5[0,0].plot(lam_all,-V_all, color=color_this, label=f's={s}')
+axs5[0,1].plot(lam_all,D_all, color=color_this)
+axs5[1,0].plot(lam_all,M_all, color=color_this)
+axs5[1,1].plot(lam_all,P_all, color=color_this)
 
-    # axs5[0,0].plot(lamsh_post,-V_post, color=color_this, label=f's={s}')
-    # axs5[0,1].plot(lamsh_post,D_post, color=color_this)
-    # axs5[1,0].plot(lamsh_post,M_post, color=color_this)
-    # axs5[1,1].plot(lamsh_post,P_post, color=color_this)
-
-
-    # axs5[0,0].plot(lamsh_pre,-V_pre, color=color_this)
-    # axs5[0,1].plot(lamsh_pre,D_pre, color=color_this)
-    # axs5[1,0].plot(lamsh_pre,M_pre, color=color_this)
-    # axs5[1,1].plot(lamsh_pre,P_pre, color=color_this)
-
-    # axs5[0,0].axvline(lamsh, -V_post[0], -V_pre[-1], color=color_this)
-    # axs5[0,1].axvline(lamsh, D_post[0], D_pre[-1], color=color_this)
-    # # axs5[1,0].axvline(lamsh, color=color_this)
-    # axs5[1,1].axvline(lamsh, P_post[0], P_pre[-1], color=color_this)
-
-    PderD_all = np.gradient(P_all,lam_all)/D_all
-
-    M_intrp = interp1d(lam_all, M_all, fill_value="extrapolate")
-    D_intrp = interp1d(lam_all, D_all, fill_value="extrapolate")
-    PderD_intrp = interp1d(lam_all, PderD_all, fill_value="extrapolate")
-
-    def odefunc_traj(xi, arg):
-        lam = arg[0]
-        v = arg[1]
-        # print(lam, (v, -2/9 * M(lam)/lam**2 - de*(de-1)*lam - (2*de-1)*v + 1e-50/lam**10))
-        # if lam<1e-5: v=-v
-        try:
-            return (v, -2/9 * M_intrp(lam)/lam**2 - de*(de-1)*lam - (2*de-1)*v - PderD_intrp(lam))
-        except:
-            print(lam,s, v, xi)
-            raise Exception
+# axs5[0,0].plot(lamsh_post,-V_post, color=color_this, label=f's={s}')
+# axs5[0,1].plot(lamsh_post,D_post, color=color_this)
+# axs5[1,0].plot(lamsh_post,M_post, color=color_this)
+# axs5[1,1].plot(lamsh_post,P_post, color=color_this)
 
 
-    res = solve_ivp(odefunc_traj, (0,3), np.array([1,-de]), t_eval=(np.arange(0,81,0.005))**(1/4), max_step=0.001, dense_output=False, vectorized=True)
-    # res1 = solve_ivp(fun, (res.t[-1],15), np.array([res.y[0][-1],-res.y[1][-1]]), max_step=0.1, dense_output=True)
+# axs5[0,0].plot(lamsh_pre,-V_pre, color=color_this)
+# axs5[0,1].plot(lamsh_pre,D_pre, color=color_this)
+# axs5[1,0].plot(lamsh_pre,M_pre, color=color_this)
+# axs5[1,1].plot(lamsh_pre,P_pre, color=color_this)
 
-    xi = res.t
-    lam = res.y[0]
-    v = res.y[1]
+# axs5[0,0].axvline(lamsh, -V_post[0], -V_pre[-1], color=color_this)
+# axs5[0,1].axvline(lamsh, D_post[0], D_pre[-1], color=color_this)
+# # axs5[1,0].axvline(lamsh, color=color_this)
+# axs5[1,1].axvline(lamsh, P_post[0], P_pre[-1], color=color_this)
 
-    tau = np.exp(xi)
-    lamF = lam*tau**de
+PderD_all = np.gradient(P_all,lam_all)/D_all
 
-    ax6.plot(tau,lamF)
+M_intrp = interp1d(lam_all, M_all, fill_value="extrapolate")
+D_intrp = interp1d(lam_all, D_all, fill_value="extrapolate")
+PderD_intrp = interp1d(lam_all, PderD_all, fill_value="extrapolate")
 
-    dmo_prfl = pd.read_hdf(f'profiles_dmo_{s}.hdf5')
+def odefunc_traj(xi, arg):
+    lam = arg[0]
+    v = arg[1]
+    # print(lam, (v, -2/9 * M(lam)/lam**2 - de*(de-1)*lam - (2*de-1)*v + 1e-50/lam**10))
+    # if lam<1e-5: v=-v
+    try:
+        return (v, -2/9 * M_intrp(lam)/lam**2 - de*(de-1)*lam - (2*de-1)*v - PderD_intrp(lam))
+    except:
+        print(lam,s, v, xi)
+        raise Exception
 
-    Mta = (3*np.pi/4)**2
-    M_dmo = interp1d(dmo_prfl['l'], dmo_prfl['M']*Mta, fill_value="extrapolate")
-    D_dmo = interp1d(dmo_prfl['l'].iloc[1:], dmo_prfl['rho'].iloc[1:], fill_value="extrapolate")
 
-    axs5[1,0].plot(lam_all, M_dmo(lam_all), color=color_this, ls='dashed')
+res = solve_ivp(odefunc_traj, (0,3), np.array([1,-de]), t_eval=(np.arange(0,81,0.005))**(1/4), max_step=0.001, dense_output=False, vectorized=True)
+# res1 = solve_ivp(fun, (res.t[-1],15), np.array([res.y[0][-1],-res.y[1][-1]]), max_step=0.1, dense_output=True)
 
+xi = res.t
+lam = res.y[0]
+v = res.y[1]
 
+tau = np.exp(xi)
+lamF = lam*tau**de
+
+ax6.plot(tau,lamF)
+
+dmo_prfl = pd.read_hdf(f'profiles_dmo_{s}.hdf5')
+
+Mta = (3*np.pi/4)**2
+M_dmo = interp1d(dmo_prfl['l'], dmo_prfl['M']*Mta, fill_value="extrapolate")
+D_dmo = interp1d(dmo_prfl['l'].iloc[1:], dmo_prfl['rho'].iloc[1:], fill_value="extrapolate")
+
+axs5[1,0].plot(lam_all, M_dmo(lam_all), color=color_this, ls='dashed')
+
+#Loop ends
 
     
 axs5[0,0].set_xscale('log')
