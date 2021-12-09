@@ -137,21 +137,6 @@ for s in [0.5,1,1.5,2,3,5][1:5]:
     axs5[1,0].plot(lam_all,M_all, color=color_this)
     axs5[1,1].plot(lam_all,P_all, color=color_this)
 
-    # axs5[0,0].plot(lamsh_post,-V_post, color=color_this, label=f's={s}')
-    # axs5[0,1].plot(lamsh_post,D_post, color=color_this)
-    # axs5[1,0].plot(lamsh_post,M_post, color=color_this)
-    # axs5[1,1].plot(lamsh_post,P_post, color=color_this)
-
-
-    # axs5[0,0].plot(lamsh_pre,-V_pre, color=color_this)
-    # axs5[0,1].plot(lamsh_pre,D_pre, color=color_this)
-    # axs5[1,0].plot(lamsh_pre,M_pre, color=color_this)
-    # axs5[1,1].plot(lamsh_pre,P_pre, color=color_this)
-
-    # axs5[0,0].axvline(lamsh, -V_post[0], -V_pre[-1], color=color_this)
-    # axs5[0,1].axvline(lamsh, D_post[0], D_pre[-1], color=color_this)
-    # # axs5[1,0].axvline(lamsh, color=color_this)
-    # axs5[1,1].axvline(lamsh, P_post[0], P_pre[-1], color=color_this)
 
     PderD_post = np.gradient(P_post,lamsh_post)/D_post
 
