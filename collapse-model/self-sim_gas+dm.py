@@ -91,14 +91,23 @@ def M0(thtsh):
     M0val = res.y[2][-1]
     return M0val-1e-2 #if M0val>0 else -(-M0val)**(1/11)
 
+
+
+
+
+
+
 #%%
 # thtshsol = fsolve(M0, 1.5*np.pi)
 s = 2
 gam = 5/3
-fb = 0.2
+fb = 0.156837
 # fig4, ax4 = plt.subplots(1, dpi=200, figsize=(10,7))
 thtsh_sols = {}
+fig5, axs5 = plt.subplots(2,2, dpi=200, figsize=(14,12), sharex=True)
+# fig6, ax6 = plt.subplots(1)
 
+# for s in [1,1.5,2,3][:]:
 dmo_prfl = pd.read_hdf(f'profiles_dmo_{s}.hdf5')
 
 Mta = (3*np.pi/4)**2
@@ -107,64 +116,92 @@ D_dmo = interp1d(dmo_prfl['l'].iloc[1:], dmo_prfl['rho'].iloc[1:], fill_value="e
 
 M_dm = lambda lam: M_dmo(lam)*(1-fb)
 
-# for s in [1,1.5,2,3][:]:
 de = 2* (1+s/3) /3
-thtshsol = bisect(M0, 1.1*np.pi, 1.9*np.pi)
-thtsh_sols[s] = thtshsol
 
-#%%
+for n in range(3):
+    thtshsol = bisect(M0, 1.1*np.pi, 1.9*np.pi)
+    thtsh_sols[s] = thtshsol
 
+    # for s in [0.5,1,1.5,2,3,5][1:5]:
+    de = 2* (1+s/3) /3
+    thtshsol = thtsh_sols[s]
+    res = get_soln(thtshsol)
 
-fig5, axs5 = plt.subplots(2,2, dpi=200, figsize=(14,12), sharex=True)
-fig6, ax6 = plt.subplots(1)
+    lamsh_post = res.t
+    V_post, D_post, M_post, P_post = res.y
 
-# for s in [0.5,1,1.5,2,3,5][1:5]:
-de = 2* (1+s/3) /3
-thtshsol = thtsh_sols[s]
-res = get_soln(thtshsol)
+    thtsh_preange = np.arange(1.1*np.pi, thtshsol,0.01)
 
-lamsh_post = res.t
-V_post, D_post, M_post, P_post = res.y
+    lamsh_pre, V_pre, D_pre, M_pre = preshock(thtsh_preange)
+    P_pre = lamsh_pre*0
 
-thtsh_preange = np.arange(1.1*np.pi, thtshsol,0.01)
+    lamsh = lamsh_pre.min()
 
-lamsh_pre, V_pre, D_pre, M_pre = preshock(thtsh_preange)
-P_pre = lamsh_pre*0
+    lam_all = np.concatenate([lamsh_post, lamsh_pre][::-1])
+    V_all = np.concatenate([V_post, V_pre][::-1])
+    D_all = np.concatenate([D_post, D_pre][::-1])
+    M_all = np.concatenate([M_post, M_pre][::-1])
+    P_all = np.concatenate([P_post, P_pre][::-1])
 
-lamsh = lamsh_pre.min()
-
-lam_all = np.concatenate([lamsh_post, lamsh_pre][::-1])
-V_all = np.concatenate([V_post, V_pre][::-1])
-D_all = np.concatenate([D_post, D_pre][::-1])
-M_all = np.concatenate([M_post, M_pre][::-1])
-P_all = np.concatenate([P_post, P_pre][::-1])
-
-color_this = plt.cm.turbo(s/2)
-
-axs5[0,0].plot(lam_all,-V_all, color=color_this, label=f's={s}')
-axs5[0,1].plot(lam_all,D_all, color=color_this)
-axs5[1,0].plot(lam_all,M_all+M_dm(lam_all), color=color_this)
-axs5[1,1].plot(lam_all,P_all, color=color_this)
+    # color_this = plt.cm.turbo(s/2)
+    color_this = plt.cm.turbo(n/2)
 
 
-PderD_post = np.gradient(P_post,lamsh_post)/D_post
+    axs5[0,0].plot(lam_all,-V_all, color=color_this, label=f'n={n}')
+    axs5[0,1].plot(lam_all,D_all, color=color_this)
+    axs5[1,0].plot(lam_all,M_all+M_dm(lam_all), color=color_this)
+    axs5[1,1].plot(lam_all,P_all, color=color_this)
 
-M_intrp = interp1d(lam_all, M_all, fill_value="extrapolate")
-D_intrp = interp1d(lam_all, D_all, fill_value="extrapolate")
-irem = P_pre.shape[0]-1
-# PderD_intrp = interp1d(np.delete(lam_all,irem), np.delete(PderD_all,irem), kind='linear', fill_value="extrapolate")
+
+
+    M_gas = interp1d(lam_all, M_all, fill_value="extrapolate")
+
+    M_tot = lambda lam : M_dm(lam)+M_gas(lam)
+
+    def ode_func(xi, arg):
+        lam = arg[0]
+        v = arg[1]
+        # print(lam, (v, -2/9 * M(lam)/lam**2 - de*(de-1)*lam - (2*de-1)*v + 1e-50/lam**10))
+        # if lam<1e-5: v=-v
+        try:
+            return (v, -2/9 * (3*np.pi/4)**2* M_tot(lam)/lam**2 - de*(de-1)*lam - (2*de-1)*v + 1e-40/lam**9)
+        except:
+            print(lam,s, v, xi)
+            raise Exception
+
+
+    res = solve_ivp(ode_func, (0,4), np.array([1,-de]), method='Radau', t_eval=(np.arange(0,256,0.005))**(1/4), max_step=0.001, dense_output=False, vectorized=True)
+    # res1 = solve_ivp(fun, (res.t[-1],15), np.array([res.y[0][-1],-res.y[1][-1]]), max_step=0.1, dense_output=True)
+
+    xi = res.t
+    lam = res.y[0]
+    v = res.y[1]
+
+    l_range = [0]
+    M_vals = [0]
+    for l in np.logspace(-2.5,0, 200):
+        l_range.append(l)
+        spl = InterpolatedUnivariateSpline(xi, lam-l)
+        roots = spl.roots()
+        Int_M = np.exp((-2*s/3)*roots)
+        M_val = np.sum(Int_M[::2]) - np.sum(Int_M[1::2])
+        M_vals.append(M_val)
+    M_vals[-1] = 1
+
+    M_vals = np.asarray(M_vals)
+    # M_vals_er = np.asarray(M_vals_er)
+    # rho_vals = np.asarray(rho_vals)
+
+    M_vals /= M_vals[-1]*Mta*(1-fb)
+
+    M_dm = interp1d(l_range, M_vals, fill_value="extrapolate")
 
 
 
 
 axs5[1,0].plot(lam_all, M_dmo(lam_all), color=color_this, ls='dashed')
 
-#Loop ends
-
-ax6.set_xlabel(r'$\tau$')
-ax6.set_ylabel('$\lambda_F$')
-ax6.set_xlim(-1,5)
-ax6.set_ylim(0,1.1)
+# s-Loop ends
     
 axs5[0,0].set_xscale('log')
 axs5[0,0].set_xlim(1e-4,1)
@@ -190,3 +227,4 @@ axs5[1,1].set_yscale('log')
 # fig5.savefig(f'Eds-gas-{gam:.02f}_trajectory.pdf')
 
 #%%
+plt.show()
