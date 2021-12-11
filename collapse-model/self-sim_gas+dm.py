@@ -192,7 +192,7 @@ for n in range(3):
     # M_vals_er = np.asarray(M_vals_er)
     # rho_vals = np.asarray(rho_vals)
 
-    M_vals /= M_vals[-1]*Mta*(1-fb)
+    M_vals *= Mta*(1-fb) / M_vals[-1]
 
     M_dm = interp1d(l_range, M_vals, fill_value="extrapolate")
 
