@@ -119,7 +119,9 @@ M_dm = lambda lam: M_dmo(lam)*(1-fb)
 
 de = 2* (1+s/3) /3
 
-for n in range(6):
+plot_iters = [0,1,2,3,5,6,7]
+
+for n in range(8):
     thtshsol = bisect(M0, 1.1*np.pi, 1.9*np.pi)
     thtsh_sols[s] = thtshsol
 
@@ -145,13 +147,13 @@ for n in range(6):
     P_all = np.concatenate([P_post, P_pre][::-1])
 
     # color_this = plt.cm.turbo(s/2)
-    color_this = plt.cm.turbo(n/5)
+    color_this = plt.cm.turbo(n/7)
 
-
-    axs5[0,0].plot(lam_all,-V_all, color=color_this, label=f'n={n}')
-    axs5[0,1].plot(lam_all,D_all, color=color_this)
-    axs5[1,0].plot(lam_all,M_all+M_dm(lam_all), color=color_this)
-    axs5[1,1].plot(lam_all,P_all, color=color_this)
+    if n in plot_iters:
+        axs5[0,0].plot(lam_all,-V_all, color=color_this, label=f'n={n}')
+        axs5[0,1].plot(lam_all,D_all, color=color_this)
+        axs5[1,0].plot(lam_all,M_all+M_dm(lam_all), color=color_this)
+        axs5[1,1].plot(lam_all,P_all, color=color_this)
 
 
 
@@ -200,7 +202,7 @@ for n in range(6):
 
 
 
-axs5[1,0].plot(lam_all, M_dmo(lam_all), color=color_this, ls='dashed')
+axs5[1,0].plot(lam_all, M_dmo(lam_all), color='k', ls='dashed')
 
 # s-Loop ends
     
