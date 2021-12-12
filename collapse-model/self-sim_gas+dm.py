@@ -235,3 +235,49 @@ dill.dump_session(filename)
 plt.show()
 
 #%%
+
+# %%
+
+# %%
+import dill                            #pip install dill --user
+filename = 'soln-globalsave-1.pkl'
+dill.load_session(filename)
+
+#%%
+fd = (1-fb)
+lamr_full = np.logspace(-3,-0.5,300)
+lamr = np.logspace(-3,-0.5,300)
+
+r, Mdr, Mbr, Mdr_dmo = lamr, M_dm(lamr), M_gas(lamr), M_dmo(lamr_full)*fd
+ri_pre = lamr_full
+
+#%%
+plt.plot(r,Mdr, label='DM')
+plt.plot(r,Mbr*fd/fb, label='baryon')
+plt.plot(ri_pre,Mdr_dmo, label='DMO_scaled' )
+# plt.plot(r,Mdr+Mbr)
+# plt.xscale('log')
+# plt.yscale('log')
+plt.legend()
+
+#%%
+rf = r.copy()
+
+logri_logM = interp1d(np.log10(Mdr_dmo),np.log10(ri_pre), fill_value='extrapolate')
+
+# assert (ri_M(Mdr_dmo) == r).all()
+
+ri = 10**logri_logM(np.log10(Mdr))
+
+Mf = Mdr+Mbr
+Mi = Mdr/fd
+
+MiMf = ( fd* (Mbr/ Mdr + 1) )**-1
+rfri = rf / ri
+
+#%%
+plt.plot(MiMf[60:-50],rfri[60:-50])
+plt.xlabel('Mi/Mf')
+plt.ylabel('rf/ri')
+plt.savefig('ratio_plot_anyl.pdf')
+# %%
