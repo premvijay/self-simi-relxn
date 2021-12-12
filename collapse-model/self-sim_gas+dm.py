@@ -1,3 +1,4 @@
+#%%
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.integrate import solve_ivp, cumtrapz, quad, trapezoid, cumulative_trapezoid
@@ -118,7 +119,7 @@ M_dm = lambda lam: M_dmo(lam)*(1-fb)
 
 de = 2* (1+s/3) /3
 
-for n in range(3):
+for n in range(6):
     thtshsol = bisect(M0, 1.1*np.pi, 1.9*np.pi)
     thtsh_sols[s] = thtshsol
 
@@ -130,7 +131,7 @@ for n in range(3):
     lamsh_post = res.t
     V_post, D_post, M_post, P_post = res.y
 
-    thtsh_preange = np.arange(1.1*np.pi, thtshsol,0.01)
+    thtsh_preange = np.arange(1*np.pi, thtshsol,0.01)
 
     lamsh_pre, V_pre, D_pre, M_pre = preshock(thtsh_preange)
     P_pre = lamsh_pre*0
@@ -144,7 +145,7 @@ for n in range(3):
     P_all = np.concatenate([P_post, P_pre][::-1])
 
     # color_this = plt.cm.turbo(s/2)
-    color_this = plt.cm.turbo(n/2)
+    color_this = plt.cm.turbo(n/5)
 
 
     axs5[0,0].plot(lam_all,-V_all, color=color_this, label=f'n={n}')
@@ -227,4 +228,10 @@ axs5[1,1].set_yscale('log')
 # fig5.savefig(f'Eds-gas-{gam:.02f}_trajectory.pdf')
 
 #%%
+import dill                            #pip install dill --user
+filename = 'soln-globalsave-2.pkl'
+dill.dump_session(filename)
+#%%
 plt.show()
+
+#%%
