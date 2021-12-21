@@ -242,7 +242,7 @@ plt.show()
 
 # %%
 import dill                            #pip install dill --user
-filename = 'soln-globalsave-1.pkl'
+filename = 'soln-globalsave-2.pkl'
 dill.load_session(filename)
 
 #%%
@@ -278,8 +278,9 @@ MiMf = ( fd* (Mbr/ Mdr + 1) )**-1
 rfri = rf / ri
 
 #%%
-plt.plot(MiMf[60:-50],rfri[60:-50])
+plt.scatter(MiMf[60:-50],rfri[60:-50],c=rf[60:-50])
+plt.colorbar()
 plt.xlabel('Mi/Mf')
 plt.ylabel('rf/ri')
-plt.savefig('ratio_plot_anyl.pdf')
+# plt.savefig('ratio_plot_anyl.pdf')
 # %%
