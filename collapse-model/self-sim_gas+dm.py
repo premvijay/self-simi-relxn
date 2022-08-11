@@ -231,7 +231,7 @@ axs5[1,1].set_yscale('log')
 
 #%%
 import dill                            #pip install dill --user
-filename = 'soln-globalsave-2.pkl'
+filename = 'soln-globalsave-3.pkl'
 dill.dump_session(filename)
 #%%
 plt.show()
@@ -278,8 +278,10 @@ MiMf = ( fd* (Mbr/ Mdr + 1) )**-1
 rfri = rf / ri
 
 #%%
-plt.scatter(MiMf[60:-50],rfri[60:-50],c=rf[60:-50])
-plt.colorbar()
+plt.figure()
+# plt.scatter(MiMf[60:-50],rfri[60:-50],c=rf[60:-50])
+plt.scatter(MiMf,rfri,c=rf, cmap='nipy_spectral')
+plt.colorbar(label='rf')
 plt.xlabel('Mi/Mf')
 plt.ylabel('rf/ri')
 # plt.savefig('ratio_plot_anyl.pdf')
