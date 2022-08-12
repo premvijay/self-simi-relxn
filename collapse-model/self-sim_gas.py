@@ -115,7 +115,7 @@ def M0(thtsh):
 #%%
 # thtshsol = fsolve(M0, 1.5*np.pi)
 s = 1
-gam = 5/3
+gam = 4.5/3
 fb = 0.2
 # fig4, ax4 = plt.subplots(1, dpi=200, figsize=(10,7))
 thtsh_sols = {}
