@@ -8,7 +8,28 @@ plt.style.use('seaborn-darkgrid')
 import pandas as pd
 from scipy.optimize import fsolve, bisect
 # %%
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+import matplotlib.patches as mpl_patches
+import pickle
+plt.style.use('seaborn-whitegrid')
+# plt.style.use('default')
 
+#%%
+mpl.rcParams['xtick.direction'] = "in"
+mpl.rcParams['ytick.direction'] = "in"
+mpl.rcParams['xtick.top'] = True
+mpl.rcParams['ytick.right'] = True
+mpl.rcParams['xtick.labelsize'] = 16
+mpl.rcParams['ytick.labelsize'] = 16
+mpl.rcParams['axes.labelsize'] = 22
+mpl.rcParams['legend.fontsize'] = 18
+#mpl.rcParams['figure.constrained_layout.use'] = True
+mpl.rcParams['xtick.major.size'] = 6
+mpl.rcParams['xtick.minor.size'] = 3
+mpl.rcParams['ytick.major.size'] = 6
+mpl.rcParams['ytick.minor.size'] = 3
 # %%
 
 # %%
@@ -106,7 +127,7 @@ for s in [1,1.5,2,3][:]:
 #%%
 
 
-fig5, axs5 = plt.subplots(2,2, dpi=200, figsize=(14,12), sharex=True)
+fig5, axs5 = plt.subplots(2,2, dpi=200, figsize=(12,10), sharex=True)
 fig6, ax6 = plt.subplots(1)
 
 for s in [0.5,1,1.5,2,3,5][1:5]:
@@ -171,7 +192,7 @@ for s in [0.5,1,1.5,2,3,5][1:5]:
     taures = np.exp(xires)
     lamFres = lamres*taures**de
 
-    ax6.plot(taures,lamFres, color=color_this)
+    ax6.plot(taures,lamFres, color=color_this, label=f's={s}')
     # ax6.plot(xires,lamres, color=color_this)
 
     #trajectory analytical
@@ -197,10 +218,11 @@ for s in [0.5,1,1.5,2,3,5][1:5]:
     M_dmo = interp1d(dmo_prfl['l'], dmo_prfl['M']*Mta, fill_value="extrapolate")
     D_dmo = interp1d(dmo_prfl['l'].iloc[1:], dmo_prfl['rho'].iloc[1:], fill_value="extrapolate")
 
-    axs5[1,0].plot(lam_all, M_dmo(lam_all), color=color_this, ls='dashed')
+    # axs5[1,0].plot(lam_all, M_dmo(lam_all), color=color_this, ls='dashed')
 
 #Loop ends
 
+ax6.legend()
 ax6.set_xlabel(r'$\tau$')
 ax6.set_ylabel('$\lambda_F$')
 ax6.set_xlim(-1,5)
@@ -209,6 +231,8 @@ ax6.set_ylim(0,1.1)
 axs5[0,0].set_xscale('log')
 axs5[0,0].set_xlim(1e-4,1)
 axs5[0,0].legend()
+axs5[1,0].set_xlabel('$\lambda$')
+axs5[1,1].set_xlabel('$\lambda$')
 
 if gam>1.66:
     axs5[0,0].set_xlim(1e-2,1)
@@ -226,8 +250,8 @@ axs5[0,1].set_yscale('log')
 axs5[1,0].set_yscale('log')
 axs5[1,1].set_yscale('log')
 
-# fig5.savefig(f'Eds-gas-{gam:.02f}_profiles.pdf')
-fig5.savefig(f'Eds-gas-{gam:.02f}_trajectory.pdf')
+fig5.savefig(f'Eds-gas-{gam:.02f}_profiles.pdf')
+fig6.savefig(f'Eds-gas-{gam:.02f}_trajectory.pdf')
 
 
 
