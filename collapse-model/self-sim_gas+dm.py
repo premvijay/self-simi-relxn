@@ -180,6 +180,8 @@ for n in range(8):
     lam = res.y[0]
     v = res.y[1]
 
+    ax6.plot(xi,lam, color=color_this, lw=1, label=f'n={n}')
+
     l_range = [0]
     M_vals = [0]
     for l in np.logspace(-2.5,0, 200):
@@ -231,7 +233,7 @@ axs5[1,1].set_yscale('log')
 
 #%%
 import dill                            #pip install dill --user
-filename = f'soln-globalsave_s{s:g}_gam{gam:g}.pkl'
+filename = f'soln-globalsave_s{s:g}_gam{gam:.2g}.pkl'
 dill.dump_session(filename)
 #%%
 plt.show()
