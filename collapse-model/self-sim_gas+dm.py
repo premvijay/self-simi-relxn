@@ -100,13 +100,13 @@ def M0(thtsh):
 
 #%%
 # thtshsol = fsolve(M0, 1.5*np.pi)
-s = 2
+s = 1
 gam = 5/3
 fb = 0.156837
 # fig4, ax4 = plt.subplots(1, dpi=200, figsize=(10,7))
 thtsh_sols = {}
 fig5, axs5 = plt.subplots(2,2, dpi=200, figsize=(14,12), sharex=True)
-# fig6, ax6 = plt.subplots(1)
+fig6, ax6 = plt.subplots(1)
 
 # for s in [1,1.5,2,3][:]:
 dmo_prfl = pd.read_hdf(f'profiles_dmo_{s}.hdf5')
@@ -221,7 +221,7 @@ axs5[0,1].set_ylabel('D')
 axs5[1,0].set_ylabel('M')
 axs5[1,1].set_ylabel('P')
 
-# axs5[0,0].set_yscale('log')
+axs5[0,0].set_yscale('log')
 axs5[0,1].set_yscale('log')
 axs5[1,0].set_yscale('log')
 axs5[1,1].set_yscale('log')
@@ -231,7 +231,7 @@ axs5[1,1].set_yscale('log')
 
 #%%
 import dill                            #pip install dill --user
-filename = 'soln-globalsave-3.pkl'
+filename = f'soln-globalsave_s{s:g}_gam{gam:g}.pkl'
 dill.dump_session(filename)
 #%%
 plt.show()
