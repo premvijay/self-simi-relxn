@@ -79,6 +79,9 @@ def odefunc(lam, depvars):
         print(linb.shape)
     try:
         der = np.transpose(np.linalg.solve(linMat1,linb1), (1,0))
+        # print(der)
+        # print('lstsq',np.linalg.lstsq(linMat1[0],linb1[0])[0])
+        # raise Exception
         # if der[2]<0:
         #     print(der)
         #     print(linb1)
@@ -91,9 +94,12 @@ def odefunc(lam, depvars):
 
         return der #*lam**2
     except:
-    #     # print(linMat)
-    #     # raise Exception
-        return depvars*0
+        # print(linMat, linb1)
+        der = np.transpose(np.linalg.lstsq(linMat1[0],linb1[0])[0:1], (1,0))
+        print(linMat1)
+        print(linb1, der)
+        # raise Exception
+        return der #depvars*0
 
 
 #%%
@@ -110,19 +116,21 @@ def get_soln(thtsh):
 def M0(thtsh):
     res = get_soln(thtsh)
     M0val = res.y[2][-1]
-    return M0val-1e-2 #if M0val>0 else -(-M0val)**(1/11)
+    return M0val-1e-3 #if M0val>0 else -(-M0val)**(1/11)
 
 #%%
 # thtshsol = fsolve(M0, 1.5*np.pi)
 s = 1
-gam = 4.5/3
+gam = 5/3
+s_vals = [0.5,1,1.5,2,3,5]
 fb = 0.2
 # fig4, ax4 = plt.subplots(1, dpi=200, figsize=(10,7))
 thtsh_sols = {}
-for s in [1,1.5,2,3][:]:
+for s in s_vals[::]:
     de = 2* (1+s/3) /3
     thtshsol = bisect(M0, 1.1*np.pi, 1.9*np.pi)
     thtsh_sols[s] = thtshsol
+    print(s,thtshsol,M0(thtshsol))
 
 #%%
 
@@ -130,7 +138,7 @@ for s in [1,1.5,2,3][:]:
 fig5, axs5 = plt.subplots(2,2, dpi=200, figsize=(12,10), sharex=True)
 fig6, ax6 = plt.subplots(1)
 
-for s in [0.5,1,1.5,2,3,5][1:5]:
+for s in s_vals[::]:
     de = 2* (1+s/3) /3
     thtshsol = thtsh_sols[s]
     res = get_soln(thtshsol)
@@ -163,6 +171,7 @@ for s in [0.5,1,1.5,2,3,5][1:5]:
 
     M_intrp = interp1d(lam_all, M_all, fill_value="extrapolate")
     D_intrp = interp1d(lam_all, D_all, fill_value="extrapolate")
+    V_intrp = interp1d(lam_all, V_all, fill_value="extrapolate")
     irem = P_pre.shape[0]-1
     # PderD_intrp = interp1d(np.delete(lam_all,irem), np.delete(PderD_all,irem), kind='linear', fill_value="extrapolate")
 
@@ -173,16 +182,17 @@ for s in [0.5,1,1.5,2,3,5][1:5]:
         v = arg[1]
         # print(lam, (v, -2/9 * M(lam)/lam**2 - de*(de-1)*lam - (2*de-1)*v + 1e-50/lam**10))
         # if lam<1e-5: v=-v
+        # if v>0: print(lam, v, V_intrp(lam)-de*lam)
         try:
-            return (v, -2/9 * M_intrp(lam)/lam**2 - de*(de-1)*lam - (2*de-1)*v - PderD_intrp(lam))
+            return (V_intrp(lam)-de*lam, -2/9 * M_intrp(lam)/lam**2 - de*(de-1)*lam - (2*de-1)*v - PderD_intrp(lam))
         except:
-            print(lam,s, v, xi)
+            print(lam,s, v, xi, V_intrp(lam))
             raise Exception
 
     lamshsol, bcs = get_shock_bcs(thtshsol)
     taush = (thtshsol - np.sin(thtshsol)) / np.pi
     xish = np.log(taush)
-    res = solve_ivp(odefunc_traj, (xish,2.2), np.array([lamshsol,bcs[0]-de*lamshsol]), method='Radau', max_step=0.01, dense_output=False, vectorized=True)
+    res = solve_ivp(odefunc_traj, (xish,2.2), np.array([lamshsol,bcs[0]-de*lamshsol]), method='RK45', max_step=0.001, dense_output=False, vectorized=True)
     # res1 = solve_ivp(fun, (res.t[-1],15), np.array([res.y[0][-1],-res.y[1][-1]]), max_step=0.1, dense_output=True)
 
     xires = res.t
@@ -212,17 +222,17 @@ for s in [0.5,1,1.5,2,3,5][1:5]:
 
 
 
-    dmo_prfl = pd.read_hdf(f'profiles_dmo_{s}.hdf5')
+    # dmo_prfl = pd.read_hdf(f'profiles_dmo_{s}.hdf5')
 
-    Mta = (3*np.pi/4)**2
-    M_dmo = interp1d(dmo_prfl['l'], dmo_prfl['M']*Mta, fill_value="extrapolate")
-    D_dmo = interp1d(dmo_prfl['l'].iloc[1:], dmo_prfl['rho'].iloc[1:], fill_value="extrapolate")
+    # Mta = (3*np.pi/4)**2
+    # M_dmo = interp1d(dmo_prfl['l'], dmo_prfl['M']*Mta, fill_value="extrapolate")
+    # D_dmo = interp1d(dmo_prfl['l'].iloc[1:], dmo_prfl['rho'].iloc[1:], fill_value="extrapolate")
 
     # axs5[1,0].plot(lam_all, M_dmo(lam_all), color=color_this, ls='dashed')
 
 #Loop ends
 
-ax6.legend()
+ax6.legend(loc='lower left')
 ax6.set_xlabel(r'$\tau$')
 ax6.set_ylabel('$\lambda_F$')
 ax6.set_xlim(-1,5)
@@ -245,7 +255,7 @@ axs5[0,1].set_ylabel('D')
 axs5[1,0].set_ylabel('M')
 axs5[1,1].set_ylabel('P')
 
-# axs5[0,0].set_yscale('log')
+axs5[0,0].set_yscale('log')
 axs5[0,1].set_yscale('log')
 axs5[1,0].set_yscale('log')
 axs5[1,1].set_yscale('log')
