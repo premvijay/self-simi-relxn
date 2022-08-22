@@ -41,7 +41,7 @@ for s in [0.5,1,1.5,2,3][1::]:
             # print(lam, (v, -2/9 * M(lam)/lam**2 - de*(de-1)*lam - (2*de-1)*v + 1e-50/lam**10))
             # if lam<1e-5: v=-v
             try:
-                return (v, -2/9 * (3*np.pi/4)**2* M(lam)/lam**2 - de*(de-1)*lam - (2*de-1)*v + 1e-40/lam**9)
+                return (v, -2/9 * (3*np.pi/4)**2* M(lam)/lam**2 - de*(de-1)*lam - (2*de-1)*v + 1e-9/lam**3)
             except:
                 print(lam,s, v, xi)
                 raise Exception
