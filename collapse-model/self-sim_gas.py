@@ -6,7 +6,7 @@ from scipy.interpolate import interp1d, InterpolatedUnivariateSpline
 from itertools import cycle
 plt.style.use('seaborn-darkgrid')
 import pandas as pd
-from scipy.optimize import fsolve, bisect
+from scipy.optimize import fsolve, bisect, minimize_scalar
 # %%
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -96,8 +96,8 @@ def odefunc(lam, depvars):
     except:
         # print(linMat, linb1)
         der = np.transpose(np.linalg.lstsq(linMat1[0],linb1[0])[0:1], (1,0))
-        print(linMat1)
-        print(linb1, der)
+        # print(linMat1)
+        # print(linb1, der)
         # raise Exception
         return der #depvars*0
 
@@ -112,23 +112,64 @@ def get_shock_bcs(thtsh):
 def get_soln(thtsh):
     lamsh, bcs = get_shock_bcs(thtsh)
     # print(thtsh)
-    return solve_ivp(odefunc, (lamsh,1e-5), bcs, max_step=0.001, vectorized=True)
+    return solve_ivp(odefunc, (lamsh,1e-6), bcs, max_step=0.001, vectorized=True)
 def M0(thtsh):
     res = get_soln(thtsh)
     M0val = res.y[2][-1]
-    return M0val-1e-3 #if M0val>0 else -(-M0val)**(1/11)
+    return M0val #if M0val>0 else -(-M0val)**(1/11)
+
+#%%
+def solve_bisect(func,bounds):
+    b0, b1 = bounds
+    bmid = (b0+b1)/2
+
+def my_bisect(f, a, b, tol=3e-3): 
+    # approximates a root, R, of f bounded 
+    # by a and b to within tolerance 
+    # | f(m) | < tol with m the midpoint 
+    # between a and b Recursive implementation
+
+    # get midpoint
+    m = (a + b)/2
+
+    sfa = np.sign(f(a))
+    sfb = np.sign(f(b))
+    f_at_m = f(m)
+    sfm = np.sign(f_at_m)
+    # check if a and b bound a root
+    if sfa == sfb:
+        raise Exception(
+         "The scalars a and b do not bound a root")
+        
+    
+    print(a,b,m,f_at_m)
+    if np.abs(f_at_m) < tol:
+        # stopping condition, report m as root
+        return m if f_at_m >0 else (m+b)/2
+    elif sfa == sfm:
+        # case where m is an improvement on a. 
+        # Make recursive call with a = m
+        return my_bisect(f, m, b, tol)
+    elif sfb == sfm:
+        # case where m is an improvement on b. 
+        # Make recursive call with b = m
+        return my_bisect(f, a, m, tol)
 
 #%%
 # thtshsol = fsolve(M0, 1.5*np.pi)
 s = 1
-gam = 5/3
+gam = 4/3
 s_vals = [0.5,1,1.5,2,3,5]
 fb = 0.2
 # fig4, ax4 = plt.subplots(1, dpi=200, figsize=(10,7))
 thtsh_sols = {}
 for s in s_vals[::]:
     de = 2* (1+s/3) /3
-    thtshsol = bisect(M0, 1.1*np.pi, 1.9*np.pi)
+    if s==3:
+        thtshsol = my_bisect(M0, 1.75*np.pi, 1.9*np.pi)
+    else:
+        thtshsol = my_bisect(M0, 1.5*np.pi, 1.9*np.pi)
+    # thtshsol1 = minimize_scalar(M0, method='bounded', bounds=(1.5*np.pi, 1.9*np.pi))
     thtsh_sols[s] = thtshsol
     print(s,thtshsol,M0(thtshsol))
 
