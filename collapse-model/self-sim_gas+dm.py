@@ -7,6 +7,7 @@ from itertools import cycle
 plt.style.use('seaborn-darkgrid')
 import pandas as pd
 from scipy.optimize import fsolve, bisect
+from time import time
 # %%
 
 # %%
@@ -71,8 +72,10 @@ def odefunc(lam, depvars):
 
         return der #*lam**2
     except:
-    #     # print(linMat)
-    #     # raise Exception
+        # der = np.transpose(np.linalg.lstsq(linMat1[0],linb1[0])[0:1], (1,0))
+        # print(linMat1)
+        # print(linb1, der)
+        # raise Exception
         return depvars*0
 
 
@@ -86,11 +89,11 @@ def get_shock_bcs(thtsh):
 def get_soln(thtsh):
     lamsh, bcs = get_shock_bcs(thtsh)
     # print(thtsh)
-    return solve_ivp(odefunc, (lamsh,1e-3), bcs, max_step=0.001, vectorized=True)
+    return solve_ivp(odefunc, (lamsh,1e-6), bcs, max_step=0.001, vectorized=True)
 def M0(thtsh):
     res = get_soln(thtsh)
     M0val = res.y[2][-1]
-    return M0val-1e-2 #if M0val>0 else -(-M0val)**(1/11)
+    return M0val-1e-7 #if M0val>0 else -(-M0val)**(1/11)
 
 
 
@@ -99,6 +102,7 @@ def M0(thtsh):
 
 
 #%%
+t_now = time()
 # thtshsol = fsolve(M0, 1.5*np.pi)
 s = 1
 gam = 5/3
@@ -121,9 +125,20 @@ de = 2* (1+s/3) /3
 
 plot_iters = [0,1,2,3,5,6,7]
 
-for n in range(8):
-    thtshsol = bisect(M0, 1.1*np.pi, 1.9*np.pi)
+t_bef, t_now = t_now, time()
+print(t_now-t_bef, 'Initialised vals and funcs for iteration')
+
+for n in range(4):
+    if n==0:
+        thtshsol = bisect(M0, 1.1*np.pi, 1.9*np.pi)
+    else:
+        try:
+            thtshsol = bisect(M0, thtshsol/1.2, thtshsol*1.2)
+        except:
+            pass
     thtsh_sols[s] = thtshsol
+    t_bef, t_now = t_now, time()
+    print(t_now-t_bef, f'{n}th iter gas shock radius solved')
 
     # for s in [0.5,1,1.5,2,3,5][1:5]:
     de = 2* (1+s/3) /3
@@ -161,15 +176,20 @@ for n in range(8):
 
     M_tot = lambda lam : M_dm(lam)+M_gas(lam)
 
+    t_bef, t_now = t_now, time()
+    print(t_now-t_bef, f'{n}th iter gas profiles updated')
+
     def ode_func(xi, arg):
         lam = arg[0]
         v = arg[1]
         # print(lam, (v, -2/9 * M(lam)/lam**2 - de*(de-1)*lam - (2*de-1)*v + 1e-50/lam**10))
         # if lam<1e-5: v=-v
         try:
-            return (v, -2/9 * (3*np.pi/4)**2* M_tot(lam)/lam**2 - de*(de-1)*lam - (2*de-1)*v + 1e-40/lam**9)
+            return (v, -2/9 * (3*np.pi/4)**2* M_tot(lam)/lam**2 - de*(de-1)*lam - (2*de-1)*v + 1e-9/lam**3)
         except:
             print(lam,s, v, xi)
+            if lam<0:
+                return (-lam,-lam)
             raise Exception
 
 
@@ -181,6 +201,9 @@ for n in range(8):
     v = res.y[1]
 
     ax6.plot(xi,lam, color=color_this, lw=1, label=f'n={n}')
+
+    t_bef, t_now = t_now, time()
+    print(t_now-t_bef, f'{n}th iter DM trajectory obtained')
 
     l_range = [0]
     M_vals = [0]
@@ -200,6 +223,11 @@ for n in range(8):
     M_vals *= Mta*(1-fb) / M_vals[-1]
 
     M_dm = interp1d(l_range, M_vals, fill_value="extrapolate")
+
+    axs5[1,0].plot(lam_all,M_all+M_dm(lam_all), color=color_this, ls='dashed')
+
+    t_bef, t_now = t_now, time()
+    print(t_now-t_bef, f'{n}th iter DM mass profile updated')
 
 
 
@@ -233,7 +261,7 @@ axs5[1,1].set_yscale('log')
 
 #%%
 import dill                            #pip install dill --user
-filename = f'soln-globalsave_s{s:g}_gam{gam:.2g}.pkl'
+filename = f'soln-globalsave_s{s:g}_gam{gam:.3g}.pkl'
 dill.dump_session(filename)
 #%%
 plt.show()
@@ -249,8 +277,8 @@ dill.load_session(filename)
 
 #%%
 fd = (1-fb)
-lamr_full = np.logspace(-3,-0.5,300)
-lamr = np.logspace(-3,-0.5,300)
+lamr_full = np.logspace(-3,-0.005,300)
+lamr = np.logspace(-3,-0.005,300)
 
 r, Mdr, Mbr, Mdr_dmo = lamr, M_dm(lamr), M_gas(lamr), M_dmo(lamr_full)*fd
 ri_pre = lamr_full
@@ -260,8 +288,8 @@ plt.plot(r,Mdr, label='DM')
 plt.plot(r,Mbr*fd/fb, label='baryon')
 plt.plot(ri_pre,Mdr_dmo, label='DMO_scaled' )
 # plt.plot(r,Mdr+Mbr)
-# plt.xscale('log')
-# plt.yscale('log')
+plt.xscale('log')
+plt.yscale('log')
 plt.legend()
 
 #%%
