@@ -16,7 +16,7 @@ fig4, ax4 = plt.subplots(1, dpi=200, figsize=(10,7))
 fig5, (ax5,ax6) = plt.subplots(1,2, dpi=200, figsize=(14,7))
 
 
-for s in [0.5,1,1.5,2,3][1::]:
+for s in [0.5,1,1.5,2,3][1:2:]:
     de = 2* (1+s/3) /3
 
     def M0(l):
@@ -28,20 +28,20 @@ for s in [0.5,1,1.5,2,3][1::]:
     # def M(l,n):
     #     return 0
 
-    M = M_pred
+    M_func = M_pred
 
     color_this = plt.cm.jet(s/3)
     # linestyles = [":","-.","--","-"]
     linestyles = [(0, (1, 3)), (0, (2, 3)), (0, (3, 3)), (0, (4, 3)), (0, (5, 1,1,1))]
-    ls_cycler = cycle(linestyles[::2])
-    for n in range(11):
+    ls_cycler = cycle(linestyles[::])
+    for n in range(3):
         def ode_func(xi, arg):
             lam = arg[0]
             v = arg[1]
             # print(lam, (v, -2/9 * M(lam)/lam**2 - de*(de-1)*lam - (2*de-1)*v + 1e-50/lam**10))
             # if lam<1e-5: v=-v
             try:
-                return (v, -2/9 * (3*np.pi/4)**2* M(lam)/lam**2 - de*(de-1)*lam - (2*de-1)*v + 1e-9/lam**3)
+                return (v, -2/9 * (3*np.pi/4)**2* M_func(lam)/lam**2 - de*(de-1)*lam - (2*de-1)*v + 1e-10/lam**3)
             except:
                 print(lam,s, v, xi)
                 raise Exception
@@ -72,17 +72,26 @@ for s in [0.5,1,1.5,2,3][1::]:
         # M_vals += quad(lambda xi : np.exp(-xi*2*s/3), xi[-1], np.inf)[0]*l_range
 
         l_range = [0]
+        n_roots_ar = [0]
+        # first_root = [0]
+        all_roots = [[None]] #np.zeros(300,70)
         M_vals = [0]
         # M_vals_er = []
         rho_vals = []
         v_xi = interp1d(xi, v, fill_value="extrapolate")
         for l in np.logspace(-2.5,0, 300):
             l_range.append(l)
-            spl = InterpolatedUnivariateSpline(xi, lam-l)
+            spl = InterpolatedUnivariateSpline(xi, np.log(lam/l),k=3)
             roots = spl.roots()
-            Int_M = np.exp((-2*s/3)*roots)
+            #Based on theory we need odd number of roots, otherwise there is a major error
+            n_roots = roots.shape[0]
+            last_root_i = n_roots if n_roots%2==1 else n_roots-1
+            Int_M = np.exp((-2*s/3)*roots[:last_root_i])
             M_val = np.sum(Int_M[::2]) - np.sum(Int_M[1::2])
             M_vals.append(M_val)
+            n_roots_ar.append(n_roots)
+            # first_root.append(roots[0])
+            all_roots.append(roots)
             # if roots.shape[0]>1:
             #     M_vals_er.append(Int_M[-2]-Int_M[-1])
             # else:
@@ -97,14 +106,14 @@ for s in [0.5,1,1.5,2,3][1::]:
 
         M_vals /= M_vals[-1]
 
-        M = interp1d(l_range, M_vals, fill_value="extrapolate")
+        M_func = interp1d(l_range, M_vals, fill_value="extrapolate")
 
 
         df = pd.DataFrame(data={'l':l_range, 'M':M_vals, 'rho':np.insert(rho_vals,0,0)})
         df.to_hdf(f'profiles_dmo_{s}.hdf5', 'main')
         
 
-        if n in [2,4,6,8,10]:
+        if n in [0,1,2,3,4,6,8,10]:
             # xi = np.linspace(0,4,100)
             # lam = res.sol(xi)[0]
             # plt.plot(xi,lam)
@@ -145,8 +154,16 @@ for s in [0.5,1,1.5,2,3][1::]:
         
     # ax5.plot(l_range, M_vals)
 
+
+all_roots_ar = np.zeros((max(n_roots_ar),301))
+for i,roots_ar in enumerate(all_roots):
+    all_roots_ar[0:len(roots_ar),i] = roots_ar
+
+
 ax4.set_xlim(0,4)
 ax4.set_ylim(0,1)
+ax4.set_yscale('log')
+ax4.set_ylim(l_range[1],1)
 ax4.xaxis.get_ticklocs(minor=True)     # []
 ax4.minorticks_on()
 ax4.grid(b=True, which='both', axis='x')
@@ -154,8 +171,8 @@ ax4.set_xlabel(r'$\xi$')
 ax4.set_ylabel(r'$\lambda$')
 ax4.legend()
 
-ax5.set_xlim(8e-2,1)
-ax5.set_ylim(1e-1,1)
+ax5.set_xlim(l_range[1]/1.2,1.1)
+ax5.set_ylim(M_vals[10]/2,1.1)
 ax5.set_xscale('log')
 ax5.set_yscale('log')
 ax5.set_xlabel(r'$\lambda$')
