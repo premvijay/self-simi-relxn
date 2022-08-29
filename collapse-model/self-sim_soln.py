@@ -6,6 +6,7 @@ from scipy.interpolate import interp1d, InterpolatedUnivariateSpline
 from itertools import cycle
 plt.style.use('seaborn-darkgrid')
 import pandas as pd
+from time import time
 # %%
 
 # %%
@@ -15,8 +16,8 @@ s = 1
 fig4, ax4 = plt.subplots(1, dpi=200, figsize=(10,7))
 fig5, (ax5,ax6) = plt.subplots(1,2, dpi=200, figsize=(14,7))
 
-
-for s in [0.5,1,1.5,2,3][1:2:]:
+t_now = time()
+for s in [0.5,1,1.5,2,3][1::]:
     de = 2* (1+s/3) /3
 
     def M0(l):
@@ -32,27 +33,34 @@ for s in [0.5,1,1.5,2,3][1:2:]:
 
     color_this = plt.cm.jet(s/3)
     # linestyles = [":","-.","--","-"]
-    linestyles = [(0, (1, 3)), (0, (2, 3)), (0, (3, 3)), (0, (4, 3)), (0, (5, 1,1,1))]
+    linestyles = [(0, (1, 3)), (0, (2, 3)), (0, (3, 3)), (0, (4, 3)), (0, (5, 1,1,1)), 'solid']
     ls_cycler = cycle(linestyles[::])
-    for n in range(3):
+
+    t_bef, t_now = t_now, time()
+    print(t_now-t_bef, f's={s} Initialised vals and funcs for iteration')
+
+    for n in range(6):
         def ode_func(xi, arg):
             lam = arg[0]
             v = arg[1]
             # print(lam, (v, -2/9 * M(lam)/lam**2 - de*(de-1)*lam - (2*de-1)*v + 1e-50/lam**10))
             # if lam<1e-5: v=-v
             try:
-                return (v, -2/9 * (3*np.pi/4)**2* M_func(lam)/lam**2 - de*(de-1)*lam - (2*de-1)*v + 1e-10/lam**3)
+                return (v, -2/9 * (3*np.pi/4)**2* M_func(lam)/lam**2 - de*(de-1)*lam - (2*de-1)*v + 1e-9/lam**3)
             except:
                 print(lam,s, v, xi)
                 raise Exception
 
 
-        res = solve_ivp(ode_func, (0,4), np.array([1,-de]), method='Radau', t_eval=(np.arange(0,256,0.005))**(1/4), max_step=0.001, dense_output=False, vectorized=True)
+        res = solve_ivp(ode_func, (0,4), np.array([1,-de]), method='Radau', t_eval=(np.arange(0,256,0.001))**(1/4), max_step=0.0005, dense_output=False, vectorized=True)
         # res1 = solve_ivp(fun, (res.t[-1],15), np.array([res.y[0][-1],-res.y[1][-1]]), max_step=0.1, dense_output=True)
 
         xi = res.t
         lam = res.y[0]
         v = res.y[1]
+
+        t_bef, t_now = t_now, time()
+        print(t_now-t_bef, f'{n}th iter DM trajectory obtained')
 
         # @np.vectorize
         # def M(l):
@@ -108,12 +116,15 @@ for s in [0.5,1,1.5,2,3][1:2:]:
 
         M_func = interp1d(l_range, M_vals, fill_value="extrapolate")
 
+        t_bef, t_now = t_now, time()
+        print(t_now-t_bef, f'{n}th iter DM mass profile obtained')
+
 
         df = pd.DataFrame(data={'l':l_range, 'M':M_vals, 'rho':np.insert(rho_vals,0,0)})
         df.to_hdf(f'profiles_dmo_{s}.hdf5', 'main')
         
 
-        if n in [0,1,2,3,4,6,8,10]:
+        if n in [0,1,2,3,4,5,7,8]:
             # xi = np.linspace(0,4,100)
             # lam = res.sol(xi)[0]
             # plt.plot(xi,lam)
@@ -137,8 +148,11 @@ for s in [0.5,1,1.5,2,3][1:2:]:
             
             ax5.plot(l_range, M_vals, color=color_this, ls=ls, lw=1)
             # ax6.plot(l_range[1:], np.diff(M_vals)/l_range[1:]**2, color=color_this, ls=ls, lw=1)
-            if n==10: ax6.plot(l_range[1:], rho_vals, color=color_this, ls='-', lw=1)
-        
+            if n==2: ax6.plot(l_range[1:], rho_vals, color=color_this, ls='-', lw=1)
+
+            t_bef, t_now = t_now, time()
+            print(t_now-t_bef, f'{n}th iter saved and plotted')
+
     # ax5.plot(lam, M_pred(lam), color=color_this, ls='-', label=f's={s}')
     ax4.plot([],[], color=color_this, label=f's={s}')
     ax5.plot([],[], color=color_this, label=f's={s}')
@@ -153,6 +167,7 @@ for s in [0.5,1,1.5,2,3][1:2:]:
 
         
     # ax5.plot(l_range, M_vals)
+    
 
 
 all_roots_ar = np.zeros((max(n_roots_ar),301))
