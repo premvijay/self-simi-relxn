@@ -17,7 +17,7 @@ fig4, ax4 = plt.subplots(1, dpi=200, figsize=(10,7))
 fig5, (ax5,ax6) = plt.subplots(1,2, dpi=200, figsize=(14,7))
 
 t_now = time()
-for s in [0.5,1,1.5,2,3][::]:
+for s in [0.5,1,1.5,2,3][1::]:
     de = 2* (1+s/3) /3
 
     def M0(l):
@@ -39,7 +39,7 @@ for s in [0.5,1,1.5,2,3][::]:
     t_bef, t_now = t_now, time()
     print(f'{t_now-t_bef:.4g}s', f's={s} Initialised vals and funcs for iteration')
 
-    for n in range(6):
+    for n in range(9):
         def ode_func(xi, arg):
             lam = arg[0]
             v = arg[1]
@@ -52,7 +52,7 @@ for s in [0.5,1,1.5,2,3][::]:
                 raise Exception
 
 
-        res = solve_ivp(ode_func, (0,4), np.array([1,-de]), method='Radau', t_eval=(np.arange(0,16,0.00005))**(1/2), max_step=0.001, dense_output=False, vectorized=True)
+        res = solve_ivp(ode_func, (0,4), np.array([1,-de]), method='Radau', t_eval=(np.arange(0,16,0.00002))**(1/2), max_step=0.0005, dense_output=False, vectorized=True)
         # res1 = solve_ivp(fun, (res.t[-1],15), np.array([res.y[0][-1],-res.y[1][-1]]), max_step=0.1, dense_output=True)
 
         xi = res.t
@@ -129,7 +129,7 @@ for s in [0.5,1,1.5,2,3][::]:
         df.to_hdf(f'profiles_dmo_{s}.hdf5', 'main')
         
 
-        if n in [0,1,2,3,4,5,7,8]:
+        if n in [0,2,4,5,7,8]:
             # xi = np.linspace(0,4,100)
             # lam = res.sol(xi)[0]
             # plt.plot(xi,lam)
