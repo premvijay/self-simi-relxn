@@ -17,7 +17,7 @@ fig4, ax4 = plt.subplots(1, dpi=200, figsize=(10,7))
 fig5, (ax5,ax6) = plt.subplots(1,2, dpi=200, figsize=(14,7))
 
 t_now = time()
-for s in [0.5,1,1.5,2,3][3:4:]:
+for s in [0.5,1,1.5,2,3][::]:
     de = 2* (1+s/3) /3
 
     def M0(l):
@@ -39,7 +39,7 @@ for s in [0.5,1,1.5,2,3][3:4:]:
     t_bef, t_now = t_now, time()
     print(f'{t_now-t_bef:.4g}s', f's={s} Initialised vals and funcs for iteration')
 
-    for n in range(2):
+    for n in range(6):
         def ode_func(xi, arg):
             lam = arg[0]
             v = arg[1]
