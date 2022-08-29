@@ -126,7 +126,7 @@ de = 2* (1+s/3) /3
 plot_iters = [0,1,2,3,5,6,7]
 
 t_bef, t_now = t_now, time()
-print(t_now-t_bef, 'Initialised vals and funcs for iteration')
+print(f'{t_now-t_bef:.4g}s', 'Initialised vals and funcs for iteration')
 
 for n in range(4):
     if n==0:
@@ -138,7 +138,7 @@ for n in range(4):
             pass
     thtsh_sols[s] = thtshsol
     t_bef, t_now = t_now, time()
-    print(t_now-t_bef, f'{n}th iter gas shock radius solved')
+    print(f'{t_now-t_bef:.4g}s', f'{n}th iter gas shock radius solved')
 
     # for s in [0.5,1,1.5,2,3,5][1:5]:
     de = 2* (1+s/3) /3
@@ -177,7 +177,7 @@ for n in range(4):
     M_tot = lambda lam : M_dm(lam)+M_gas(lam)
 
     t_bef, t_now = t_now, time()
-    print(t_now-t_bef, f'{n}th iter gas profiles updated')
+    print(f'{t_now-t_bef:.4g}s', f'{n}th iter gas profiles updated')
 
     def ode_func(xi, arg):
         lam = arg[0]
@@ -193,7 +193,7 @@ for n in range(4):
             raise Exception
 
 
-    res = solve_ivp(ode_func, (0,4), np.array([1,-de]), method='Radau', t_eval=(np.arange(0,256,0.005))**(1/4), max_step=0.001, dense_output=False, vectorized=True)
+    res = solve_ivp(ode_func, (0,4), np.array([1,-de]), method='Radau', t_eval=(np.arange(0,256,0.002))**(1/4), max_step=0.001, dense_output=False, vectorized=True)
     # res1 = solve_ivp(fun, (res.t[-1],15), np.array([res.y[0][-1],-res.y[1][-1]]), max_step=0.1, dense_output=True)
 
     xi = res.t
@@ -203,7 +203,7 @@ for n in range(4):
     ax6.plot(xi,lam, color=color_this, lw=1, label=f'n={n}')
 
     t_bef, t_now = t_now, time()
-    print(t_now-t_bef, f'{n}th iter DM trajectory obtained')
+    print(f'{t_now-t_bef:.4g}s', f'{n}th iter DM trajectory obtained')
 
     l_range = [0]
     M_vals = [0]
@@ -227,7 +227,7 @@ for n in range(4):
     axs5[1,0].plot(lam_all,M_all+M_dm(lam_all), color=color_this, ls='dashed')
 
     t_bef, t_now = t_now, time()
-    print(t_now-t_bef, f'{n}th iter DM mass profile updated')
+    print(f'{t_now-t_bef:.4g}s', f'{n}th iter DM mass profile updated')
 
 
 
