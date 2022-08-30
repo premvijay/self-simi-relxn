@@ -66,20 +66,26 @@ def odefunc(lam, depvars):
     # lam = 1/laminv
     V,D,M,P = depvars
     Vb = V - de*lam
-    try:
-        veclen = len(V)
-    except:
-        veclen = 1
-    linMat = np.array([[D, Vb, 0*V, 0*V], [Vb, 0*V, 0*V, 1/D], [0*V, -Vb*gam/D, 0*V, Vb/P], [0*V, 0*V, 1+V-V, 0*V]])
+    # try:
+    #     veclen = len(V)
+    # except:
+    #     veclen = 1
+    # linMat = np.array([[D, Vb, 0*V, 0*V], [Vb, 0*V, 0*V, 1/D], [0*V, -Vb*gam/D, 0*V, Vb/P], [0*V, 0*V, 1+V-V, 0*V]])
     linb = -np.array([2*D*V/lam-2*D, (de-1)*V+2/9*M/lam**2, 2*(gam-1)+2*(de-1)+V-V, -3*lam**2*D])
-    try:
-        linMat1 = np.transpose(linMat,(2,0,1)) #linMat.reshape(veclen,4,4)
-        linb1 = np.transpose(linb, (1,0)) #linb.reshape(veclen,4)
-    except:
-        print(linb.shape)
-    try:
-        der = np.transpose(np.linalg.solve(linMat1,linb1), (1,0))
-        # print(der)
+    # try:
+    #     linMat1 = np.transpose(linMat,(2,0,1)) #linMat.reshape(veclen,4,4)
+    #     linb1 = np.transpose(linb, (1,0)) #linb.reshape(veclen,4)
+    # except:
+    #     print(linb.shape)
+    if True:
+        # der_num = np.transpose(np.linalg.solve(linMat1,linb1), (1,0))
+        linMat_det1 = D*Vb**2-gam*P
+        linMat_cofac1 = np.array([[-gam*P/D,D*Vb,-P,0],[D*Vb,-D**2,D*P/Vb,0],[0,0,0,linMat_det1],[gam*P*Vb,-gam*D*P,D*P*Vb,0]])
+        linMat_inv = linMat_cofac1/ linMat_det1
+        # print(linMat_inv.shape,linb1.shape, linMat.shape, linb.shape)
+        # print(linMat_inv, np.linalg.inv(linMat[:,:,0]))
+        der = np.matmul(linMat_inv,linb)
+        # print(der[0][0][0],der_num[0][0])
         # print('lstsq',np.linalg.lstsq(linMat1[0],linb1[0])[0])
         # raise Exception
         # if der[2]<0:
@@ -93,13 +99,13 @@ def odefunc(lam, depvars):
         #     pass
 
         return der #*lam**2
-    except:
-        # print(linMat, linb1)
-        der = np.transpose(np.linalg.lstsq(linMat1[0],linb1[0])[0:1], (1,0))
-        # print(linMat1)
-        # print(linb1, der)
-        # raise Exception
-        return der #depvars*0
+    # except:
+    #     # print(linMat, linb1)
+    #     der = np.transpose(np.linalg.lstsq(linMat1[0],linb1[0])[0:1], (1,0))
+    #     # print(linMat1)
+    #     # print(linb1, der)
+    #     # raise Exception
+    #     return der #depvars*0
 
 
 #%%
@@ -142,7 +148,7 @@ def my_bisect(f, a, b, tol=3e-3):
          "The scalars a and b do not bound a root")
         
     
-    print(a,b,m,f_at_m)
+    # print(a,b,m,f_at_m)
     if np.abs(f_at_m) < tol:
         # stopping condition, report m as root
         return m if f_at_m >0 else (m+b)/2
@@ -171,7 +177,7 @@ for s in s_vals[::]:
         thtshsol = my_bisect(M0, 1.5*np.pi, 1.9*np.pi)
     # thtshsol1 = minimize_scalar(M0, method='bounded', bounds=(1.5*np.pi, 1.9*np.pi))
     thtsh_sols[s] = thtshsol
-    print(s,thtshsol,M0(thtshsol))
+    print(f's={s}',thtshsol,M0(thtshsol))
 
 #%%
 
