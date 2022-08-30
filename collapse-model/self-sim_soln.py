@@ -46,13 +46,13 @@ for s in [0.5,1,1.5,2,3][1::]:
             # print(lam, (v, -2/9 * M(lam)/lam**2 - de*(de-1)*lam - (2*de-1)*v + 1e-50/lam**10))
             # if lam<1e-5: v=-v
             try:
-                return (v, -2/9 * (3*np.pi/4)**2* M_func(lam)/lam**2 - de*(de-1)*lam - (2*de-1)*v + 3e-10/lam**3)
+                return (v, -2/9 * (3*np.pi/4)**2* M_func(lam)/lam**2 - de*(de-1)*lam - (2*de-1)*v + 1e-9/lam**3)
             except:
                 print(lam,s, v, xi)
                 raise Exception
 
 
-        res = solve_ivp(ode_func, (0,4), np.array([1,-de]), method='Radau', t_eval=(np.arange(0,16,0.00002))**(1/2), max_step=0.0005, dense_output=False, vectorized=True)
+        res = solve_ivp(ode_func, (0,4), np.array([1,-de]), method='Radau', t_eval=np.linspace(0,64,5000000)**(1/3), max_step=np.inf, dense_output=False, vectorized=True) #np.unique(np.concatenate([np.linspace(0,2,50000),np.log10(np.linspace(1,10000,100000))]))
         # res1 = solve_ivp(fun, (res.t[-1],15), np.array([res.y[0][-1],-res.y[1][-1]]), max_step=0.1, dense_output=True)
 
         xi = res.t
@@ -82,9 +82,9 @@ for s in [0.5,1,1.5,2,3][1::]:
 
         l_range = np.zeros(301)
         l_range[1:] = np.logspace(-2.5,0, 300)
-        # n_roots_ar = np.zeros(301)
+        n_roots_ar = np.zeros(301)
         # first_root = [0]
-        # all_roots = [[None]] #np.zeros(300,70)
+        all_roots = [[None]] #np.zeros(300,70)
         M_vals = np.zeros(301)
         # M_vals_er = []
         rho_vals = np.zeros(301)
@@ -102,9 +102,9 @@ for s in [0.5,1,1.5,2,3][1::]:
             Int_M = np.exp((-2*s/3)*roots[:last_root_i])
             M_val = np.sum(Int_M[::2]) - np.sum(Int_M[1::2])
             M_vals[i] = M_val
-            # n_roots_ar[i] = n_roots
+            n_roots_ar[i] = n_roots
             # first_root.append(roots[0])
-            # all_roots.append(roots)
+            all_roots.append(roots)
             # if roots.shape[0]>1:
             #     M_vals_er.append(Int_M[-2]-Int_M[-1])
             # else:
@@ -127,6 +127,7 @@ for s in [0.5,1,1.5,2,3][1::]:
 
         df = pd.DataFrame(data={'l':l_range, 'M':M_vals, 'rho':rho_vals,})
         df.to_hdf(f'profiles_dmo_{s}.hdf5', 'main')
+        df.to_hdf(f'profiles_dmo_{s}.hdf5', f'iter{n}')
         
 
         if n in [0,2,4,5,7,8]:
@@ -175,9 +176,9 @@ for s in [0.5,1,1.5,2,3][1::]:
     
 
 
-# all_roots_ar = np.zeros((max(n_roots_ar),301))
-# for i,roots_ar in enumerate(all_roots):
-#     all_roots_ar[0:len(roots_ar),i] = roots_ar
+all_roots_ar = np.zeros((int(max(n_roots_ar)),301))
+for i,roots_ar in enumerate(all_roots):
+    all_roots_ar[0:len(roots_ar),i] = roots_ar
 
 
 ax4.set_xlim(0,4)
