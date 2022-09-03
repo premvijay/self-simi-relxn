@@ -72,11 +72,11 @@ def odefunc(lam, depvars):
 
         return der #*lam**2
     except:
-        # der = np.transpose(np.linalg.lstsq(linMat1[0],linb1[0])[0:1], (1,0))
+        der = np.transpose(np.linalg.lstsq(linMat1[0],linb1[0])[0:1], (1,0))
         # print(linMat1)
         # print(linb1, der)
         # raise Exception
-        return depvars*0
+        return der #depvars*0
 
 
 #%%
@@ -96,6 +96,37 @@ def M0(thtsh):
     return M0val-1e-7 #if M0val>0 else -(-M0val)**(1/11)
 
 
+def my_bisect(f, a, b, tol=3e-3): 
+    # approximates a root, R, of f bounded 
+    # by a and b to within tolerance 
+    # | f(m) | < tol with m the midpoint 
+    # between a and b Recursive implementation
+
+    # get midpoint
+    m = (a + b)/2
+
+    sfa = np.sign(f(a))
+    sfb = np.sign(f(b))
+    f_at_m = f(m)
+    sfm = np.sign(f_at_m)
+    # check if a and b bound a root
+    if sfa == sfb:
+        raise Exception(
+         "The scalars a and b do not bound a root")
+        
+    
+    print(a,b,m,f_at_m)
+    if np.abs(f_at_m) < tol:
+        # stopping condition, report m as root
+        return m if f_at_m >0 else (m+b)/2
+    elif sfa == sfm:
+        # case where m is an improvement on a. 
+        # Make recursive call with a = m
+        return my_bisect(f, m, b, tol)
+    elif sfb == sfm:
+        # case where m is an improvement on b. 
+        # Make recursive call with b = m
+        return my_bisect(f, a, m, tol)
 
 
 
@@ -104,7 +135,7 @@ def M0(thtsh):
 #%%
 t_now = time()
 # thtshsol = fsolve(M0, 1.5*np.pi)
-s = 1
+s = 1.5
 gam = 5/3
 fb = 0.156837
 # fig4, ax4 = plt.subplots(1, dpi=200, figsize=(10,7))
@@ -129,11 +160,17 @@ t_bef, t_now = t_now, time()
 print(f'{t_now-t_bef:.4g}s', 'Initialised vals and funcs for iteration')
 
 for n in range(4):
+    
     if n==0:
-        thtshsol = bisect(M0, 1.1*np.pi, 1.9*np.pi)
+        if s==3:
+            thtshsol = my_bisect(M0, 1.75*np.pi, 1.9*np.pi)
+        else:
+            thtshsol = my_bisect(M0, 1.3*np.pi, 1.9*np.pi)
+        # thtshsol1 = minimize_scalar(M0, method='bounded', bounds=(1.5*np.pi, 1.9*np.pi))
+        # thtshsol = bisect(M0, 1.1*np.pi, 1.9*np.pi)
     else:
         try:
-            thtshsol = bisect(M0, thtshsol/1.2, thtshsol*1.2)
+            thtshsol = my_bisect(M0, thtshsol/1.2, thtshsol*1.2)
         except:
             pass
     thtsh_sols[s] = thtshsol
@@ -193,27 +230,46 @@ for n in range(4):
             raise Exception
 
 
-    res = solve_ivp(ode_func, (0,4), np.array([1,-de]), method='Radau', t_eval=(np.arange(0,256,0.002))**(1/4), max_step=0.001, dense_output=False, vectorized=True)
+    res = solve_ivp(ode_func, (0,4), np.array([1,-de]), method='Radau', t_eval=(np.arange(0,16,0.00002))**(1/2), max_step=0.0005, dense_output=False, vectorized=True)
     # res1 = solve_ivp(fun, (res.t[-1],15), np.array([res.y[0][-1],-res.y[1][-1]]), max_step=0.1, dense_output=True)
 
     xi = res.t
     lam = res.y[0]
     v = res.y[1]
+    loglam = np.log(np.maximum(lam,1e-15))
 
     ax6.plot(xi,lam, color=color_this, lw=1, label=f'n={n}')
 
     t_bef, t_now = t_now, time()
     print(f'{t_now-t_bef:.4g}s', f'{n}th iter DM trajectory obtained')
 
-    l_range = [0]
-    M_vals = [0]
-    for l in np.logspace(-2.5,0, 200):
-        l_range.append(l)
-        spl = InterpolatedUnivariateSpline(xi, lam-l)
-        roots = spl.roots()
-        Int_M = np.exp((-2*s/3)*roots)
+    l_range = np.zeros(301)
+    l_range[1:] = np.logspace(-2.5,0, 300)
+    M_vals = np.zeros(301)
+    rho_vals = np.zeros(301)
+    v_xi = interp1d(xi, v, fill_value="extrapolate")
+    for i in range(1,301):
+        # l_range.append(l)
+        l = l_range[i]
+        # spl = InterpolatedUnivariateSpline(xi, loglam-np.log(l),k=3)
+        # roots = spl.roots()
+        roots_ind = np.nonzero(np.diff(np.sign(loglam-np.log(l))))[0]
+        roots = (xi[roots_ind]+xi[np.array(roots_ind)+1])/2
+        #Based on theory we need odd number of roots, otherwise there is a major error
+        n_roots = roots.shape[0]
+        last_root_i = n_roots if n_roots%2==1 else n_roots-1
+        Int_M = np.exp((-2*s/3)*roots[:last_root_i])
         M_val = np.sum(Int_M[::2]) - np.sum(Int_M[1::2])
-        M_vals.append(M_val)
+        M_vals[i] = M_val
+    # l_range = [0]
+    # M_vals = [0]
+    # for l in np.logspace(-2.5,0, 200):
+    #     l_range.append(l)
+    #     spl = InterpolatedUnivariateSpline(xi, lam-l)
+    #     roots = spl.roots()
+    #     Int_M = np.exp((-2*s/3)*roots)
+    #     M_val = np.sum(Int_M[::2]) - np.sum(Int_M[1::2])
+    #     M_vals.append(M_val)
     M_vals[-1] = 1
 
     M_vals = np.asarray(M_vals)
