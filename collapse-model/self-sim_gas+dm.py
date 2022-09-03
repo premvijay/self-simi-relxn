@@ -42,41 +42,19 @@ def preshock(tht):
 
 
 # %%
-def odefunc(lam, depvars):
+def odefunc(l, depvars):
     # lam = 1/laminv
+    lam = np.exp(l)
     V,D,M,P = depvars
     Vb = V - de*lam
-    Mtot = M + M_dm(lam)
-    try:
-        veclen = len(V)
-    except:
-        veclen = 1
-    linMat = np.array([[D, Vb, 0*V, 0*V], [Vb, 0*V, 0*V, 1/D], [0*V, -Vb*gam/D, 0*V, Vb/P], [0*V, 0*V, 1+V-V, 0*V]])
-    linb = -np.array([2*D*V/lam-2*D, (de-1)*V+2/9*Mtot/lam**2, 2*(gam-1)+2*(de-1)+V-V, -3*lam**2*D])
-    try:
-        linMat1 = np.transpose(linMat,(2,0,1)) #linMat.reshape(veclen,4,4)
-        linb1 = np.transpose(linb, (1,0)) #linb.reshape(veclen,4)
-    except:
-        print(linb.shape)
-    try:
-        der = np.transpose(np.linalg.solve(linMat1,linb1), (1,0))
-        # if der[2]<0:
-        #     print(der)
-        #     print(linb1)
-        #     print(linMat1)
-        #     print(depvars)
-        #     raise Exception
-        # else:
-        #     # print('good')
-        #     pass
-
-        return der #*lam**2
-    except:
-        der = np.transpose(np.linalg.lstsq(linMat1[0],linb1[0])[0:1], (1,0))
-        # print(linMat1)
-        # print(linb1, der)
-        # raise Exception
-        return der #depvars*0
+    linb = -np.array([2*D*V-2*D*lam, (de-1)*V*lam+2/9*M/lam, (2*(gam-1)+2*(de-1))*lam, -3*lam**3*D])
+    # der_num = np.transpose(np.linalg.solve(linMat1,linb1), (1,0))
+    linMat_det1 = D*Vb**2-gam*P
+    # if linMat_det1 == 0: print(depvars)
+    linMat_cofac1 = np.array([[-gam*P/D,D*Vb,-P,0],[D*Vb,-D**2,D*P/Vb,0],[0,0,0,linMat_det1],[gam*P*Vb,-gam*D*P,D*P*Vb,0]])
+    linMat_inv = linMat_cofac1/ linMat_det1
+    der = np.matmul(linMat_inv,linb)
+    return der #*lam**2
 
 
 #%%
@@ -88,54 +66,37 @@ def get_shock_bcs(thtsh):
 
 def get_soln(thtsh):
     lamsh, bcs = get_shock_bcs(thtsh)
-    # print(thtsh)
-    return solve_ivp(odefunc, (lamsh,1e-6), bcs, max_step=0.001, vectorized=True)
+    # print(thtsh)#(lamsh, 1e-9) #np.log(lamsh),np.log(1e-9))
+    return solve_ivp(odefunc, (np.log(lamsh),np.log(1e-9)), bcs, method='Radau', max_step=np.inf, vectorized=False)
 def M0(thtsh):
     res = get_soln(thtsh)
     M0val = res.y[2][-1]
-    return M0val-1e-7 #if M0val>0 else -(-M0val)**(1/11)
+    return M0val-3e-4 #if M0val>0 else -(-M0val)**(1/11)
 
+#%%
+def solve_bisect(func,bounds):
+    b0, b1 = bounds
+    bmid = (b0+b1)/2
 
-def my_bisect(f, a, b, tol=3e-3): 
-    # approximates a root, R, of f bounded 
-    # by a and b to within tolerance 
-    # | f(m) | < tol with m the midpoint 
-    # between a and b Recursive implementation
-
-    # get midpoint
+def my_bisect(f, a, b, tol=1e-4): 
     m = (a + b)/2
-
-    sfa = np.sign(f(a))
-    sfb = np.sign(f(b))
+    sfa = -1
+    sfb = +1
     f_at_m = f(m)
     sfm = np.sign(f_at_m)
-    # check if a and b bound a root
-    if sfa == sfb:
-        raise Exception(
-         "The scalars a and b do not bound a root")
-        
-    
-    print(a,b,m,f_at_m)
-    if np.abs(f_at_m) < tol:
-        # stopping condition, report m as root
-        return m if f_at_m >0 else (m+b)/2
+    # print(a,b,m,f_at_m)
+    if abs(b-a) < tol:
+        return m if f_at_m >0 else b
     elif sfa == sfm:
-        # case where m is an improvement on a. 
-        # Make recursive call with a = m
         return my_bisect(f, m, b, tol)
     elif sfb == sfm:
-        # case where m is an improvement on b. 
-        # Make recursive call with b = m
         return my_bisect(f, a, m, tol)
-
-
-
 
 
 #%%
 t_now = time()
 # thtshsol = fsolve(M0, 1.5*np.pi)
-s = 1.5
+s = 2
 gam = 5/3
 fb = 0.156837
 # fig4, ax4 = plt.subplots(1, dpi=200, figsize=(10,7))
@@ -144,7 +105,7 @@ fig5, axs5 = plt.subplots(2,2, dpi=200, figsize=(14,12), sharex=True)
 fig6, ax6 = plt.subplots(1)
 
 # for s in [1,1.5,2,3][:]:
-dmo_prfl = pd.read_hdf(f'profiles_dmo_{s}.hdf5')
+dmo_prfl = pd.read_hdf(f'profiles_dmo_{s}.hdf5', key='iter8')
 
 Mta = (3*np.pi/4)**2
 M_dmo = interp1d(dmo_prfl['l'], dmo_prfl['M']*Mta, fill_value="extrapolate")
@@ -159,30 +120,26 @@ plot_iters = [0,1,2,3,5,6,7]
 t_bef, t_now = t_now, time()
 print(f'{t_now-t_bef:.4g}s', 'Initialised vals and funcs for iteration')
 
-for n in range(4):
-    
-    if n==0:
-        if s==3:
-            thtshsol = my_bisect(M0, 1.75*np.pi, 1.9*np.pi)
-        else:
-            thtshsol = my_bisect(M0, 1.3*np.pi, 1.9*np.pi)
-        # thtshsol1 = minimize_scalar(M0, method='bounded', bounds=(1.5*np.pi, 1.9*np.pi))
-        # thtshsol = bisect(M0, 1.1*np.pi, 1.9*np.pi)
-    else:
-        try:
-            thtshsol = my_bisect(M0, thtshsol/1.2, thtshsol*1.2)
-        except:
-            pass
-    thtsh_sols[s] = thtshsol
+for n in range(2):
+    thetbins = np.linspace(1.2*np.pi, 1.99*np.pi, 8)
+    for nsect_i in range(0,3):
+        M0_atbins = list(map(M0,thetbins))
+        # t_bef, t_now = t_now, time()
+        # print(f'{t_now-t_bef:.4g}s', f's={s}: grid M0 obtained')
+        # ax4.plot(thetbins,M0_atbins, label=f's={s} and nsect={nsect_i}')
+        idx_M0neg = np.where(np.sign(M0_atbins)==-1)[0].max()
+        # t_bef, t_now = t_now, time()
+        # print(f'{t_now-t_bef:.4g}s', f's={s}: grid M0 selected')
+        thtshsol = thetbins[idx_M0neg+1]
+        thetbins = np.linspace(thetbins[idx_M0neg], 2*thtshsol-thetbins[idx_M0neg], 8)
+
+    thtshsol = my_bisect(M0, thetbins[0], thetbins[-1], tol=1e-4)
     t_bef, t_now = t_now, time()
     print(f'{t_now-t_bef:.4g}s', f'{n}th iter gas shock radius solved')
 
-    # for s in [0.5,1,1.5,2,3,5][1:5]:
-    de = 2* (1+s/3) /3
-    thtshsol = thtsh_sols[s]
     res = get_soln(thtshsol)
 
-    lamsh_post = res.t
+    lamsh_post = np.exp(res.t)
     V_post, D_post, M_post, P_post = res.y
 
     thtsh_preange = np.arange(1*np.pi, thtshsol,0.01)
@@ -261,15 +218,6 @@ for n in range(4):
         Int_M = np.exp((-2*s/3)*roots[:last_root_i])
         M_val = np.sum(Int_M[::2]) - np.sum(Int_M[1::2])
         M_vals[i] = M_val
-    # l_range = [0]
-    # M_vals = [0]
-    # for l in np.logspace(-2.5,0, 200):
-    #     l_range.append(l)
-    #     spl = InterpolatedUnivariateSpline(xi, lam-l)
-    #     roots = spl.roots()
-    #     Int_M = np.exp((-2*s/3)*roots)
-    #     M_val = np.sum(Int_M[::2]) - np.sum(Int_M[1::2])
-    #     M_vals.append(M_val)
     M_vals[-1] = 1
 
     M_vals = np.asarray(M_vals)
