@@ -63,8 +63,9 @@ def preshock(tht):
 
 
 # %%
-def odefunc(lam, depvars):
+def odefunc(l, depvars):
     # lam = 1/laminv
+    lam = np.exp(l)
     V,D,M,P = depvars
     Vb = V - de*lam
     # try:
@@ -72,7 +73,7 @@ def odefunc(lam, depvars):
     # except:
     #     veclen = 1
     # linMat = np.array([[D, Vb, 0*V, 0*V], [Vb, 0*V, 0*V, 1/D], [0*V, -Vb*gam/D, 0*V, Vb/P], [0*V, 0*V, 1+V-V, 0*V]])
-    linb = -np.array([2*D*V/lam-2*D, (de-1)*V+2/9*M/lam**2, 2*(gam-1)+2*(de-1)+V-V, -3*lam**2*D])
+    linb = -np.array([2*D*V-2*D*lam, (de-1)*V*lam+2/9*M/lam, (2*(gam-1)+2*(de-1))*lam, -3*lam**3*D])
     # try:
     #     linMat1 = np.transpose(linMat,(2,0,1)) #linMat.reshape(veclen,4,4)
     #     linb1 = np.transpose(linb, (1,0)) #linb.reshape(veclen,4)
@@ -119,12 +120,12 @@ def get_shock_bcs(thtsh):
 
 def get_soln(thtsh):
     lamsh, bcs = get_shock_bcs(thtsh)
-    # print(thtsh)
-    return solve_ivp(odefunc, (lamsh,1e-9), bcs, max_step=0.001, vectorized=True)
+    # print(thtsh)#(lamsh, 1e-9) #np.log(lamsh),np.log(1e-9))
+    return solve_ivp(odefunc, (np.log(lamsh),np.log(1e-9)), bcs, method='RK45', max_step=np.inf, vectorized=True)
 def M0(thtsh):
     res = get_soln(thtsh)
     M0val = res.y[2][-1]
-    return M0val-1e-4 #if M0val>0 else -(-M0val)**(1/11)
+    return M0val-3e-3 #if M0val>0 else -(-M0val)**(1/11)
 
 #%%
 def solve_bisect(func,bounds):
@@ -172,23 +173,31 @@ s_vals = [0.5,1,1.5,2,3,5]
 fb = 0.2
 fig4, ax4 = plt.subplots(1, dpi=200, figsize=(10,7))
 thtsh_sols = {}
-thetbins = np.linspace(1.2*np.pi, 1.99*np.pi, 50)
+thetbins = np.linspace(1.2*np.pi, 1.99*np.pi, 8)
 M0_atbins = {}
 M0_sols = {}
 
-for s in s_vals[::]:
+for s in s_vals[2:3:]:
     t_now = time()
     de = 2* (1+s/3) /3
-    M0_atbins[s] = []
-    for thetbin in thetbins:
-        M0_atbins[s].append(M0(thetbin))
+    M0_atbins[s] = list(map(M0,thetbins))
     t_bef, t_now = t_now, time()
     print(f'{t_now-t_bef:.4g}s', f's={s}: grid M0 obtained')
     ax4.plot(thetbins,M0_atbins[s], label=f's={s}')
     idx_M0neg = np.where(np.sign(M0_atbins[s])==-1)[0].max()
     t_bef, t_now = t_now, time()
     print(f'{t_now-t_bef:.4g}s', f's={s}: grid M0 selected')
-    thtshsol = bisect(M0, thetbins[idx_M0neg], thetbins[idx_M0neg+1], xtol=1e-5)+1e-5
+
+    thetbins = np.linspace(thetbins[idx_M0neg], thetbins[idx_M0neg+2], 8)
+    M0_atbins[s] = list(map(M0,thetbins))
+    t_bef, t_now = t_now, time()
+    print(f'{t_now-t_bef:.4g}s', f's={s}: grid M0 obtained second time')
+    ax4.plot(thetbins,M0_atbins[s], label=f's={s}')
+    idx_M0neg = np.where(np.sign(M0_atbins[s])==-1)[0].max()
+    t_bef, t_now = t_now, time()
+    print(f'{t_now-t_bef:.4g}s', f's={s}: grid M0 selected second time')
+
+    thtshsol = bisect(M0, thetbins[idx_M0neg], thetbins[idx_M0neg+2], xtol=1e-3)#+1e-5
     t_bef, t_now = t_now, time()
     print(f'{t_now-t_bef:.4g}s', f's={s}: root thetsh obtained')
     # thtshsol1 = minimize_scalar(M0, method='bounded', bounds=(1.5*np.pi, 1.9*np.pi))
@@ -207,17 +216,17 @@ ax4.legend()
 fig5, axs5 = plt.subplots(2,2, dpi=200, figsize=(12,10), sharex=True)
 fig6, ax6 = plt.subplots(1)
 
-for s in s_vals[::]:
+for s in s_vals[2:3:]:
     t_now = time()
     de = 2* (1+s/3) /3
-    thtshsol = thtsh_sols[s]#+1e-10
+    thtshsol = thetbins[1]+1e-5 #thtsh_sols[s]#+1e-10
     res = get_soln(thtshsol)
     print(res.y[2][-1])
     # print(M0(thtshsol))
     t_bef, t_now = t_now, time()
     print(f'{t_now-t_bef:.4g}s', f's={s}: post shock profiles obtained')
 
-    lamsh_post = res.t
+    lamsh_post = np.exp(res.t)
     V_post, D_post, M_post, P_post = res.y
 
     thtsh_preange = np.arange(1.1*np.pi, thtshsol,0.01)
@@ -319,7 +328,7 @@ ax6.set_xlim(-1,5)
 ax6.set_ylim(0,1.1)
     
 axs5[0,0].set_xscale('log')
-# axs5[0,0].set_xlim(1e-7,1)
+# axs5[0,0].set_xlim(1e-3,1)
 axs5[0,0].legend()
 axs5[1,0].set_xlabel('$\lambda$')
 axs5[1,1].set_xlabel('$\lambda$')
