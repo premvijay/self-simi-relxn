@@ -7,6 +7,7 @@ from itertools import cycle
 plt.style.use('seaborn-darkgrid')
 import pandas as pd
 from scipy.optimize import fsolve, bisect, minimize_scalar
+from time import time
 # %%
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -80,6 +81,7 @@ def odefunc(lam, depvars):
     if True:
         # der_num = np.transpose(np.linalg.solve(linMat1,linb1), (1,0))
         linMat_det1 = D*Vb**2-gam*P
+        # if linMat_det1 == 0: print(depvars)
         linMat_cofac1 = np.array([[-gam*P/D,D*Vb,-P,0],[D*Vb,-D**2,D*P/Vb,0],[0,0,0,linMat_det1],[gam*P*Vb,-gam*D*P,D*P*Vb,0]])
         linMat_inv = linMat_cofac1/ linMat_det1
         # print(linMat_inv.shape,linb1.shape, linMat.shape, linb.shape)
@@ -118,18 +120,18 @@ def get_shock_bcs(thtsh):
 def get_soln(thtsh):
     lamsh, bcs = get_shock_bcs(thtsh)
     # print(thtsh)
-    return solve_ivp(odefunc, (lamsh,1e-6), bcs, max_step=0.001, vectorized=True)
+    return solve_ivp(odefunc, (lamsh,1e-9), bcs, max_step=0.001, vectorized=True)
 def M0(thtsh):
     res = get_soln(thtsh)
     M0val = res.y[2][-1]
-    return M0val #if M0val>0 else -(-M0val)**(1/11)
+    return M0val-1e-4 #if M0val>0 else -(-M0val)**(1/11)
 
 #%%
 def solve_bisect(func,bounds):
     b0, b1 = bounds
     bmid = (b0+b1)/2
 
-def my_bisect(f, a, b, tol=3e-3): 
+def my_bisect(f, a, b, tol=1e-4): 
     # approximates a root, R, of f bounded 
     # by a and b to within tolerance 
     # | f(m) | < tol with m the midpoint 
@@ -144,14 +146,15 @@ def my_bisect(f, a, b, tol=3e-3):
     sfm = np.sign(f_at_m)
     # check if a and b bound a root
     if sfa == sfb:
+        print(a,b,f(a),f(b),m,f_at_m)
         raise Exception(
          "The scalars a and b do not bound a root")
         
     
     # print(a,b,m,f_at_m)
-    if np.abs(f_at_m) < tol:
+    if abs(b-a) < tol:
         # stopping condition, report m as root
-        return m if f_at_m >0 else (m+b)/2
+        return m if f_at_m >0 else b
     elif sfa == sfm:
         # case where m is an improvement on a. 
         # Make recursive call with a = m
@@ -167,17 +170,36 @@ s = 1
 gam = 4/3
 s_vals = [0.5,1,1.5,2,3,5]
 fb = 0.2
-# fig4, ax4 = plt.subplots(1, dpi=200, figsize=(10,7))
+fig4, ax4 = plt.subplots(1, dpi=200, figsize=(10,7))
 thtsh_sols = {}
+thetbins = np.linspace(1.2*np.pi, 1.99*np.pi, 50)
+M0_atbins = {}
+M0_sols = {}
+
 for s in s_vals[::]:
+    t_now = time()
     de = 2* (1+s/3) /3
-    if s==3:
-        thtshsol = my_bisect(M0, 1.75*np.pi, 1.9*np.pi)
-    else:
-        thtshsol = my_bisect(M0, 1.5*np.pi, 1.9*np.pi)
+    M0_atbins[s] = []
+    for thetbin in thetbins:
+        M0_atbins[s].append(M0(thetbin))
+    t_bef, t_now = t_now, time()
+    print(f'{t_now-t_bef:.4g}s', f's={s}: grid M0 obtained')
+    ax4.plot(thetbins,M0_atbins[s], label=f's={s}')
+    idx_M0neg = np.where(np.sign(M0_atbins[s])==-1)[0].max()
+    t_bef, t_now = t_now, time()
+    print(f'{t_now-t_bef:.4g}s', f's={s}: grid M0 selected')
+    thtshsol = bisect(M0, thetbins[idx_M0neg], thetbins[idx_M0neg+1], xtol=1e-5)+1e-5
+    t_bef, t_now = t_now, time()
+    print(f'{t_now-t_bef:.4g}s', f's={s}: root thetsh obtained')
     # thtshsol1 = minimize_scalar(M0, method='bounded', bounds=(1.5*np.pi, 1.9*np.pi))
     thtsh_sols[s] = thtshsol
-    print(f's={s}',thtshsol,M0(thtshsol))
+    M0_sols[s] = M0(thtshsol)
+    ax4.scatter(thtshsol, M0_sols[s])
+    print(f's={s}', thtshsol, M0_sols[s])
+ax4.set_xlabel(r'$\theta$')
+ax4.set_ylabel(r'$M(\lambda=0)$')
+ax4.set_ylim(-2,5)
+ax4.legend()
 
 #%%
 
@@ -186,9 +208,14 @@ fig5, axs5 = plt.subplots(2,2, dpi=200, figsize=(12,10), sharex=True)
 fig6, ax6 = plt.subplots(1)
 
 for s in s_vals[::]:
+    t_now = time()
     de = 2* (1+s/3) /3
-    thtshsol = thtsh_sols[s]
+    thtshsol = thtsh_sols[s]#+1e-10
     res = get_soln(thtshsol)
+    print(res.y[2][-1])
+    # print(M0(thtshsol))
+    t_bef, t_now = t_now, time()
+    print(f'{t_now-t_bef:.4g}s', f's={s}: post shock profiles obtained')
 
     lamsh_post = res.t
     V_post, D_post, M_post, P_post = res.y
@@ -224,6 +251,9 @@ for s in s_vals[::]:
 
     PderD_intrp = interp1d(lamsh_post, PderD_post, kind='linear', fill_value=0, bounds_error=False)
 
+    t_bef, t_now = t_now, time()
+    print(f'{t_now-t_bef:.4g}s', f's={s}: all profiles obtained')
+
     def odefunc_traj(xi, arg):
         lam = arg[0]
         v = arg[1]
@@ -242,6 +272,9 @@ for s in s_vals[::]:
     res = solve_ivp(odefunc_traj, (xish,2.2), np.array([lamshsol,bcs[0]-de*lamshsol]), method='RK45', max_step=0.001, dense_output=False, vectorized=True)
     # res1 = solve_ivp(fun, (res.t[-1],15), np.array([res.y[0][-1],-res.y[1][-1]]), max_step=0.1, dense_output=True)
 
+    t_bef, t_now = t_now, time()
+    print(f'{t_now-t_bef:.4g}s', f's={s}: post shock trajectory obtained')
+    
     xires = res.t
     lamres = res.y[0]
     vres = res.y[1]
@@ -286,7 +319,7 @@ ax6.set_xlim(-1,5)
 ax6.set_ylim(0,1.1)
     
 axs5[0,0].set_xscale('log')
-axs5[0,0].set_xlim(1e-4,1)
+# axs5[0,0].set_xlim(1e-7,1)
 axs5[0,0].legend()
 axs5[1,0].set_xlabel('$\lambda$')
 axs5[1,1].set_xlabel('$\lambda$')
