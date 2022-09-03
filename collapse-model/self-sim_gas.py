@@ -121,11 +121,11 @@ def get_shock_bcs(thtsh):
 def get_soln(thtsh):
     lamsh, bcs = get_shock_bcs(thtsh)
     # print(thtsh)#(lamsh, 1e-9) #np.log(lamsh),np.log(1e-9))
-    return solve_ivp(odefunc, (np.log(lamsh),np.log(1e-9)), bcs, method='RK45', max_step=np.inf, vectorized=True)
+    return solve_ivp(odefunc, (np.log(lamsh),np.log(1e-9)), bcs, method='Radau', max_step=np.inf, vectorized=False)
 def M0(thtsh):
     res = get_soln(thtsh)
     M0val = res.y[2][-1]
-    return M0val-3e-3 #if M0val>0 else -(-M0val)**(1/11)
+    return M0val-3e-4 #if M0val>0 else -(-M0val)**(1/11)
 
 #%%
 def solve_bisect(func,bounds):
@@ -141,17 +141,11 @@ def my_bisect(f, a, b, tol=1e-4):
     # get midpoint
     m = (a + b)/2
 
-    sfa = np.sign(f(a))
-    sfb = np.sign(f(b))
+    sfa = -1
+    sfb = +1
     f_at_m = f(m)
     sfm = np.sign(f_at_m)
-    # check if a and b bound a root
-    if sfa == sfb:
-        print(a,b,f(a),f(b),m,f_at_m)
-        raise Exception(
-         "The scalars a and b do not bound a root")
-        
-    
+
     # print(a,b,m,f_at_m)
     if abs(b-a) < tol:
         # stopping condition, report m as root
@@ -168,7 +162,7 @@ def my_bisect(f, a, b, tol=1e-4):
 #%%
 # thtshsol = fsolve(M0, 1.5*np.pi)
 s = 1
-gam = 4/3
+gam = 5/3
 s_vals = [0.5,1,1.5,2,3,5]
 fb = 0.2
 fig4, ax4 = plt.subplots(1, dpi=200, figsize=(10,7))
@@ -177,27 +171,23 @@ thetbins = np.linspace(1.2*np.pi, 1.99*np.pi, 8)
 M0_atbins = {}
 M0_sols = {}
 
-for s in s_vals[2:3:]:
+for s in s_vals[::]:
     t_now = time()
     de = 2* (1+s/3) /3
-    M0_atbins[s] = list(map(M0,thetbins))
-    t_bef, t_now = t_now, time()
-    print(f'{t_now-t_bef:.4g}s', f's={s}: grid M0 obtained')
-    ax4.plot(thetbins,M0_atbins[s], label=f's={s}')
-    idx_M0neg = np.where(np.sign(M0_atbins[s])==-1)[0].max()
-    t_bef, t_now = t_now, time()
-    print(f'{t_now-t_bef:.4g}s', f's={s}: grid M0 selected')
+    thetbins = np.linspace(1.2*np.pi, 1.99*np.pi, 8)
+    for nsect_i in range(0,3):
+        M0_atbins[s] = list(map(M0,thetbins))
+        t_bef, t_now = t_now, time()
+        print(f'{t_now-t_bef:.4g}s', f's={s}: grid M0 obtained')
+        ax4.plot(thetbins,M0_atbins[s], label=f's={s} and nsect={nsect_i}')
+        idx_M0neg = np.where(np.sign(M0_atbins[s])==-1)[0].max()
+        t_bef, t_now = t_now, time()
+        print(f'{t_now-t_bef:.4g}s', f's={s}: grid M0 selected')
+        thtshsol = thetbins[idx_M0neg+1]
+        thetbins = np.linspace(thetbins[idx_M0neg], 2*thtshsol-thetbins[idx_M0neg], 8)
 
-    thetbins = np.linspace(thetbins[idx_M0neg], thetbins[idx_M0neg+2], 8)
-    M0_atbins[s] = list(map(M0,thetbins))
-    t_bef, t_now = t_now, time()
-    print(f'{t_now-t_bef:.4g}s', f's={s}: grid M0 obtained second time')
-    ax4.plot(thetbins,M0_atbins[s], label=f's={s}')
-    idx_M0neg = np.where(np.sign(M0_atbins[s])==-1)[0].max()
-    t_bef, t_now = t_now, time()
-    print(f'{t_now-t_bef:.4g}s', f's={s}: grid M0 selected second time')
-
-    thtshsol = bisect(M0, thetbins[idx_M0neg], thetbins[idx_M0neg+2], xtol=1e-3)#+1e-5
+    thtshsol = my_bisect(M0, thetbins[0], thetbins[-1], tol=1e-4)#+1e-5
+    # thtshsol = thetbins[idx_M0neg+1]
     t_bef, t_now = t_now, time()
     print(f'{t_now-t_bef:.4g}s', f's={s}: root thetsh obtained')
     # thtshsol1 = minimize_scalar(M0, method='bounded', bounds=(1.5*np.pi, 1.9*np.pi))
@@ -216,10 +206,10 @@ ax4.legend()
 fig5, axs5 = plt.subplots(2,2, dpi=200, figsize=(12,10), sharex=True)
 fig6, ax6 = plt.subplots(1)
 
-for s in s_vals[2:3:]:
+for s in s_vals[::]:
     t_now = time()
     de = 2* (1+s/3) /3
-    thtshsol = thetbins[1]+1e-5 #thtsh_sols[s]#+1e-10
+    thtshsol = thtsh_sols[s]#+1e-10
     res = get_soln(thtshsol)
     print(res.y[2][-1])
     # print(M0(thtshsol))
@@ -328,7 +318,7 @@ ax6.set_xlim(-1,5)
 ax6.set_ylim(0,1.1)
     
 axs5[0,0].set_xscale('log')
-# axs5[0,0].set_xlim(1e-3,1)
+axs5[0,0].set_xlim(1e-5,1)
 axs5[0,0].legend()
 axs5[1,0].set_xlabel('$\lambda$')
 axs5[1,1].set_xlabel('$\lambda$')
