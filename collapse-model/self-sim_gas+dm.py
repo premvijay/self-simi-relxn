@@ -96,7 +96,7 @@ def my_bisect(f, a, b, tol=1e-4):
 def odefunc_traj_dm(xi, arg):
     lam = arg[0]
     v = arg[1]
-    return (v, -2/9 * (3*np.pi/4)**2* M_tot(lam)/lam**2 - de*(de-1)*lam - (2*de-1)*v + 1e-9/lam**3)
+    return (v, -2/9 * M_tot(lam)/lam**2 - de*(de-1)*lam - (2*de-1)*v + 1e-9/lam**3)
 
 def odefunc_traj_gas(xi, arg):
     lam = arg
@@ -111,6 +111,7 @@ t_now = time()
 s = 2
 gam = 4.1/3
 fb = 0.156837
+fd = (1-fb)
 # fig4, ax4 = plt.subplots(1, dpi=200, figsize=(10,7))
 thtsh_sols = []
 thtbins_alls = []
@@ -184,7 +185,7 @@ for n in range(0, 4):
     print(f'{t_now-t_bef:.4g}s', f'{n}th iter gas profiles updated')
 
 
-    res_traj_dm = solve_ivp(odefunc_traj_dm, (0,3), np.array([1,-de]), method='Radau', t_eval=(np.arange(0,9,0.0001))**(1/2), max_step=np.inf, dense_output=False, vectorized=True)
+    res_traj_dm = solve_ivp(odefunc_traj_dm, (0,4), np.array([1,-de]), method='Radau', t_eval=(np.arange(0,160,0.0001))**(1/4), max_step=np.inf, dense_output=False, vectorized=True)
     # res1 = solve_ivp(fun, (res.t[-1],15), np.array([res.y[0][-1],-res.y[1][-1]]), max_step=0.1, dense_output=True)
 
     xi = res_traj_dm.t
@@ -273,9 +274,9 @@ for n in plot_iters:
     ax4.axvline(thtsh_sols[n], color=color_this)
     print(f'n={n}', thtshsol)
 
-    resdf_prof_gas = pd.read_hdf(f'profiles_gasdm_{s}.hdf5', key=f'gas/iter{n}', mode='r')
-    resdf_prof_dm = pd.read_hdf(f'profiles_gasdm_{s}.hdf5', key=f'dm/iter{n}', mode='r')
-    resdf_traj_dm = pd.read_hdf(f'traj_gasdm_{s}.hdf5', key=f'dm/iter{n}', mode='r')
+    resdf_prof_gas = pd.read_hdf(f'profiles_gasdm_s{s:g}_gam{gam:.3g}.hdf5', key=f'gas/iter{n}', mode='r')
+    resdf_prof_dm = pd.read_hdf(f'profiles_gasdm_s{s:g}_gam{gam:.3g}.hdf5', key=f'dm/iter{n}', mode='r')
+    resdf_traj_dm = pd.read_hdf(f'traj_gasdm_s{s:g}_gam{gam:.3g}.hdf5', key=f'dm/iter{n}', mode='r')
 
     axs5[0,0].plot(resdf_prof_gas.l, -resdf_prof_gas.V, color=color_this, label=f'n={n}')
     axs5[0,1].plot(resdf_prof_gas.l, resdf_prof_gas.D, color=color_this)
@@ -412,13 +413,16 @@ Mi = Mdr/fd
 
 MiMf = ( fd* (Mbr/ Mdr + 1) )**-1
 rfri = rf / ri
-
+ 
 #%%
 plt.figure()
 # plt.scatter(MiMf[60:-50],rfri[60:-50],c=rf[60:-50])
-plt.scatter(MiMf,rfri,c=rf, cmap='nipy_spectral')
-plt.colorbar(label='rf')
+plt.scatter(MiMf,rfri,c=np.log10(rf), cmap='nipy_spectral')
+# plt.scatter(MiMf[100:],rfri[100:],c=np.log10(rf[100:]), cmap='nipy_spectral')
+plt.plot(MiMf,1+0.25*(MiMf-1),'k',label='q=0.25')
+plt.colorbar(label='rf (defined as relaxed $\lambda$)')
 plt.xlabel('Mi/Mf')
 plt.ylabel('rf/ri')
-# plt.savefig('ratio_plot_anyl.pdf')
+plt.legend()
+plt.savefig('ratio_plot_anyl.pdf')
 # %%
