@@ -98,10 +98,9 @@ def odefunc_traj_dm(xi, arg):
     v = arg[1]
     return (v, -2/9 * (3*np.pi/4)**2* M_tot(lam)/lam**2 - de*(de-1)*lam - (2*de-1)*v + 1e-9/lam**3)
 
-# def odefunc_traj_gas(xi, arg):
-#     lam = arg
-#     try:
-#         return V_intrp(lam)-de*lam
+def odefunc_traj_gas(xi, arg):
+    lam = arg
+    return V_intrp(lam)-de*lam
 #     except:
 #         print(lam,s, xi, V_intrp(lam))
 #         raise Exception
@@ -110,7 +109,7 @@ def odefunc_traj_dm(xi, arg):
 t_now = time()
 # thtshsol = fsolve(M0, 1.5*np.pi)
 s = 2
-gam = 5/3
+gam = 4.1/3
 fb = 0.156837
 # fig4, ax4 = plt.subplots(1, dpi=200, figsize=(10,7))
 thtsh_sols = []
@@ -127,12 +126,12 @@ M_dm = lambda lam: M_dmo(lam)*(1-fb)
 
 de = 2* (1+s/3) /3
 
-plot_iters = [0,1,2,3,5,6,7]
+plot_iters = [0,1,2,3] #,5,6,7]
 
 t_bef, t_now = t_now, time()
 print(f'{t_now-t_bef:.4g}s', 'Initialised vals and funcs for iteration')
 
-for n in range(0, 1):
+for n in range(0, 4):
     thtbins_all = [np.linspace(1.2*np.pi, 1.99*np.pi, 8)]
     M0_atbins_all = []
     for nsect_i in range(0,3):
@@ -178,14 +177,14 @@ for n in range(0, 1):
     M_tot = lambda lam : M_dm(lam)+M_gas(lam)
 
     resdf_gas = pd.DataFrame(data={'l':lam_all, 'M':M_all, 'V':V_all, 'D':D_all, 'P':P_all,})
-    resdf_gas.to_hdf(f'profiles_gasdm_{s}.hdf5', 'gas/main', mode='a')
-    resdf_gas.to_hdf(f'profiles_gasdm_{s}.hdf5', f'gas/iter{n}', mode='a')
+    resdf_gas.to_hdf(f'profiles_gasdm_s{s:g}_gam{gam:.3g}.hdf5', 'gas/main', mode='a')
+    resdf_gas.to_hdf(f'profiles_gasdm_s{s:g}_gam{gam:.3g}.hdf5', f'gas/iter{n}', mode='a')
 
     t_bef, t_now = t_now, time()
     print(f'{t_now-t_bef:.4g}s', f'{n}th iter gas profiles updated')
 
 
-    res_traj_dm = solve_ivp(odefunc_traj_dm, (0,3), np.array([1,-de]), method='Radau', t_eval=(np.arange(0,9,0.005))**(1/2), max_step=np.inf, dense_output=False, vectorized=True)
+    res_traj_dm = solve_ivp(odefunc_traj_dm, (0,3), np.array([1,-de]), method='Radau', t_eval=(np.arange(0,9,0.0001))**(1/2), max_step=np.inf, dense_output=False, vectorized=True)
     # res1 = solve_ivp(fun, (res.t[-1],15), np.array([res.y[0][-1],-res.y[1][-1]]), max_step=0.1, dense_output=True)
 
     xi = res_traj_dm.t
@@ -194,8 +193,8 @@ for n in range(0, 1):
     loglam = np.log(np.maximum(lam,1e-15))
 
     resdf_traj_dm = pd.DataFrame(data={'xi':xi, 'lam':lam,})
-    resdf_traj_dm.to_hdf(f'traj_gasdm_{s}.hdf5', 'dm/main', mode='a')
-    resdf_traj_dm.to_hdf(f'traj_gasdm_{s}.hdf5', f'dm/iter{n}', mode='a')
+    resdf_traj_dm.to_hdf(f'traj_gasdm_s{s:g}_gam{gam:.3g}.hdf5', 'dm/main', mode='a')
+    resdf_traj_dm.to_hdf(f'traj_gasdm_s{s:g}_gam{gam:.3g}.hdf5', f'dm/iter{n}', mode='a')
 
     t_bef, t_now = t_now, time()
     print(f'{t_now-t_bef:.4g}s', f'{n}th iter DM trajectory obtained')
@@ -229,8 +228,8 @@ for n in range(0, 1):
     M_dm = interp1d(l_range, M_vals, fill_value="extrapolate")
 
     resdf_dm = pd.DataFrame(data={'l':l_range, 'M':M_vals,})
-    resdf_dm.to_hdf(f'profiles_gasdm_{s}.hdf5', 'dm/main', mode='a')
-    resdf_dm.to_hdf(f'profiles_gasdm_{s}.hdf5', f'dm/iter{n}', mode='a')
+    resdf_dm.to_hdf(f'profiles_gasdm_s{s:g}_gam{gam:.3g}.hdf5', 'dm/main', mode='a')
+    resdf_dm.to_hdf(f'profiles_gasdm_s{s:g}_gam{gam:.3g}.hdf5', f'dm/iter{n}', mode='a')
 
     t_bef, t_now = t_now, time()
     print(f'{t_now-t_bef:.4g}s', f'{n}th iter DM mass profile updated')
@@ -258,7 +257,7 @@ fig4, ax4 = plt.subplots(1, dpi=200, figsize=(7,5))
 fig5, axs5 = plt.subplots(2,2, dpi=200, figsize=(10,8), sharex=True)
 fig6, ax6 = plt.subplots(1)
 
-plot_iters = [0,] #1,2,3,5,6,7]
+# plot_iters = [0,] #1,2,3,5,6,7]
 
 t_bef, t_now = t_now, time()
 print(f'{t_now-t_bef:.4g}s', 'Initialised plots and figs for iteration')
@@ -287,7 +286,7 @@ for n in plot_iters:
 
 
     M_gas = interp1d(resdf_prof_gas.l, resdf_prof_gas.M)
-    M_gas = interp1d(resdf_prof_dm.l, resdf_prof_dm.M)
+    M_dm = interp1d(resdf_prof_dm.l, resdf_prof_dm.M)
 
     M_tot = lambda lam : M_dm(lam)+M_gas(lam)
 
@@ -295,8 +294,29 @@ for n in plot_iters:
 
     ax6.plot(resdf_traj_dm.xi,resdf_traj_dm.lam, color=color_this, label=f'n={n}')
 
+    V_intrp = interp1d(resdf_prof_gas.l, resdf_prof_gas.V, fill_value="extrapolate")
+    lamshsol, bcs = get_shock_bcs(thtshsol)
+    taush = (thtshsol - np.sin(thtshsol)) / np.pi
+    xish = np.log(taush)
+    res_traj_gas = solve_ivp(odefunc_traj_gas, (xish,2.2), np.array([lamshsol]), method='Radau', max_step=0.001, dense_output=False, vectorized=True)
+    # res1 = solve_ivp(fun, (res.t[-1],15), np.array([res.y[0][-1],-res.y[1][-1]]), max_step=0.1, dense_output=True)
+
     t_bef, t_now = t_now, time()
-    print(f'{t_now-t_bef:.4g}s', f'{n}th iter DM mass profile updated')
+    print(f'{t_now-t_bef:.4g}s', f's={s}: post shock trajectory obtained')
+    
+    xires = res_traj_gas.t
+    lamres = res_traj_gas.y[0]
+    # vres = res.y[1]
+
+    taures = np.exp(xires)
+    lamFres = lamres*taures**de
+
+    # ax6.plot(taures,lamFres, color=color_this, label=f's={s}')
+    ax6.plot(xires,lamres, color=color_this)
+
+
+    t_bef, t_now = t_now, time()
+    print(f'{t_now-t_bef:.4g}s', f'{n}th iter plotted')
 
 axs5[1,0].plot(dmo_prfl['l'], dmo_prfl['M']*Mta, color='k', ls='dashed')
 
@@ -357,9 +377,9 @@ plt.show()
 # %%
 
 # %%
-import dill                            #pip install dill --user
-filename = f'soln-globalsave_s{s:g}_gam{gam:.3g}.pkl'
-dill.load_session(filename)
+# import dill                            #pip install dill --user
+# filename = f'soln-globalsave_s{s:g}_gam{gam:.3g}.pkl'
+# dill.load_session(filename)
 
 #%%
 fd = (1-fb)
