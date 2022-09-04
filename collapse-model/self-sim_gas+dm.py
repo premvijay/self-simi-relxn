@@ -177,9 +177,9 @@ for n in range(0, 1):
 
     M_tot = lambda lam : M_dm(lam)+M_gas(lam)
 
-    df_gas = pd.DataFrame(data={'l':lam_all, 'M':M_all, 'V':V_all, 'D':D_all, 'P':P_all,})
-    df_gas.to_hdf(f'profiles_gasdm_{s}.hdf5', 'gas/main', mode='a')
-    df_gas.to_hdf(f'profiles_gasdm_{s}.hdf5', f'gas/iter{n}', mode='a')
+    resdf_gas = pd.DataFrame(data={'l':lam_all, 'M':M_all, 'V':V_all, 'D':D_all, 'P':P_all,})
+    resdf_gas.to_hdf(f'profiles_gasdm_{s}.hdf5', 'gas/main', mode='a')
+    resdf_gas.to_hdf(f'profiles_gasdm_{s}.hdf5', f'gas/iter{n}', mode='a')
 
     t_bef, t_now = t_now, time()
     print(f'{t_now-t_bef:.4g}s', f'{n}th iter gas profiles updated')
@@ -192,6 +192,10 @@ for n in range(0, 1):
     lam = res_traj_dm.y[0]
     # v = res_traj_dm.y[1]
     loglam = np.log(np.maximum(lam,1e-15))
+
+    resdf_traj_dm = pd.DataFrame(data={'xi':xi, 'lam':lam,})
+    resdf_traj_dm.to_hdf(f'traj_gasdm_{s}.hdf5', 'dm/main', mode='a')
+    resdf_traj_dm.to_hdf(f'traj_gasdm_{s}.hdf5', f'dm/iter{n}', mode='a')
 
     t_bef, t_now = t_now, time()
     print(f'{t_now-t_bef:.4g}s', f'{n}th iter DM trajectory obtained')
@@ -224,9 +228,9 @@ for n in range(0, 1):
 
     M_dm = interp1d(l_range, M_vals, fill_value="extrapolate")
 
-    df_dm = pd.DataFrame(data={'l':l_range, 'M':M_vals,})
-    df_dm.to_hdf(f'profiles_gasdm_{s}.hdf5', 'dm/main', mode='a')
-    df_dm.to_hdf(f'profiles_gasdm_{s}.hdf5', f'dm/iter{n}', mode='a')
+    resdf_dm = pd.DataFrame(data={'l':l_range, 'M':M_vals,})
+    resdf_dm.to_hdf(f'profiles_gasdm_{s}.hdf5', 'dm/main', mode='a')
+    resdf_dm.to_hdf(f'profiles_gasdm_{s}.hdf5', f'dm/iter{n}', mode='a')
 
     t_bef, t_now = t_now, time()
     print(f'{t_now-t_bef:.4g}s', f'{n}th iter DM mass profile updated')
@@ -241,11 +245,17 @@ filename = f'soln-globalsave_s{s:g}_gam{gam:.3g}.pkl'
 dill.dump_session(filename)
 
 
+# %%
+import dill                            #pip install dill --user
+filename = f'soln-globalsave_s{s:g}_gam{gam:.3g}.pkl'
+dill.load_session(filename)
+
+
 #%%
 t_now = time()
 # thtshsol = fsolve(M0, 1.5*np.pi)
 fig4, ax4 = plt.subplots(1, dpi=200, figsize=(7,5))
-fig5, axs5 = plt.subplots(2,2, dpi=200, figsize=(14,12), sharex=True)
+fig5, axs5 = plt.subplots(2,2, dpi=200, figsize=(10,8), sharex=True)
 fig6, ax6 = plt.subplots(1)
 
 plot_iters = [0,] #1,2,3,5,6,7]
@@ -266,13 +276,14 @@ for n in plot_iters:
 
     resdf_prof_gas = pd.read_hdf(f'profiles_gasdm_{s}.hdf5', key=f'gas/iter{n}', mode='r')
     resdf_prof_dm = pd.read_hdf(f'profiles_gasdm_{s}.hdf5', key=f'dm/iter{n}', mode='r')
+    resdf_traj_dm = pd.read_hdf(f'traj_gasdm_{s}.hdf5', key=f'dm/iter{n}', mode='r')
 
     axs5[0,0].plot(resdf_prof_gas.l, -resdf_prof_gas.V, color=color_this, label=f'n={n}')
     axs5[0,1].plot(resdf_prof_gas.l, resdf_prof_gas.D, color=color_this)
-    axs5[1,0].plot(resdf_prof_gas.l, resdf_prof_gas.M, color=color_this)
+    axs5[1,0].plot(resdf_prof_gas.l, resdf_prof_gas.M, color=color_this, ls='dashdot')
     axs5[1,1].plot(resdf_prof_gas.l, resdf_prof_gas.P, color=color_this)
 
-    axs5[1,0].plot(resdf_prof_dm.l, resdf_prof_dm.M)
+    axs5[1,0].plot(resdf_prof_dm.l, resdf_prof_dm.M, ls='solid', color=color_this)
 
 
     M_gas = interp1d(resdf_prof_gas.l, resdf_prof_gas.M)
@@ -281,6 +292,8 @@ for n in plot_iters:
     M_tot = lambda lam : M_dm(lam)+M_gas(lam)
 
     # axs5[1,0].plot(lam_all,M_all+M_dm(lam_all), color=color_this, ls='dashed')
+
+    ax6.plot(resdf_traj_dm.xi,resdf_traj_dm.lam, color=color_this, label=f'n={n}')
 
     t_bef, t_now = t_now, time()
     print(f'{t_now-t_bef:.4g}s', f'{n}th iter DM mass profile updated')
@@ -297,8 +310,13 @@ axs5[0,0].set_xscale('log')
 axs5[0,0].set_xlim(1e-4,1)
 axs5[0,0].legend()
 
+axs5[1,0].plot([], ls='solid', color='k', label='DM')
+axs5[1,0].plot([], ls='dashdot', color='k', label='Gas')
+axs5[1,0].plot([], ls='dashed', color='k', label='DMo')
+axs5[1,0].legend()
+
 if gam>1.66:
-    axs5[0,0].set_xlim(1e-2,1)
+    # axs5[0,0].set_xlim(1e-2,1)
     axs5[0,1].set_ylim(1e-1,1e6)
     axs5[1,0].set_ylim(1e-2,1e1)
     axs5[1,1].set_ylim(1e0,1e7)
@@ -312,6 +330,20 @@ axs5[0,0].set_yscale('log')
 axs5[0,1].set_yscale('log')
 axs5[1,0].set_yscale('log')
 axs5[1,1].set_yscale('log')
+
+
+
+
+ax6.set_xlim(0,4)
+ax6.set_ylim(0,1)
+ax6.set_yscale('log')
+ax6.set_ylim(resdf_prof_dm.l[1],1)
+ax6.xaxis.get_ticklocs(minor=True)     # []
+ax6.minorticks_on()
+ax6.grid(visible=True, which='both', axis='x')
+ax6.set_xlabel(r'$\xi$')
+ax6.set_ylabel(r'$\lambda$')
+ax6.legend()
 
 # fig5.savefig(f'Eds-gas-{gam:.02f}_profiles.pdf')
 # fig5.savefig(f'Eds-gas-{gam:.02f}_trajectory.pdf')
