@@ -92,6 +92,19 @@ def my_bisect(f, a, b, tol=1e-4):
     elif sfb == sfm:
         return my_bisect(f, a, m, tol)
 
+#%%
+def odefunc_traj_dm(xi, arg):
+    lam = arg[0]
+    v = arg[1]
+    return (v, -2/9 * (3*np.pi/4)**2* M_tot(lam)/lam**2 - de*(de-1)*lam - (2*de-1)*v + 1e-9/lam**3)
+
+# def odefunc_traj_gas(xi, arg):
+#     lam = arg
+#     try:
+#         return V_intrp(lam)-de*lam
+#     except:
+#         print(lam,s, xi, V_intrp(lam))
+#         raise Exception
 
 #%%
 t_now = time()
@@ -100,12 +113,11 @@ s = 2
 gam = 5/3
 fb = 0.156837
 # fig4, ax4 = plt.subplots(1, dpi=200, figsize=(10,7))
-thtsh_sols = {}
-fig5, axs5 = plt.subplots(2,2, dpi=200, figsize=(14,12), sharex=True)
-fig6, ax6 = plt.subplots(1)
+thtsh_sols = []
+thtbins_alls = []
+M0_atbins_alls = []
 
-# for s in [1,1.5,2,3][:]:
-dmo_prfl = pd.read_hdf(f'profiles_dmo_{s}.hdf5', key='iter8')
+dmo_prfl = pd.read_hdf(f'profiles_dmo_{s}.hdf5', key='main')
 
 Mta = (3*np.pi/4)**2
 M_dmo = interp1d(dmo_prfl['l'], dmo_prfl['M']*Mta, fill_value="extrapolate")
@@ -120,27 +132,33 @@ plot_iters = [0,1,2,3,5,6,7]
 t_bef, t_now = t_now, time()
 print(f'{t_now-t_bef:.4g}s', 'Initialised vals and funcs for iteration')
 
-for n in range(2):
-    thetbins = np.linspace(1.2*np.pi, 1.99*np.pi, 8)
+for n in range(0, 1):
+    thtbins_all = [np.linspace(1.2*np.pi, 1.99*np.pi, 8)]
+    M0_atbins_all = []
     for nsect_i in range(0,3):
-        M0_atbins = list(map(M0,thetbins))
+        thtbins = thtbins_all[nsect_i]
+        M0_atbins_all.append(list(map(M0,thtbins)))
         # t_bef, t_now = t_now, time()
         # print(f'{t_now-t_bef:.4g}s', f's={s}: grid M0 obtained')
-        # ax4.plot(thetbins,M0_atbins, label=f's={s} and nsect={nsect_i}')
-        idx_M0neg = np.where(np.sign(M0_atbins)==-1)[0].max()
+        idx_M0neg = np.where(np.sign(M0_atbins_all[nsect_i])==-1)[0].max()
         # t_bef, t_now = t_now, time()
         # print(f'{t_now-t_bef:.4g}s', f's={s}: grid M0 selected')
-        thtshsol = thetbins[idx_M0neg+1]
-        thetbins = np.linspace(thetbins[idx_M0neg], 2*thtshsol-thetbins[idx_M0neg], 8)
+        thtshsol = thtbins[idx_M0neg+1]
+        thtbins_all.append(np.linspace(thtbins[idx_M0neg], 2*thtshsol-thtbins[idx_M0neg], 8))
 
-    thtshsol = my_bisect(M0, thetbins[0], thetbins[-1], tol=1e-4)
+    thtshsol = my_bisect(M0, thtbins_all[nsect_i+1][0], thtbins_all[nsect_i+1][-1], tol=1e-4)
+    
+    thtsh_sols.append(thtshsol)
+    thtbins_alls.append(thtbins_all)
+    M0_atbins_alls.append(M0_atbins_all)
+
     t_bef, t_now = t_now, time()
     print(f'{t_now-t_bef:.4g}s', f'{n}th iter gas shock radius solved')
 
-    res = get_soln(thtshsol)
+    res_prof_gas = get_soln(thtshsol)
 
-    lamsh_post = np.exp(res.t)
-    V_post, D_post, M_post, P_post = res.y
+    lamsh_post = np.exp(res_prof_gas.t)
+    V_post, D_post, M_post, P_post = res_prof_gas.y
 
     thtsh_preange = np.arange(1*np.pi, thtshsol,0.01)
 
@@ -155,17 +173,6 @@ for n in range(2):
     M_all = np.concatenate([M_post, M_pre][::-1])
     P_all = np.concatenate([P_post, P_pre][::-1])
 
-    # color_this = plt.cm.turbo(s/2)
-    color_this = plt.cm.turbo(n/7)
-
-    if n in plot_iters:
-        axs5[0,0].plot(lam_all,-V_all, color=color_this, label=f'n={n}')
-        axs5[0,1].plot(lam_all,D_all, color=color_this)
-        axs5[1,0].plot(lam_all,M_all+M_dm(lam_all), color=color_this)
-        axs5[1,1].plot(lam_all,P_all, color=color_this)
-
-
-
     M_gas = interp1d(lam_all, M_all, fill_value="extrapolate")
 
     M_tot = lambda lam : M_dm(lam)+M_gas(lam)
@@ -177,29 +184,14 @@ for n in range(2):
     t_bef, t_now = t_now, time()
     print(f'{t_now-t_bef:.4g}s', f'{n}th iter gas profiles updated')
 
-    def ode_func(xi, arg):
-        lam = arg[0]
-        v = arg[1]
-        # print(lam, (v, -2/9 * M(lam)/lam**2 - de*(de-1)*lam - (2*de-1)*v + 1e-50/lam**10))
-        # if lam<1e-5: v=-v
-        try:
-            return (v, -2/9 * (3*np.pi/4)**2* M_tot(lam)/lam**2 - de*(de-1)*lam - (2*de-1)*v + 1e-9/lam**3)
-        except:
-            print(lam,s, v, xi)
-            if lam<0:
-                return (-lam,-lam)
-            raise Exception
 
-
-    res = solve_ivp(ode_func, (0,4), np.array([1,-de]), method='Radau', t_eval=(np.arange(0,16,0.00002))**(1/2), max_step=0.0005, dense_output=False, vectorized=True)
+    res_traj_dm = solve_ivp(odefunc_traj_dm, (0,3), np.array([1,-de]), method='Radau', t_eval=(np.arange(0,9,0.005))**(1/2), max_step=np.inf, dense_output=False, vectorized=True)
     # res1 = solve_ivp(fun, (res.t[-1],15), np.array([res.y[0][-1],-res.y[1][-1]]), max_step=0.1, dense_output=True)
 
-    xi = res.t
-    lam = res.y[0]
-    v = res.y[1]
+    xi = res_traj_dm.t
+    lam = res_traj_dm.y[0]
+    # v = res_traj_dm.y[1]
     loglam = np.log(np.maximum(lam,1e-15))
-
-    ax6.plot(xi,lam, color=color_this, lw=1, label=f'n={n}')
 
     t_bef, t_now = t_now, time()
     print(f'{t_now-t_bef:.4g}s', f'{n}th iter DM trajectory obtained')
@@ -232,8 +224,6 @@ for n in range(2):
 
     M_dm = interp1d(l_range, M_vals, fill_value="extrapolate")
 
-    axs5[1,0].plot(lam_all,M_all+M_dm(lam_all), color=color_this, ls='dashed')
-
     df_dm = pd.DataFrame(data={'l':l_range, 'M':M_vals,})
     df_dm.to_hdf(f'profiles_gasdm_{s}.hdf5', 'dm/main', mode='a')
     df_dm.to_hdf(f'profiles_gasdm_{s}.hdf5', f'dm/iter{n}', mode='a')
@@ -244,9 +234,64 @@ for n in range(2):
 
 
 
-axs5[1,0].plot(lam_all, M_dmo(lam_all), color='k', ls='dashed')
+#%%
+del res_traj_dm, lam, loglam, xi
+import dill                            #pip install dill --user
+filename = f'soln-globalsave_s{s:g}_gam{gam:.3g}.pkl'
+dill.dump_session(filename)
 
-# s-Loop ends
+
+#%%
+t_now = time()
+# thtshsol = fsolve(M0, 1.5*np.pi)
+fig4, ax4 = plt.subplots(1, dpi=200, figsize=(7,5))
+fig5, axs5 = plt.subplots(2,2, dpi=200, figsize=(14,12), sharex=True)
+fig6, ax6 = plt.subplots(1)
+
+plot_iters = [0,] #1,2,3,5,6,7]
+
+t_bef, t_now = t_now, time()
+print(f'{t_now-t_bef:.4g}s', 'Initialised plots and figs for iteration')
+
+for n in plot_iters:
+    color_this = plt.cm.turbo(n/7)
+    linestyles= [':', '--', '-']
+    thtbins_all = thtbins_alls[n]
+    for nsect_i in range(0,3):
+        ax4.plot(thtbins_all[nsect_i],M0_atbins_alls[n][nsect_i], color=color_this, ls=linestyles[nsect_i], label=f'n={n} and nsect={nsect_i}')
+
+    # thtshsol = my_bisect(M0, thtbins_all[0], thtbins_all[-1], tol=1e-4)
+    ax4.axvline(thtsh_sols[n], color=color_this)
+    print(f'n={n}', thtshsol)
+
+    resdf_prof_gas = pd.read_hdf(f'profiles_gasdm_{s}.hdf5', key=f'gas/iter{n}', mode='r')
+    resdf_prof_dm = pd.read_hdf(f'profiles_gasdm_{s}.hdf5', key=f'dm/iter{n}', mode='r')
+
+    axs5[0,0].plot(resdf_prof_gas.l, -resdf_prof_gas.V, color=color_this, label=f'n={n}')
+    axs5[0,1].plot(resdf_prof_gas.l, resdf_prof_gas.D, color=color_this)
+    axs5[1,0].plot(resdf_prof_gas.l, resdf_prof_gas.M, color=color_this)
+    axs5[1,1].plot(resdf_prof_gas.l, resdf_prof_gas.P, color=color_this)
+
+    axs5[1,0].plot(resdf_prof_dm.l, resdf_prof_dm.M)
+
+
+    M_gas = interp1d(resdf_prof_gas.l, resdf_prof_gas.M)
+    M_gas = interp1d(resdf_prof_dm.l, resdf_prof_dm.M)
+
+    M_tot = lambda lam : M_dm(lam)+M_gas(lam)
+
+    # axs5[1,0].plot(lam_all,M_all+M_dm(lam_all), color=color_this, ls='dashed')
+
+    t_bef, t_now = t_now, time()
+    print(f'{t_now-t_bef:.4g}s', f'{n}th iter DM mass profile updated')
+
+axs5[1,0].plot(dmo_prfl['l'], dmo_prfl['M']*Mta, color='k', ls='dashed')
+
+
+ax4.set_xlabel(r'$\theta$')
+ax4.set_ylabel(r'$M(\lambda=0)$')
+# ax4.set_ylim(-2,5)
+ax4.legend()
     
 axs5[0,0].set_xscale('log')
 axs5[0,0].set_xlim(1e-4,1)
@@ -271,10 +316,7 @@ axs5[1,1].set_yscale('log')
 # fig5.savefig(f'Eds-gas-{gam:.02f}_profiles.pdf')
 # fig5.savefig(f'Eds-gas-{gam:.02f}_trajectory.pdf')
 
-#%%
-import dill                            #pip install dill --user
-filename = f'soln-globalsave_s{s:g}_gam{gam:.3g}.pkl'
-dill.dump_session(filename)
+
 #%%
 plt.show()
 
@@ -284,7 +326,7 @@ plt.show()
 
 # %%
 import dill                            #pip install dill --user
-filename = 'soln-globalsave-2.pkl'
+filename = f'soln-globalsave_s{s:g}_gam{gam:.3g}.pkl'
 dill.load_session(filename)
 
 #%%
