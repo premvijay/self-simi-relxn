@@ -170,6 +170,10 @@ for n in range(2):
 
     M_tot = lambda lam : M_dm(lam)+M_gas(lam)
 
+    df_gas = pd.DataFrame(data={'l':lam_all, 'M':M_all, 'V':V_all, 'D':D_all, 'P':P_all,})
+    df_gas.to_hdf(f'profiles_gasdm_{s}.hdf5', 'gas/main', mode='a')
+    df_gas.to_hdf(f'profiles_gasdm_{s}.hdf5', f'gas/iter{n}', mode='a')
+
     t_bef, t_now = t_now, time()
     print(f'{t_now-t_bef:.4g}s', f'{n}th iter gas profiles updated')
 
@@ -203,8 +207,8 @@ for n in range(2):
     l_range = np.zeros(301)
     l_range[1:] = np.logspace(-2.5,0, 300)
     M_vals = np.zeros(301)
-    rho_vals = np.zeros(301)
-    v_xi = interp1d(xi, v, fill_value="extrapolate")
+    # rho_vals = np.zeros(301)
+    # v_xi = interp1d(xi, v, fill_value="extrapolate")
     for i in range(1,301):
         # l_range.append(l)
         l = l_range[i]
@@ -229,6 +233,10 @@ for n in range(2):
     M_dm = interp1d(l_range, M_vals, fill_value="extrapolate")
 
     axs5[1,0].plot(lam_all,M_all+M_dm(lam_all), color=color_this, ls='dashed')
+
+    df_dm = pd.DataFrame(data={'l':l_range, 'M':M_vals,})
+    df_dm.to_hdf(f'profiles_gasdm_{s}.hdf5', 'dm/main', mode='a')
+    df_dm.to_hdf(f'profiles_gasdm_{s}.hdf5', f'dm/iter{n}', mode='a')
 
     t_bef, t_now = t_now, time()
     print(f'{t_now-t_bef:.4g}s', f'{n}th iter DM mass profile updated')
