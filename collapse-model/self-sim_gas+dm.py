@@ -67,11 +67,11 @@ def get_shock_bcs(thtsh):
 def get_soln(thtsh):
     lamsh, bcs = get_shock_bcs(thtsh)
     # print(thtsh)#(lamsh, 1e-9) #np.log(lamsh),np.log(1e-9))
-    return solve_ivp(odefunc, (np.log(lamsh),np.log(1e-9)), bcs, method='Radau', max_step=np.inf, vectorized=False)
+    return solve_ivp(odefunc, (np.log(lamsh),np.log(1e-6)), bcs, method='Radau', max_step=0.1, vectorized=False)
 def M0(thtsh):
     res = get_soln(thtsh)
     M0val = res.y[2][-1]
-    return M0val-3e-4 #if M0val>0 else -(-M0val)**(1/11)
+    return M0val-1e-4 #if M0val>0 else -(-M0val)**(1/11)
 
 #%%
 def solve_bisect(func,bounds):
@@ -96,7 +96,7 @@ def my_bisect(f, a, b, tol=1e-4):
 def odefunc_traj_dm(xi, arg):
     lam = arg[0]
     v = arg[1]
-    return (v, -2/9 * M_tot(lam)/lam**2 - de*(de-1)*lam - (2*de-1)*v + 1e-9/lam**3)
+    return (v, -2/9 * M_tot(lam)/lam**2 - de*(de-1)*lam - (2*de-1)*v + 1e-8/lam**3)
 
 def odefunc_traj_gas(xi, arg):
     lam = arg
@@ -109,8 +109,9 @@ def odefunc_traj_gas(xi, arg):
 t_now = time()
 # thtshsol = fsolve(M0, 1.5*np.pi)
 s = 2
-gam = 4.1/3
+gam = 4.5/3
 fb = 0.156837
+fb = 0.5
 fd = (1-fb)
 # fig4, ax4 = plt.subplots(1, dpi=200, figsize=(10,7))
 thtsh_sols = []
@@ -127,12 +128,12 @@ M_dm = lambda lam: M_dmo(lam)*(1-fb)
 
 de = 2* (1+s/3) /3
 
-plot_iters = [0,1,2,3] #,5,6,7]
+plot_iters = [0]#1,2,3] #,5,6,7]
 
 t_bef, t_now = t_now, time()
 print(f'{t_now-t_bef:.4g}s', 'Initialised vals and funcs for iteration')
 
-for n in range(0, 4):
+for n in range(0, 1):
     thtbins_all = [np.linspace(1.2*np.pi, 1.99*np.pi, 8)]
     M0_atbins_all = []
     for nsect_i in range(0,3):
@@ -271,7 +272,7 @@ for n in plot_iters:
         ax4.plot(thtbins_all[nsect_i],M0_atbins_alls[n][nsect_i], color=color_this, ls=linestyles[nsect_i], label=f'n={n} and nsect={nsect_i}')
 
     # thtshsol = my_bisect(M0, thtbins_all[0], thtbins_all[-1], tol=1e-4)
-    ax4.axvline(thtsh_sols[n], color=color_this)
+    ax4.axvline(thtsh_sols[n], color=color_this, label=r'$\theta_{s}=$'+f'{thtsh_sols[n]:.6g}')
     print(f'n={n}', thtshsol)
 
     resdf_prof_gas = pd.read_hdf(f'profiles_gasdm_s{s:g}_gam{gam:.3g}.hdf5', key=f'gas/iter{n}', mode='r')
@@ -384,8 +385,8 @@ plt.show()
 
 #%%
 fd = (1-fb)
-lamr_full = np.logspace(-3,-0.005,300)
-lamr = np.logspace(-3,-0.005,300)
+lamr_full = np.logspace(-2.3,-0.005,300)
+lamr = np.logspace(-2.3,-0.005,300)
 
 r, Mdr, Mbr, Mdr_dmo = lamr, M_dm(lamr), M_gas(lamr), M_dmo(lamr_full)*fd
 ri_pre = lamr_full
@@ -393,7 +394,7 @@ ri_pre = lamr_full
 #%%
 plt.plot(r,Mdr, label='DM')
 plt.plot(r,Mbr*fd/fb, label='baryon')
-plt.plot(ri_pre,Mdr_dmo, label='DMO_scaled' )
+plt.plot(ri_pre,Mdr_dmo, label='DM in DMO' )
 # plt.plot(r,Mdr+Mbr)
 plt.xscale('log')
 plt.yscale('log')
@@ -417,8 +418,8 @@ rfri = rf / ri
 #%%
 plt.figure()
 # plt.scatter(MiMf[60:-50],rfri[60:-50],c=rf[60:-50])
-plt.scatter(MiMf,rfri,c=np.log10(rf), cmap='nipy_spectral')
-# plt.scatter(MiMf[100:],rfri[100:],c=np.log10(rf[100:]), cmap='nipy_spectral')
+# plt.scatter(MiMf,rfri,c=np.log10(rf), cmap='nipy_spectral')
+plt.scatter(MiMf[100:],rfri[100:],c=np.log10(rf[100:]), cmap='nipy_spectral')
 plt.plot(MiMf,1+0.25*(MiMf-1),'k',label='q=0.25')
 plt.colorbar(label='rf (defined as relaxed $\lambda$)')
 plt.xlabel('Mi/Mf')
