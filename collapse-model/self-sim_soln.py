@@ -45,18 +45,18 @@ for s in [0.5,1,1.5,2,3][1::]:
             v = arg[1]
             # print(lam, (v, -2/9 * M(lam)/lam**2 - de*(de-1)*lam - (2*de-1)*v + 1e-50/lam**10))
             # if lam<1e-5: v=-v
-            try:
-                return (v, -2/9 * (3*np.pi/4)**2* M_func(lam)/lam**2 - de*(de-1)*lam - (2*de-1)*v + 1e-9/lam**3)
-            except:
-                print(lam,s, v, xi)
-                raise Exception
+            # try:
+            return (v, -2/9 * (3*np.pi/4)**2* M_func(np.abs(lam))/(lam**2+1e-6) * np.sign(lam) - de*(de-1)*lam - (2*de-1)*v)
+            # except:
+            #     print(lam,s, v, xi)
+            #     raise Exception
 
 
         res = solve_ivp(ode_func, (0,4), np.array([1,-de]), method='Radau', t_eval=np.linspace(0,64,5000000)**(1/3), max_step=np.inf, dense_output=False, vectorized=True) #np.unique(np.concatenate([np.linspace(0,2,50000),np.log10(np.linspace(1,10000,100000))]))
         # res1 = solve_ivp(fun, (res.t[-1],15), np.array([res.y[0][-1],-res.y[1][-1]]), max_step=0.1, dense_output=True)
 
         xi = res.t
-        lam = res.y[0]
+        lam = np.abs(res.y[0])
         v = res.y[1]
         loglam = np.log(np.maximum(lam,1e-15))
 
