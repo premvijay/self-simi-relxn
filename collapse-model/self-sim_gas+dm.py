@@ -96,7 +96,7 @@ def my_bisect(f, a, b, tol=1e-4):
 def odefunc_traj_dm(xi, arg):
     lam = arg[0]
     v = arg[1]
-    return (v, -2/9 * M_tot(lam)/lam**2 - de*(de-1)*lam - (2*de-1)*v + 1e-8/lam**3)
+    return (v, -2/9 * M_tot(np.abs(lam))/(lam**2+1e-6) * np.sign(lam) - de*(de-1)*lam - (2*de-1)*v)
 
 def odefunc_traj_gas(xi, arg):
     lam = arg
@@ -111,7 +111,7 @@ t_now = time()
 s = 2
 gam = 4.5/3
 fb = 0.156837
-fb = 0.5
+# fb = 0.5
 fd = (1-fb)
 # fig4, ax4 = plt.subplots(1, dpi=200, figsize=(10,7))
 thtsh_sols = []
@@ -122,11 +122,12 @@ dmo_prfl = pd.read_hdf(f'profiles_dmo_{s}.hdf5', key='main')
 
 Mta = (3*np.pi/4)**2
 M_dmo = interp1d(dmo_prfl['l'], dmo_prfl['M']*Mta, fill_value="extrapolate")
-D_dmo = interp1d(dmo_prfl['l'].iloc[1:], dmo_prfl['rho'].iloc[1:], fill_value="extrapolate")
+# D_dmo = interp1d(dmo_prfl['l'].iloc[1:], dmo_prfl['rho'].iloc[1:], fill_value="extrapolate")
 
 M_dm = lambda lam: M_dmo(lam)*(1-fb)
 
 de = 2* (1+s/3) /3
+upsil = 1 if s >= 3/2 else 3*s/(s+3)
 
 plot_iters = [0]#1,2,3] #,5,6,7]
 
@@ -185,12 +186,13 @@ for n in range(0, 1):
     t_bef, t_now = t_now, time()
     print(f'{t_now-t_bef:.4g}s', f'{n}th iter gas profiles updated')
 
+    xi_max = np.log(5e-4**upsil)*-3/2/s
 
-    res_traj_dm = solve_ivp(odefunc_traj_dm, (0,4), np.array([1,-de]), method='Radau', t_eval=(np.arange(0,160,0.0001))**(1/4), max_step=np.inf, dense_output=False, vectorized=True)
+    res_traj_dm = solve_ivp(odefunc_traj_dm, (0,xi_max), np.array([1,-de]), method='Radau', t_eval=(np.linspace(0,xi_max**3,500000))**(1/4), max_step=np.inf, dense_output=False, vectorized=True)
     # res1 = solve_ivp(fun, (res.t[-1],15), np.array([res.y[0][-1],-res.y[1][-1]]), max_step=0.1, dense_output=True)
 
     xi = res_traj_dm.t
-    lam = res_traj_dm.y[0]
+    lam = np.abs(res_traj_dm.y[0])
     # v = res_traj_dm.y[1]
     loglam = np.log(np.maximum(lam,1e-15))
 
@@ -271,7 +273,7 @@ for n in plot_iters:
     for nsect_i in range(0,3):
         ax4.plot(thtbins_all[nsect_i],M0_atbins_alls[n][nsect_i], color=color_this, ls=linestyles[nsect_i], label=f'n={n} and nsect={nsect_i}')
 
-    # thtshsol = my_bisect(M0, thtbins_all[0], thtbins_all[-1], tol=1e-4)
+    thtshsol = thtsh_sols[n]
     ax4.axvline(thtsh_sols[n], color=color_this, label=r'$\theta_{s}=$'+f'{thtsh_sols[n]:.6g}')
     print(f'n={n}', thtshsol)
 
@@ -300,7 +302,7 @@ for n in plot_iters:
     lamshsol, bcs = get_shock_bcs(thtshsol)
     taush = (thtshsol - np.sin(thtshsol)) / np.pi
     xish = np.log(taush)
-    res_traj_gas = solve_ivp(odefunc_traj_gas, (xish,2.2), np.array([lamshsol]), method='Radau', max_step=0.001, dense_output=False, vectorized=True)
+    res_traj_gas = solve_ivp(odefunc_traj_gas, (xish,4), np.array([lamshsol]), method='Radau', max_step=0.001, dense_output=False, vectorized=True)
     # res1 = solve_ivp(fun, (res.t[-1],15), np.array([res.y[0][-1],-res.y[1][-1]]), max_step=0.1, dense_output=True)
 
     t_bef, t_now = t_now, time()
@@ -331,6 +333,8 @@ ax4.legend()
 axs5[0,0].set_xscale('log')
 axs5[0,0].set_xlim(1e-4,1)
 axs5[0,0].legend()
+
+# axs5[0,0].set_ylim(1e-60,1)
 
 axs5[1,0].plot([], ls='solid', color='k', label='DM')
 axs5[1,0].plot([], ls='dashdot', color='k', label='Gas')
