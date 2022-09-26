@@ -49,7 +49,7 @@ def M_pred(l):
 
 M_func = M_pred
 
-color_this = plt.cm.jet(s/3)
+color_this = plt.cm.jet(s/2)
 # # linestyles = [":","-.","--","-"]
 # linestyles = [(0, (1, 3)), (0, (2, 3)), (0, (3, 3)), (0, (4, 3)), (0, (5, 1,1,1)), 'solid']
 # ls_cycler = cycle(linestyles[::])
@@ -86,5 +86,5 @@ ax41.plot(xi,v, color=color_this, ls=ls, lw=1)
 
 ax4.set_yscale('log')
 # %%
-
+plt.plot(xi,lam)
 # %%
