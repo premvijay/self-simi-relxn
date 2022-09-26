@@ -67,7 +67,7 @@ def get_shock_bcs(thtsh):
 def get_soln(thtsh):
     lamsh, bcs = get_shock_bcs(thtsh)
     # print(thtsh)#(lamsh, 1e-9) #np.log(lamsh),np.log(1e-9))
-    return solve_ivp(odefunc, (np.log(lamsh),np.log(1e-6)), bcs, method='Radau', max_step=0.1, vectorized=False)
+    return solve_ivp(odefunc, (np.log(lamsh),np.log(1e-8)), bcs, method='Radau', max_step=0.1, vectorized=False)
 def M0(thtsh):
     res = get_soln(thtsh)
     M0val = res.y[2][-1]
@@ -108,8 +108,8 @@ def odefunc_traj_gas(xi, arg):
 #%%
 t_now = time()
 # thtshsol = fsolve(M0, 1.5*np.pi)
-s = 2
-gam = 4.5/3
+s = 1
+gam = 1.3
 fb = 0.156837
 # fb = 0.5
 fd = (1-fb)
@@ -186,7 +186,7 @@ for n in range(0, 1):
     t_bef, t_now = t_now, time()
     print(f'{t_now-t_bef:.4g}s', f'{n}th iter gas profiles updated')
 
-    xi_max = np.log(5e-4**upsil)*-3/2/s
+    xi_max = np.log(2e-4**upsil)*-3/2/s
 
     res_traj_dm = solve_ivp(odefunc_traj_dm, (0,xi_max), np.array([1,-de]), method='Radau', t_eval=(np.linspace(0,xi_max**3,500000))**(1/4), max_step=np.inf, dense_output=False, vectorized=True)
     # res1 = solve_ivp(fun, (res.t[-1],15), np.array([res.y[0][-1],-res.y[1][-1]]), max_step=0.1, dense_output=True)
@@ -389,13 +389,14 @@ plt.show()
 
 #%%
 fd = (1-fb)
-lamr_full = np.logspace(-2.3,-0.005,300)
-lamr = np.logspace(-2.3,-0.005,300)
+lamr_full = np.logspace(-3.3,-0.005,300)
+lamr = np.logspace(-3.3,-0.005,300)
 
 r, Mdr, Mbr, Mdr_dmo = lamr, M_dm(lamr), M_gas(lamr), M_dmo(lamr_full)*fd
 ri_pre = lamr_full
 
 #%%
+plt.figure()
 plt.plot(r,Mdr, label='DM')
 plt.plot(r,Mbr*fd/fb, label='baryon')
 plt.plot(ri_pre,Mdr_dmo, label='DM in DMO' )
@@ -422,8 +423,8 @@ rfri = rf / ri
 #%%
 plt.figure()
 # plt.scatter(MiMf[60:-50],rfri[60:-50],c=rf[60:-50])
-# plt.scatter(MiMf,rfri,c=np.log10(rf), cmap='nipy_spectral')
-plt.scatter(MiMf[100:],rfri[100:],c=np.log10(rf[100:]), cmap='nipy_spectral')
+plt.scatter(MiMf,rfri,c=np.log10(rf), cmap='nipy_spectral')
+# plt.scatter(MiMf[100:],rfri[100:],c=np.log10(rf[100:]), cmap='nipy_spectral')
 plt.plot(MiMf,1+0.25*(MiMf-1),'k',label='q=0.25')
 plt.colorbar(label='rf (defined as relaxed $\lambda$)')
 plt.xlabel('Mi/Mf')
