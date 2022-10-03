@@ -109,7 +109,7 @@ def odefunc_traj_gas(xi, arg):
 t_now = time()
 # thtshsol = fsolve(M0, 1.5*np.pi)
 s = 1
-gam = 1.3
+gam = 4.5/3
 fb = 0.156837
 # fb = 0.5
 fd = (1-fb)
