@@ -96,7 +96,7 @@ def my_bisect(f, a, b, tol=1e-4):
 def odefunc_traj_dm(xi, arg):
     lam = arg[0]
     v = arg[1]
-    return (v, -2/9 * M_tot(np.abs(lam))/(lam**2+1e-6) * np.sign(lam) - de*(de-1)*lam - (2*de-1)*v)
+    return (v, -2/9 * M_tot(np.abs(lam))/(lam**2+1e-4) * np.sign(lam) - de*(de-1)*lam - (2*de-1)*v)
 
 def odefunc_traj_gas(xi, arg):
     lam = arg
@@ -108,7 +108,7 @@ def odefunc_traj_gas(xi, arg):
 #%%
 t_now = time()
 # thtshsol = fsolve(M0, 1.5*np.pi)
-s = 1
+s = 2
 gam = 5/3
 fb = 0.156837
 # fb = 0.5
@@ -157,7 +157,9 @@ for n in range(0, 1):
     t_bef, t_now = t_now, time()
     print(f'{t_now-t_bef:.4g}s', f'{n}th iter gas shock radius solved')
 
+    thtshsol = 1.95*np.pi
     res_prof_gas = get_soln(thtshsol)
+    # res_prof_gas = get_soln(1.95*np.pi)
 
     lamsh_post = np.exp(res_prof_gas.t)
     V_post, D_post, M_post, P_post = res_prof_gas.y
@@ -175,6 +177,7 @@ for n in range(0, 1):
     M_all = np.concatenate([M_post, M_pre][::-1])
     P_all = np.concatenate([P_post, P_pre][::-1])
 
+    # M_all = lam_all**(upsil)*M_all[0]
     M_gas = interp1d(lam_all, M_all, fill_value="extrapolate")
 
     M_tot = lambda lam : M_dm(lam)+M_gas(lam)
@@ -186,7 +189,7 @@ for n in range(0, 1):
     t_bef, t_now = t_now, time()
     print(f'{t_now-t_bef:.4g}s', f'{n}th iter gas profiles updated')
 
-    xi_max = np.log(2e-4**upsil)*-3/2/s
+    xi_max = np.log(1e-4**upsil)*-3/2/s
 
     res_traj_dm = solve_ivp(odefunc_traj_dm, (0,xi_max), np.array([1,-de]), method='Radau', t_eval=(np.linspace(0,xi_max**3,500000))**(1/4), max_step=np.inf, dense_output=False, vectorized=True)
     # res1 = solve_ivp(fun, (res.t[-1],15), np.array([res.y[0][-1],-res.y[1][-1]]), max_step=0.1, dense_output=True)
@@ -302,21 +305,21 @@ for n in plot_iters:
     lamshsol, bcs = get_shock_bcs(thtshsol)
     taush = (thtshsol - np.sin(thtshsol)) / np.pi
     xish = np.log(taush)
-    res_traj_gas = solve_ivp(odefunc_traj_gas, (xish,4), np.array([lamshsol]), method='Radau', max_step=0.001, dense_output=False, vectorized=True)
-    # res1 = solve_ivp(fun, (res.t[-1],15), np.array([res.y[0][-1],-res.y[1][-1]]), max_step=0.1, dense_output=True)
+    # res_traj_gas = solve_ivp(odefunc_traj_gas, (xish,4), np.array([lamshsol]), method='Radau', max_step=0.001, dense_output=False, vectorized=True)
+    # # res1 = solve_ivp(fun, (res.t[-1],15), np.array([res.y[0][-1],-res.y[1][-1]]), max_step=0.1, dense_output=True)
 
-    t_bef, t_now = t_now, time()
-    print(f'{t_now-t_bef:.4g}s', f's={s}: post shock trajectory obtained')
+    # t_bef, t_now = t_now, time()
+    # print(f'{t_now-t_bef:.4g}s', f's={s}: post shock trajectory obtained')
     
-    xires = res_traj_gas.t
-    lamres = res_traj_gas.y[0]
-    # vres = res.y[1]
+    # xires = res_traj_gas.t
+    # lamres = res_traj_gas.y[0]
+    # # vres = res.y[1]
 
-    taures = np.exp(xires)
-    lamFres = lamres*taures**de
+    # taures = np.exp(xires)
+    # lamFres = lamres*taures**de
 
-    # ax6.plot(taures,lamFres, color=color_this, label=f's={s}')
-    ax6.plot(xires,lamres, color=color_this)
+    # # ax6.plot(taures,lamFres, color=color_this, label=f's={s}')
+    # ax6.plot(xires,lamres, color=color_this)
 
 
     t_bef, t_now = t_now, time()
@@ -360,7 +363,7 @@ axs5[1,1].set_yscale('log')
 
 
 
-ax6.set_xlim(0,4)
+# ax6.set_xlim(0,4)
 ax6.set_ylim(0,1)
 ax6.set_yscale('log')
 ax6.set_ylim(resdf_prof_dm.l[1],1)
@@ -389,8 +392,8 @@ plt.show()
 
 #%%
 fd = (1-fb)
-lamr_full = np.logspace(-3.3,-0.005,300)
-lamr = np.logspace(-3.3,-0.005,300)
+lamr_full = np.logspace(-2.3,-0.005,300)
+lamr = np.logspace(-2.3,-0.005,300)
 
 r, Mdr, Mbr, Mdr_dmo = lamr, M_dm(lamr), M_gas(lamr), M_dmo(lamr_full)*fd
 ri_pre = lamr_full
@@ -423,9 +426,10 @@ rfri = rf / ri
 #%%
 plt.figure()
 # plt.scatter(MiMf[60:-50],rfri[60:-50],c=rf[60:-50])
-plt.scatter(MiMf,rfri,c=np.log10(rf), cmap='nipy_spectral')
+plt.scatter(MiMf,rfri,c=np.log10(rf), cmap='nipy_spectral', label=f"s={s} "+r'$\gamma=$'+f"{gam:.3g}")
 # plt.scatter(MiMf[100:],rfri[100:],c=np.log10(rf[100:]), cmap='nipy_spectral')
-plt.plot(MiMf,1+0.25*(MiMf-1),'k',label='q=0.25')
+plt.plot(MiMf,1+0.25*(MiMf-1),'k',label='$q=0.25$')
+plt.plot(MiMf,1+0.25*(MiMf-1)-0.02,'k',label='$q=0.25$ and $q_0=0.02$')
 plt.colorbar(label='rf (defined as relaxed $\lambda$)')
 plt.xlabel('Mi/Mf')
 plt.ylabel('rf/ri')
