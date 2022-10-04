@@ -424,7 +424,7 @@ MiMf = ( fd* (Mbr/ Mdr + 1) )**-1
 rfri = rf / ri
  
 #%%
-plt.figure()
+plt.figure(figsize=(8,6))
 # plt.scatter(MiMf[60:-50],rfri[60:-50],c=rf[60:-50])
 plt.scatter(MiMf,rfri,c=np.log10(rf), cmap='nipy_spectral', label=f"s={s} "+r'$\gamma=$'+f"{gam:.3g}")
 # plt.scatter(MiMf[100:],rfri[100:],c=np.log10(rf[100:]), cmap='nipy_spectral')
