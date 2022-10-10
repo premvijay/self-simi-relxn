@@ -61,6 +61,25 @@ def preshock(tht):
     return lam,V,D,M
 
 
+#%%
+def odefunc_prof_init_Pless(lam, depvars):
+    # lam = 1/laminv
+    # lam = np.exp(l)
+    V,D,M = depvars
+    Vb = V - de*lam
+    linb = -np.array([2*D*V-2*D*lam, (de-1)*V*lam+2/9*M/lam, -3*lam**3*D])/lam
+    # der_num = np.transpose(np.linalg.solve(linMat1,linb1), (1,0))
+    linMat_det1 = D*Vb**2
+    # if linMat_det1 == 0: print(depvars)
+    linMat_cofac1 = np.array([[0,D*Vb,0],[D*Vb,-D**2,0],[0,0,linMat_det1]])
+    linMat_inv = linMat_cofac1/ linMat_det1
+    der = np.matmul(linMat_inv,linb)
+    return der #*lam**2
+
+# tht_ran = np.linspace(np.pi,1.5*np.pi)
+# res = solve_ivp(odefunc_prof_init_Pless, (1,0.5), preshock(np.pi)[1:], max_step=0.01 )
+# plt.plot(res.t,res.y[2])
+# plt.plot(preshock(tht_ran)[0], preshock(tht_ran)[3])
 
 # %%
 def odefunc(l, depvars):
