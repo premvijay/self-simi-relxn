@@ -147,6 +147,19 @@ def M0(thtsh):
     return M0val-3e-4 #if M0val>0 else -(-M0val)**(1/11)
 
 #%%
+def get_soln_gas_full(lamsh):
+    res_pre = solve_ivp(odefunc_prof_init_Pless, (1,lamsh), preshock(np.pi)[1:], max_step=0.01 )
+    V1, D1, M1 = res_pre.y[0][-1], res_pre.y[1][-1], res_pre.y[2][-1]
+    bcs = shock_jump(lamsh, V1, D1, M1) #get_shock_bcs(thtsh_sols[s])[1] #
+    res_post = solve_ivp(odefunc, (np.log(lamsh),np.log(1e-9)), bcs, method='Radau', max_step=np.inf, vectorized=False)
+    return res_pre, res_post
+
+def M0_num(lamsh):
+    res = get_soln_gas_full(lamsh)[1]
+    M0val = res.y[2][-1]
+    return M0val-3e-4 #if M0val>0 else -(-M0val)**(1/11)
+
+#%%
 def solve_bisect(func,bounds):
     b0, b1 = bounds
     bmid = (b0+b1)/2
@@ -185,36 +198,36 @@ gam = 5/3
 s_vals = [0.5,1,1.5,2,3,5]
 fb = 0.2
 fig4, ax4 = plt.subplots(1, dpi=200, figsize=(10,7))
-thtsh_sols = {}
-thetbins = np.linspace(1.2*np.pi, 1.99*np.pi, 8)
+lamsh_sols = {}
+lambins = np.linspace(1.2*np.pi, 1.99*np.pi, 8)
 M0_atbins = {}
 M0_sols = {}
 
 for s in s_vals[::]:
     t_now = time()
     de = 2* (1+s/3) /3
-    thetbins = np.linspace(1.2*np.pi, 1.99*np.pi, 8)
+    lambins = np.linspace(0.9, 0.05, 8)
     for nsect_i in range(0,3):
-        M0_atbins[s] = list(map(M0,thetbins))
+        M0_atbins[s] = list(map(M0_num,lambins))
         t_bef, t_now = t_now, time()
         print(f'{t_now-t_bef:.4g}s', f's={s}: grid M0 obtained')
-        ax4.plot(thetbins,M0_atbins[s], label=f's={s} and nsect={nsect_i}')
+        ax4.plot(lambins,M0_atbins[s], label=f's={s} and nsect={nsect_i}')
         idx_M0neg = np.where(np.sign(M0_atbins[s])==-1)[0].max()
         t_bef, t_now = t_now, time()
         print(f'{t_now-t_bef:.4g}s', f's={s}: grid M0 selected')
-        thtshsol = thetbins[idx_M0neg+1]
-        thetbins = np.linspace(thetbins[idx_M0neg], 2*thtshsol-thetbins[idx_M0neg], 8)
+        lamshsol = lambins[idx_M0neg+1]
+        lambins = np.linspace(lambins[idx_M0neg], max(2*lamshsol-lambins[idx_M0neg],0.01), 8)
 
-    thtshsol = my_bisect(M0, thetbins[0], thetbins[-1], tol=1e-4)#+1e-5
-    # thtshsol = thetbins[idx_M0neg+1]
+    lamshsol = my_bisect(M0, lambins[0], lambins[-1], tol=1e-4)#+1e-5
+    # lamshsol = thetbins[idx_M0neg+1]
     t_bef, t_now = t_now, time()
     print(f'{t_now-t_bef:.4g}s', f's={s}: root thetsh obtained')
-    # thtshsol1 = minimize_scalar(M0, method='bounded', bounds=(1.5*np.pi, 1.9*np.pi))
-    thtsh_sols[s] = thtshsol
-    M0_sols[s] = M0(thtshsol)
-    ax4.scatter(thtshsol, M0_sols[s])
-    print(f's={s}', thtshsol, M0_sols[s])
-ax4.set_xlabel(r'$\theta$')
+    # lamshsol1 = minimize_scalar(M0, method='bounded', bounds=(1.5*np.pi, 1.9*np.pi))
+    lamsh_sols[s] = lamshsol
+    M0_sols[s] = M0(lamshsol)
+    ax4.scatter(lamshsol, M0_sols[s])
+    print(f's={s}', lamshsol, M0_sols[s])
+ax4.set_xlabel(r'$\lambda_{sh}}$')
 ax4.set_ylabel(r'$M(\lambda=0)$')
 ax4.set_ylim(-2,5)
 ax4.legend()
@@ -228,19 +241,22 @@ fig6, ax6 = plt.subplots(1)
 for s in s_vals[::]:
     t_now = time()
     de = 2* (1+s/3) /3
-    thtshsol = thtsh_sols[s]#+1e-10
-    res = get_soln(thtshsol)
-    print(res.y[2][-1])
-    # print(M0(thtshsol))
+    lamshsol = lamsh_sols[s]#+1e-10
+    res_pre, res_post = get_soln_gas_full(lamshsol)
+    print(res_post.y[2][-1])
+    # print(M0(lamshsol))
     t_bef, t_now = t_now, time()
     print(f'{t_now-t_bef:.4g}s', f's={s}: post shock profiles obtained')
 
-    lamsh_post = np.exp(res.t)
-    V_post, D_post, M_post, P_post = res.y
+    lamsh_pre = res_pre.t
+    V_pre, D_pre, M_pre = res_pre.y
 
-    thtsh_preange = np.arange(1.1*np.pi, thtshsol,0.01)
+    lamsh_post = np.exp(res_post.t)
+    V_post, D_post, M_post, P_post = res_post.y
 
-    lamsh_pre, V_pre, D_pre, M_pre = preshock(thtsh_preange)
+    # lamsh_preange = np.arange(1.1*np.pi, lamshsol,0.01)
+
+    # lamsh_pre, V_pre, D_pre, M_pre = preshock(thtsh_preange)
     P_pre = lamsh_pre*0
 
     lamsh = lamsh_pre.min()
@@ -273,21 +289,14 @@ for s in s_vals[::]:
     print(f'{t_now-t_bef:.4g}s', f's={s}: all profiles obtained')
 
     def odefunc_traj(xi, arg):
-        lam = arg[0]
-        v = arg[1]
-        # print(lam, (v, -2/9 * M(lam)/lam**2 - de*(de-1)*lam - (2*de-1)*v + 1e-50/lam**10))
-        # if lam<1e-5: v=-v
-        # if v>0: print(lam, v, V_intrp(lam)-de*lam)
-        try:
-            return (V_intrp(lam)-de*lam, -2/9 * M_intrp(lam)/lam**2 - de*(de-1)*lam - (2*de-1)*v - PderD_intrp(lam))
-        except:
-            print(lam,s, v, xi, V_intrp(lam))
-            raise Exception
+        lam = arg
+        return V_intrp(lam)-de*lam
 
-    lamshsol, bcs = get_shock_bcs(thtshsol)
-    taush = (thtshsol - np.sin(thtshsol)) / np.pi
-    xish = np.log(taush)
-    res = solve_ivp(odefunc_traj, (xish,2.2), np.array([lamshsol,bcs[0]-de*lamshsol]), method='RK45', max_step=0.001, dense_output=False, vectorized=True)
+    # V1, D1, M1 = res_pre.y[0][-1], res_pre.y[1][-1], res_pre.y[2][-1]
+    # bcs = shock_jump(lamshsol, V1, D1, M1)
+    # taush = (thtshsol - np.sin(thtshsol)) / np.pi
+    # xish = np.log(taush)
+    res = solve_ivp(odefunc_traj, (0,2.2), (1,), method='RK45', max_step=0.001, dense_output=False, vectorized=True)
     # res1 = solve_ivp(fun, (res.t[-1],15), np.array([res.y[0][-1],-res.y[1][-1]]), max_step=0.1, dense_output=True)
 
     t_bef, t_now = t_now, time()
@@ -295,7 +304,7 @@ for s in s_vals[::]:
     
     xires = res.t
     lamres = res.y[0]
-    vres = res.y[1]
+    # vres = res.y[1]
 
     taures = np.exp(xires)
     lamFres = lamres*taures**de
@@ -431,3 +440,188 @@ lamsh = 3.38976e-1
 bcs = shock_jump(lamsh, -1.47080, D_dmo(lamsh), M_dmo(lamsh))
 
 # %%
+
+#%%
+# thtshsol = fsolve(M0, 1.5*np.pi)
+s = 1
+gam = 5/3
+s_vals = [0.5,1,1.5,2,3,5]
+fb = 0.2
+fig4, ax4 = plt.subplots(1, dpi=200, figsize=(10,7))
+thtsh_sols = {}
+lamsh_sols = {}
+thetbins = np.linspace(1.2*np.pi, 1.99*np.pi, 8)
+M0_atbins = {}
+M0_sols = {}
+
+for s in s_vals[::]:
+    t_now = time()
+    de = 2* (1+s/3) /3
+    thetbins = np.linspace(1.2*np.pi, 1.99*np.pi, 8)
+    for nsect_i in range(0,3):
+        M0_atbins[s] = list(map(M0,thetbins))
+        t_bef, t_now = t_now, time()
+        print(f'{t_now-t_bef:.4g}s', f's={s}: grid M0 obtained')
+        ax4.plot(thetbins,M0_atbins[s], label=f's={s} and nsect={nsect_i}')
+        idx_M0neg = np.where(np.sign(M0_atbins[s])==-1)[0].max()
+        t_bef, t_now = t_now, time()
+        print(f'{t_now-t_bef:.4g}s', f's={s}: grid M0 selected')
+        thtshsol = thetbins[idx_M0neg+1]
+        thetbins = np.linspace(thetbins[idx_M0neg], 2*thtshsol-thetbins[idx_M0neg], 8)
+
+    thtshsol = my_bisect(M0, thetbins[0], thetbins[-1], tol=1e-4)#+1e-5
+    # thtshsol = thetbins[idx_M0neg+1]
+    t_bef, t_now = t_now, time()
+    print(f'{t_now-t_bef:.4g}s', f's={s}: root thetsh obtained')
+    # thtshsol1 = minimize_scalar(M0, method='bounded', bounds=(1.5*np.pi, 1.9*np.pi))
+    thtsh_sols[s] = thtshsol
+    M0_sols[s] = M0(thtshsol)
+    ax4.scatter(thtshsol, M0_sols[s])
+    print(f's={s}', thtshsol, M0_sols[s])
+ax4.set_xlabel(r'$\theta$')
+ax4.set_ylabel(r'$M(\lambda=0)$')
+ax4.set_ylim(-2,5)
+ax4.legend()
+
+#%%
+
+
+fig5, axs5 = plt.subplots(2,2, dpi=200, figsize=(12,10), sharex=True)
+fig6, ax6 = plt.subplots(1)
+
+for s in s_vals[::]:
+    t_now = time()
+    de = 2* (1+s/3) /3
+    thtshsol = thtsh_sols[s]#+1e-10
+    res = get_soln(thtshsol)
+    print(res.y[2][-1])
+    # print(M0(thtshsol))
+    t_bef, t_now = t_now, time()
+    print(f'{t_now-t_bef:.4g}s', f's={s}: post shock profiles obtained')
+
+    lamsh_post = np.exp(res.t)
+    V_post, D_post, M_post, P_post = res.y
+
+    thtsh_preange = np.arange(1.1*np.pi, thtshsol,0.01)
+
+    lamsh_pre, V_pre, D_pre, M_pre = preshock(thtsh_preange)
+    P_pre = lamsh_pre*0
+
+    lamsh = lamsh_pre.min()
+    lamsh_sols[s] = lamsh
+
+    lam_all = np.concatenate([lamsh_post, lamsh_pre][::-1])
+    V_all = np.concatenate([V_post, V_pre][::-1])
+    D_all = np.concatenate([D_post, D_pre][::-1])
+    M_all = np.concatenate([M_post, M_pre][::-1])
+    P_all = np.concatenate([P_post, P_pre][::-1])
+
+    color_this = plt.cm.turbo(s/4)
+
+    axs5[0,0].plot(lam_all,-V_all, color=color_this, label=f's={s}')
+    axs5[0,1].plot(lam_all,D_all, color=color_this)
+    axs5[1,0].plot(lam_all,M_all, color=color_this)
+    axs5[1,1].plot(lam_all,P_all, color=color_this)
+
+
+    PderD_post = np.gradient(P_post,lamsh_post)/D_post
+
+    M_intrp = interp1d(lam_all, M_all, fill_value="extrapolate")
+    D_intrp = interp1d(lam_all, D_all, fill_value="extrapolate")
+    V_intrp = interp1d(lam_all, V_all, fill_value="extrapolate")
+    irem = P_pre.shape[0]-1
+    # PderD_intrp = interp1d(np.delete(lam_all,irem), np.delete(PderD_all,irem), kind='linear', fill_value="extrapolate")
+
+    PderD_intrp = interp1d(lamsh_post, PderD_post, kind='linear', fill_value=0, bounds_error=False)
+
+    t_bef, t_now = t_now, time()
+    print(f'{t_now-t_bef:.4g}s', f's={s}: all profiles obtained')
+
+    def odefunc_traj(xi, arg):
+        lam = arg[0]
+        v = arg[1]
+        # print(lam, (v, -2/9 * M(lam)/lam**2 - de*(de-1)*lam - (2*de-1)*v + 1e-50/lam**10))
+        # if lam<1e-5: v=-v
+        # if v>0: print(lam, v, V_intrp(lam)-de*lam)
+        try:
+            return (V_intrp(lam)-de*lam, -2/9 * M_intrp(lam)/lam**2 - de*(de-1)*lam - (2*de-1)*v - PderD_intrp(lam))
+        except:
+            print(lam,s, v, xi, V_intrp(lam))
+            raise Exception
+
+    lamshsol, bcs = get_shock_bcs(thtshsol)
+    taush = (thtshsol - np.sin(thtshsol)) / np.pi
+    xish = np.log(taush)
+    res = solve_ivp(odefunc_traj, (xish,2.2), np.array([lamshsol,bcs[0]-de*lamshsol]), method='RK45', max_step=0.001, dense_output=False, vectorized=True)
+    # res1 = solve_ivp(fun, (res.t[-1],15), np.array([res.y[0][-1],-res.y[1][-1]]), max_step=0.1, dense_output=True)
+
+    t_bef, t_now = t_now, time()
+    print(f'{t_now-t_bef:.4g}s', f's={s}: post shock trajectory obtained')
+    
+    xires = res.t
+    lamres = res.y[0]
+    vres = res.y[1]
+
+    taures = np.exp(xires)
+    lamFres = lamres*taures**de
+
+    ax6.plot(taures,lamFres, color=color_this, label=f's={s}')
+    # ax6.plot(xires,lamres, color=color_this)
+
+    #trajectory analytical
+    thet_range = np.linspace(0.5, thtshsol,2000)
+    tau_anlt = (thet_range - np.sin(thet_range)) / np.pi
+    xi_anlt = np.log(tau_anlt)
+    lam_anlt = preshock(thet_range)[0]
+    lamF_anlt = lam_anlt*tau_anlt**de
+
+    # ax6.plot(xi_anlt, lam_anlt, color=color_this)
+
+
+    
+
+    ax6.plot(tau_anlt, lamF_anlt, color=color_this)
+    
+
+
+
+    # dmo_prfl = pd.read_hdf(f'profiles_dmo_{s}.hdf5')
+
+    # Mta = (3*np.pi/4)**2
+    # M_dmo = interp1d(dmo_prfl['l'], dmo_prfl['M']*Mta, fill_value="extrapolate")
+    # D_dmo = interp1d(dmo_prfl['l'].iloc[1:], dmo_prfl['rho'].iloc[1:], fill_value="extrapolate")
+
+    # axs5[1,0].plot(lam_all, M_dmo(lam_all), color=color_this, ls='dashed')
+
+#Loop ends
+
+ax6.legend(loc='lower left')
+ax6.set_xlabel(r'$\tau$')
+ax6.set_ylabel('$\lambda_F$')
+ax6.set_xlim(-1,5)
+ax6.set_ylim(0,1.1)
+    
+axs5[0,0].set_xscale('log')
+axs5[0,0].set_xlim(1e-5,1)
+axs5[0,0].legend()
+axs5[1,0].set_xlabel('$\lambda$')
+axs5[1,1].set_xlabel('$\lambda$')
+
+if gam>1.66:
+    axs5[0,0].set_xlim(1e-2,1)
+    axs5[0,1].set_ylim(1e-1,1e6)
+    axs5[1,0].set_ylim(1e-2,1e1)
+    axs5[1,1].set_ylim(1e0,1e7)
+
+axs5[0,0].set_ylabel('-V')
+axs5[0,1].set_ylabel('D')
+axs5[1,0].set_ylabel('M')
+axs5[1,1].set_ylabel('P')
+
+axs5[0,0].set_yscale('log')
+axs5[0,1].set_yscale('log')
+axs5[1,0].set_yscale('log')
+axs5[1,1].set_yscale('log')
+
+fig5.savefig(f'Eds-gas-{gam:.02f}_profiles.pdf')
+fig6.savefig(f'Eds-gas-{gam:.02f}_trajectory.pdf')
