@@ -143,21 +143,24 @@ def get_soln(thtsh):
     return solve_ivp(odefunc, (np.log(lamsh),np.log(1e-9)), bcs, method='Radau', max_step=np.inf, vectorized=False)
 def M0(thtsh):
     res = get_soln(thtsh)
+    lamsh_post = np.exp(res.t)
+    V_post, D_post, M_post, P_post = res.y
+    M0_expected = M_post[0]*(lamsh_post[-1]/lamsh_post[0])**(alpha_D+3)
     M0val = res.y[2][-1]
-    return M0val-3e-4 #if M0val>0 else -(-M0val)**(1/11)
+    return M0val-M0_expected #3e-3 #if M0val>0 else -(-M0val)**(1/11)
 
 #%%
 def get_soln_gas_full(lamsh):
     res_pre = solve_ivp(odefunc_prof_init_Pless, (1,lamsh), preshock(np.pi)[1:], max_step=0.01 )
     V1, D1, M1 = res_pre.y[0][-1], res_pre.y[1][-1], res_pre.y[2][-1]
     bcs = shock_jump(lamsh, V1, D1, M1) #get_shock_bcs(thtsh_sols[s])[1] #
-    res_post = solve_ivp(odefunc, (np.log(lamsh),np.log(1e-9)), bcs, method='Radau', max_step=np.inf, vectorized=False)
+    res_post = solve_ivp(odefunc, (np.log(lamsh),np.log(1e-12)), bcs, method='Radau', max_step=np.inf, vectorized=False)
     return res_pre, res_post
 
 def M0_num(lamsh):
     res = get_soln_gas_full(lamsh)[1]
     M0val = res.y[2][-1]
-    return M0val-3e-4 #if M0val>0 else -(-M0val)**(1/11)
+    return M0val-3e-1 #if M0val>0 else -(-M0val)**(1/11)
 
 #%%
 def solve_bisect(func,bounds):
@@ -199,14 +202,14 @@ s_vals = [0.5,1,1.5,2,3,5]
 fb = 0.2
 fig4, ax4 = plt.subplots(1, dpi=200, figsize=(10,7))
 lamsh_sols = {}
-lambins = np.linspace(1.2*np.pi, 1.99*np.pi, 8)
+# lambins = np.linspace(1.2*np.pi, 1.99*np.pi, 8)
 M0_atbins = {}
 M0_sols = {}
 
 for s in s_vals[::]:
     t_now = time()
     de = 2* (1+s/3) /3
-    lambins = np.linspace(0.9, 0.05, 8)
+    lambins = np.linspace(0.5, 0.05, 8)
     for nsect_i in range(0,3):
         M0_atbins[s] = list(map(M0_num,lambins))
         t_bef, t_now = t_now, time()
@@ -313,7 +316,7 @@ for s in s_vals[::]:
     # ax6.plot(xires,lamres, color=color_this)
 
     #trajectory analytical
-    thet_range = np.linspace(0.5, thtshsol,2000)
+    thet_range = np.linspace(0.5, 1.2*np.pi,2000)
     tau_anlt = (thet_range - np.sin(thet_range)) / np.pi
     xi_anlt = np.log(tau_anlt)
     lam_anlt = preshock(thet_range)[0]
@@ -492,6 +495,7 @@ fig6, ax6 = plt.subplots(1)
 for s in s_vals[::]:
     t_now = time()
     de = 2* (1+s/3) /3
+    alpha_D = -9/(s+3)
     thtshsol = thtsh_sols[s]#+1e-10
     res = get_soln(thtshsol)
     print(res.y[2][-1])
@@ -523,6 +527,7 @@ for s in s_vals[::]:
     axs5[1,0].plot(lam_all,M_all, color=color_this)
     axs5[1,1].plot(lam_all,P_all, color=color_this)
 
+    axs5[1,0].plot(lamsh_post, M_post[0]*(lamsh_post/lamsh_post[0])**(alpha_D+3), color=color_this)
 
     PderD_post = np.gradient(P_post,lamsh_post)/D_post
 
@@ -625,3 +630,5 @@ axs5[1,1].set_yscale('log')
 
 fig5.savefig(f'Eds-gas-{gam:.02f}_profiles.pdf')
 fig6.savefig(f'Eds-gas-{gam:.02f}_trajectory.pdf')
+
+# %%
