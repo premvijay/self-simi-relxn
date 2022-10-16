@@ -149,6 +149,11 @@ def M0(thtsh):
     M0val = res.y[2][-1]
     return M0val-M0_expected #3e-3 #if M0val>0 else -(-M0val)**(1/11)
 
+def P0(thtsh):
+    res = get_soln(thtsh)
+    return res.y[3][-1]
+    # return M0val-M0_expected #3e-3 #if M0val>0 else -(-M0val)**(1/11)
+
 #%%
 def get_soln_gas_full(lamsh):
     res_pre = solve_ivp(odefunc_prof_init_Pless, (1,lamsh), preshock(np.pi)[1:], max_step=0.01 )
@@ -450,22 +455,26 @@ s = 1
 gam = 5/3
 s_vals = [0.5,1,1.5,2,3,5]
 fb = 0.2
-fig4, ax4 = plt.subplots(1, dpi=200, figsize=(10,7))
+fig4, ax4 = plt.subplots(1, dpi=120, figsize=(10,7))
 thtsh_sols = {}
 lamsh_sols = {}
 thetbins = np.linspace(1.2*np.pi, 1.99*np.pi, 8)
 M0_atbins = {}
+P0_atbins = {}
 M0_sols = {}
 
 for s in s_vals[::]:
     t_now = time()
     de = 2* (1+s/3) /3
+    alpha_D = -9/(s+3)
     thetbins = np.linspace(1.2*np.pi, 1.99*np.pi, 8)
     for nsect_i in range(0,3):
         M0_atbins[s] = list(map(M0,thetbins))
+        P0_atbins[s] = list(map(P0,thetbins))
         t_bef, t_now = t_now, time()
         print(f'{t_now-t_bef:.4g}s', f's={s}: grid M0 obtained')
         ax4.plot(thetbins,M0_atbins[s], label=f's={s} and nsect={nsect_i}')
+        ax4.plot(thetbins,P0_atbins[s], label=f'P0 s={s} and nsect={nsect_i}')
         idx_M0neg = np.where(np.sign(M0_atbins[s])==-1)[0].max()
         t_bef, t_now = t_now, time()
         print(f'{t_now-t_bef:.4g}s', f's={s}: grid M0 selected')
@@ -483,20 +492,20 @@ for s in s_vals[::]:
     print(f's={s}', thtshsol, M0_sols[s])
 ax4.set_xlabel(r'$\theta$')
 ax4.set_ylabel(r'$M(\lambda=0)$')
-ax4.set_ylim(-2,5)
+# ax4.set_ylim(-2,5)
 ax4.legend()
 
 #%%
 
 
-fig5, axs5 = plt.subplots(2,2, dpi=200, figsize=(12,10), sharex=True)
-fig6, ax6 = plt.subplots(1)
+fig5, axs5 = plt.subplots(2,2, dpi=100, figsize=(12,10), sharex=True)
+fig6, (ax6,ax62) = plt.subplots(1,2, dpi=100, figsize=(10,5))
 
 for s in s_vals[::]:
     t_now = time()
     de = 2* (1+s/3) /3
     alpha_D = -9/(s+3)
-    thtshsol = thtsh_sols[s]#+1e-10
+    thtshsol = thtsh_sols[s]
     res = get_soln(thtshsol)
     print(res.y[2][-1])
     # print(M0(thtshsol))
@@ -571,16 +580,16 @@ for s in s_vals[::]:
     lamFres = lamres*taures**de
 
     ax6.plot(taures,lamFres, color=color_this, label=f's={s}')
-    # ax6.plot(xires,lamres, color=color_this)
+    ax62.plot(xires,lamres, color=color_this)
 
     #trajectory analytical
-    thet_range = np.linspace(0.5, thtshsol,2000)
+    thet_range = np.linspace(np.pi, thtshsol,2000)
     tau_anlt = (thet_range - np.sin(thet_range)) / np.pi
     xi_anlt = np.log(tau_anlt)
     lam_anlt = preshock(thet_range)[0]
     lamF_anlt = lam_anlt*tau_anlt**de
 
-    # ax6.plot(xi_anlt, lam_anlt, color=color_this)
+    ax62.plot(xi_anlt, lam_anlt, color=color_this)
 
 
     
@@ -605,6 +614,12 @@ ax6.set_xlabel(r'$\tau$')
 ax6.set_ylabel('$\lambda_F$')
 ax6.set_xlim(-1,5)
 ax6.set_ylim(0,1.1)
+
+ax62.legend()
+ax62.set_xlabel(r'$\xi$')
+ax62.set_ylabel(r'$\lambda$')
+# ax62.set_yscale('log')
+ax62.set_ylim(0,1.1)
     
 axs5[0,0].set_xscale('log')
 axs5[0,0].set_xlim(1e-5,1)
@@ -630,5 +645,7 @@ axs5[1,1].set_yscale('log')
 
 fig5.savefig(f'Eds-gas-{gam:.02f}_profiles.pdf')
 fig6.savefig(f'Eds-gas-{gam:.02f}_trajectory.pdf')
+axs5[0,0].set_xlim(1e-10,1)
+axs5[1,0].set_ylim(1e-4,1e1)
 
 # %%
