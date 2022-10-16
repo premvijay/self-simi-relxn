@@ -165,7 +165,7 @@ def get_soln_gas_full(lamsh):
 def M0_num(lamsh):
     res = get_soln_gas_full(lamsh)[1]
     M0val = res.y[2][-1]
-    return M0val-3e-1 #if M0val>0 else -(-M0val)**(1/11)
+    return M0val-3e-3 #if M0val>0 else -(-M0val)**(1/11)
 
 #%%
 def solve_bisect(func,bounds):
@@ -205,7 +205,7 @@ s = 1
 gam = 5/3
 s_vals = [0.5,1,1.5,2,3,5]
 fb = 0.2
-fig4, ax4 = plt.subplots(1, dpi=200, figsize=(10,7))
+fig4, ax4 = plt.subplots(1, dpi=120, figsize=(10,7))
 lamsh_sols = {}
 # lambins = np.linspace(1.2*np.pi, 1.99*np.pi, 8)
 M0_atbins = {}
@@ -243,8 +243,8 @@ ax4.legend()
 #%%
 
 
-fig5, axs5 = plt.subplots(2,2, dpi=200, figsize=(12,10), sharex=True)
-fig6, ax6 = plt.subplots(1)
+fig5, axs5 = plt.subplots(2,2, dpi=100, figsize=(12,10), sharex=True)
+fig6, (ax6,ax62) = plt.subplots(1,2, dpi=100, figsize=(10,5))
 
 for s in s_vals[::]:
     t_now = time()
@@ -377,7 +377,8 @@ axs5[1,1].set_yscale('log')
 
 fig5.savefig(f'Eds-gas-{gam:.02f}_profiles.pdf')
 fig6.savefig(f'Eds-gas-{gam:.02f}_trajectory.pdf')
-
+axs5[0,0].set_xlim(1e-3,1)
+# axs5[1,0].set_ylim(1e-4,1e1)
 
 
 
