@@ -47,7 +47,7 @@ def odefunc(l, depvars):
     lam = np.exp(l)
     V,D,M,P = depvars
     Vb = V - de*lam
-    linb = -np.array([2*D*V-2*D*lam, (de-1)*V*lam+2/9*M/lam, (2*(gam-1)+2*(de-1))*lam, -3*lam**3*D])
+    linb = -np.array([2*D*V-2*D*lam, (de-1)*V*lam+2/9*(M+M_dm(lam))/lam, (2*(gam-1)+2*(de-1))*lam, -3*lam**3*D])
     # der_num = np.transpose(np.linalg.solve(linMat1,linb1), (1,0))
     linMat_det1 = D*Vb**2-gam*P
     # if linMat_det1 == 0: print(depvars)
@@ -56,6 +56,20 @@ def odefunc(l, depvars):
     der = np.matmul(linMat_inv,linb)
     return der #*lam**2
 
+#%%
+def odefunc_prof_init_Pless(lam, depvars):
+    # lam = 1/laminv
+    # lam = np.exp(l)
+    V,D,M = depvars
+    Vb = V - de*lam
+    linb = -np.array([2*D*V-2*D*lam, (de-1)*V*lam+2/9*(M+M_dm(lam))/lam, -3*lam**3*D])/lam
+    # der_num = np.transpose(np.linalg.solve(linMat1,linb1), (1,0))
+    linMat_det1 = D*Vb**2
+    # if linMat_det1 == 0: print(depvars)
+    linMat_cofac1 = np.array([[0,D*Vb,0],[D*Vb,-D**2,0],[0,0,linMat_det1]])
+    linMat_inv = linMat_cofac1/ linMat_det1
+    der = np.matmul(linMat_inv,linb)
+    return der #*lam**2
 
 #%%
 # thtsh = 4.58324+1
@@ -72,6 +86,19 @@ def M0(thtsh):
     res = get_soln(thtsh)
     M0val = res.y[2][-1]
     return M0val-1e-4 #if M0val>0 else -(-M0val)**(1/11)
+
+#%%
+def get_soln_gas_full(lamsh):
+    res_pre = solve_ivp(odefunc_prof_init_Pless, (1,lamsh), preshock(np.pi)[1:], max_step=0.01 )
+    V1, D1, M1 = res_pre.y[0][-1], res_pre.y[1][-1], res_pre.y[2][-1]
+    bcs = shock_jump(lamsh, V1, D1, M1) #get_shock_bcs(thtsh_sols[s])[1] #
+    res_post = solve_ivp(odefunc, (np.log(lamsh),np.log(1e-9)), bcs, method='Radau', max_step=np.inf, vectorized=False)
+    return res_pre, res_post
+
+def M0_num(lamsh):
+    res = get_soln_gas_full(lamsh)[1]
+    M0val = res.y[2][-1]
+    return M0val-3e-4 #if M0val>0 else -(-M0val)**(1/11)
 
 #%%
 def solve_bisect(func,bounds):
@@ -158,18 +185,27 @@ for n in range(0, 1):
     print(f'{t_now-t_bef:.4g}s', f'{n}th iter gas shock radius solved')
 
     thtshsol = 1.95*np.pi
-    res_prof_gas = get_soln(thtshsol)
-    # res_prof_gas = get_soln(1.95*np.pi)
+    lamsh = preshock(thtshsol)[0]
 
-    lamsh_post = np.exp(res_prof_gas.t)
-    V_post, D_post, M_post, P_post = res_prof_gas.y
+    res_prof_gas_pre, res_prof_gas_post = get_soln_gas_full(lamsh=lamsh)
 
-    thtsh_preange = np.arange(1*np.pi, thtshsol,0.01)
-
-    lamsh_pre, V_pre, D_pre, M_pre = preshock(thtsh_preange)
+    lamsh_pre = res_prof_gas_pre.t
+    V_pre, D_pre, M_pre = res_prof_gas_pre.y
     P_pre = lamsh_pre*0
 
-    lamsh = lamsh_pre.min()
+    # res_prof_gas = get_soln(thtshsol)
+    # res_prof_gas = get_soln(1.95*np.pi)
+
+    lamsh_post = np.exp(res_prof_gas_post.t)
+    V_post, D_post, M_post, P_post = res_prof_gas_post.y
+
+    # thtsh_preange = np.arange(1*np.pi, thtshsol,0.01)
+
+    # lamsh_pre, V_pre, D_pre, M_pre = preshock(thtsh_preange)
+    # P_pre = lamsh_pre*0
+    
+
+    
 
     lam_all = np.concatenate([lamsh_post, lamsh_pre][::-1])
     V_all = np.concatenate([V_post, V_pre][::-1])
@@ -310,7 +346,7 @@ for n in plot_iters:
 
     # t_bef, t_now = t_now, time()
     # print(f'{t_now-t_bef:.4g}s', f's={s}: post shock trajectory obtained')
-    
+
     # xires = res_traj_gas.t
     # lamres = res_traj_gas.y[0]
     # # vres = res.y[1]
