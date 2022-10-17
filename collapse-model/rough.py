@@ -31,7 +31,7 @@ plt.plot(res_fl.t,res_fl.y[0],)
 
 #%%
 s = 2
-fig4, (ax4,ax41) = plt.subplots(2, dpi=200, figsize=(10,12))
+fig4, (ax4,ax41) = plt.subplots(2, dpi=120, figsize=(8,9))
 # fig5, (ax5,ax6) = plt.subplots(1,2, dpi=200, figsize=(14,7))
 
 t_now = time()
@@ -65,10 +65,10 @@ def ode_func(xi, arg):
     a_grav = -2/9 * (3*np.pi/4)**2* M_func(np.abs(lam))/(lam**2+1e-6) * np.sign(lam)
     a_shm = - de*(de-1)*lam
     a_drag = - (2*de-1)*v
-    return (v, 2*a_grav + a_shm + 0*a_drag )# *np.sign(lam)/np.sign(v))
+    return (v, a_grav + a_shm + a_drag )# *np.sign(lam)/np.sign(v))
 
 
-res = solve_ivp(ode_func, (0,10), np.array([1,-de]), method='Radau', t_eval=np.linspace(0,1000,5000000)**(1/3), max_step=np.inf, dense_output=False, vectorized=True) #np.unique(np.concatenate([np.linspace(0,2,50000),np.log10(np.linspace(1,10000,100000))]))
+res = solve_ivp(ode_func, (0,10), np.array([1,-de]), method='Radau', t_eval=np.linspace(0,1000,500000)**(1/3), max_step=np.inf, dense_output=False, vectorized=True) #np.unique(np.concatenate([np.linspace(0,2,50000),np.log10(np.linspace(1,10000,100000))]))
 # res1 = solve_ivp(fun, (res.t[-1],15), np.array([res.y[0][-1],-res.y[1][-1]]), max_step=0.1, dense_output=True)
 
 xi = res.t
@@ -89,16 +89,17 @@ ax41.plot(xi,v, color=color_this, ls=ls, lw=1)
 
 ax4.set_yscale('log')
 # %%
-plt.plot(xi,lam)
+# plt.plot(xi,lam)
 # %%
 
 #%%
 plt.figure(figsize=(9,7))
-plt.plot(xi, -2/9 * (3*np.pi/4)**2* M_func(np.abs(lam))/(lam**2+1e-6) * np.sign(lam) - de*(de-1)*lam - (2*de-1)*v, label='accel')
-plt.plot(xi, -2/9 * (3*np.pi/4)**2* M_func(np.abs(lam))/(lam**2+1e-6) * np.sign(lam), label='accel1')
-plt.plot(xi, - de*(de-1)*lam, label='accel2')
-plt.plot(xi, - (2*de-1)*v, label='accel3')
-plt.plot(xi, v*10, label='vel')
-plt.plot(xi,lam*10, label='lam')
+plt.plot(xi, -2/9 * (3*np.pi/4)**2* M_func(np.abs(lam))/(lam**2+1e-6) * np.sign(lam) - de*(de-1)*lam - (2*de-1)*v, label='accel_total')
+plt.plot(xi, -2/9 * (3*np.pi/4)**2* M_func(np.abs(lam))/(lam**2+1e-6) * np.sign(lam), label='accel_mass')
+plt.plot(xi, - de*(de-1)*lam, label='accel_shm')
+plt.plot(xi, - (2*de-1)*v, label='accel_drag')
+# plt.plot(xi, v*10, label='vel')
+# plt.plot(xi,lam*10, label='lam')
 plt.legend()
+plt.show()
 # %%
