@@ -301,11 +301,11 @@ for n in plot_iters:
 
     ax6.plot(resdf_traj_dm.xi,resdf_traj_dm.lam, color=color_this, label=f'n={n}')
 
-    V_intrp = interp1d(resdf_prof_gas.l, resdf_prof_gas.V, fill_value="extrapolate")
-    lamshsol, bcs = get_shock_bcs(thtshsol)
-    taush = (thtshsol - np.sin(thtshsol)) / np.pi
-    xish = np.log(taush)
-    # res_traj_gas = solve_ivp(odefunc_traj_gas, (xish,4), np.array([lamshsol]), method='Radau', max_step=0.001, dense_output=False, vectorized=True)
+    # V_intrp = interp1d(resdf_prof_gas.l, resdf_prof_gas.V, fill_value="extrapolate")
+    # lamshsol, bcs = get_shock_bcs(thtshsol)
+    # taush = (thtshsol - np.sin(thtshsol)) / np.pi
+    # xish = np.log(taush)
+    # res_traj_gas = solve_ivp(odefunc_traj_gas, (1,4), np.array([1]), method='Radau', max_step=0.001, dense_output=False, vectorized=True)
     # # res1 = solve_ivp(fun, (res.t[-1],15), np.array([res.y[0][-1],-res.y[1][-1]]), max_step=0.1, dense_output=True)
 
     # t_bef, t_now = t_now, time()
@@ -320,6 +320,7 @@ for n in plot_iters:
 
     # # ax6.plot(taures,lamFres, color=color_this, label=f's={s}')
     # ax6.plot(xires,lamres, color=color_this)
+    ax6.plot(cumtrapz(1/(resdf_prof_gas.V-de*resdf_prof_gas.l), x=resdf_prof_gas.l), resdf_prof_gas.l[1:])
 
 
     t_bef, t_now = t_now, time()
