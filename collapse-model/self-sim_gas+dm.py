@@ -125,9 +125,9 @@ def odefunc_traj_dm(xi, arg):
     v = arg[1]
     return (v, -2/9 * M_tot(np.abs(lam))/(lam**2+1e-4) * np.sign(lam) - de*(de-1)*lam - (2*de-1)*v)
 
-def odefunc_traj_gas(xi, arg):
-    lam = arg
-    return V_intrp(lam)-de*lam
+# def odefunc_traj_gas(xi, arg):
+#     lam = arg
+#     return V_intrp(lam)-de*lam
 #     except:
 #         print(lam,s, xi, V_intrp(lam))
 #         raise Exception
