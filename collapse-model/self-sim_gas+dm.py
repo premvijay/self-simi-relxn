@@ -162,30 +162,31 @@ t_bef, t_now = t_now, time()
 print(f'{t_now-t_bef:.4g}s', 'Initialised vals and funcs for iteration')
 
 for n in range(0, 1):
-    thtbins_all = [np.linspace(1.2*np.pi, 1.99*np.pi, 8)]
-    M0_atbins_all = []
-    for nsect_i in range(0,3):
-        thtbins = thtbins_all[nsect_i]
-        M0_atbins_all.append(list(map(M0,thtbins)))
-        # t_bef, t_now = t_now, time()
-        # print(f'{t_now-t_bef:.4g}s', f's={s}: grid M0 obtained')
-        idx_M0neg = np.where(np.sign(M0_atbins_all[nsect_i])==-1)[0].max()
-        # t_bef, t_now = t_now, time()
-        # print(f'{t_now-t_bef:.4g}s', f's={s}: grid M0 selected')
-        thtshsol = thtbins[idx_M0neg+1]
-        thtbins_all.append(np.linspace(thtbins[idx_M0neg], 2*thtshsol-thtbins[idx_M0neg], 8))
+    # thtbins_all = [np.linspace(1.2*np.pi, 1.99*np.pi, 8)]
+    # M0_atbins_all = []
+    # for nsect_i in range(0,3):
+    #     thtbins = thtbins_all[nsect_i]
+    #     M0_atbins_all.append(list(map(M0,thtbins)))
+    #     # t_bef, t_now = t_now, time()
+    #     # print(f'{t_now-t_bef:.4g}s', f's={s}: grid M0 obtained')
+    #     idx_M0neg = np.where(np.sign(M0_atbins_all[nsect_i])==-1)[0].max()
+    #     # t_bef, t_now = t_now, time()
+    #     # print(f'{t_now-t_bef:.4g}s', f's={s}: grid M0 selected')
+    #     thtshsol = thtbins[idx_M0neg+1]
+    #     thtbins_all.append(np.linspace(thtbins[idx_M0neg], 2*thtshsol-thtbins[idx_M0neg], 8))
 
-    thtshsol = my_bisect(M0, thtbins_all[nsect_i+1][0], thtbins_all[nsect_i+1][-1], tol=1e-4)
+    # thtshsol = my_bisect(M0, thtbins_all[nsect_i+1][0], thtbins_all[nsect_i+1][-1], tol=1e-4)
     
-    thtsh_sols.append(thtshsol)
-    thtbins_alls.append(thtbins_all)
-    M0_atbins_alls.append(M0_atbins_all)
+    # thtsh_sols.append(thtshsol)
+    # thtbins_alls.append(thtbins_all)
+    # M0_atbins_alls.append(M0_atbins_all)
 
-    t_bef, t_now = t_now, time()
-    print(f'{t_now-t_bef:.4g}s', f'{n}th iter gas shock radius solved')
+    # t_bef, t_now = t_now, time()
+    # print(f'{t_now-t_bef:.4g}s', f'{n}th iter gas shock radius solved')
 
     thtshsol = 1.95*np.pi
     lamsh = preshock(thtshsol)[0]
+    # lamsh = 0.01
 
     res_prof_gas_pre, res_prof_gas_post = get_soln_gas_full(lamsh=lamsh)
 
@@ -281,7 +282,7 @@ for n in range(0, 1):
 
 
 #%%
-del res_traj_dm, lam, loglam, xi
+# del res_traj_dm, lam, loglam, xi
 import dill                            #pip install dill --user
 filename = f'soln-globalsave_s{s:g}_gam{gam:.3g}.pkl'
 dill.dump_session(filename)
@@ -296,7 +297,7 @@ dill.load_session(filename)
 #%%
 t_now = time()
 # thtshsol = fsolve(M0, 1.5*np.pi)
-fig4, ax4 = plt.subplots(1, dpi=200, figsize=(7,5))
+# fig4, ax4 = plt.subplots(1, dpi=200, figsize=(7,5))
 fig5, axs5 = plt.subplots(2,2, dpi=200, figsize=(10,8), sharex=True)
 fig6, ax6 = plt.subplots(1)
 
@@ -308,17 +309,18 @@ print(f'{t_now-t_bef:.4g}s', 'Initialised plots and figs for iteration')
 for n in plot_iters:
     color_this = plt.cm.turbo(n/7)
     linestyles= [':', '--', '-']
-    thtbins_all = thtbins_alls[n]
-    for nsect_i in range(0,3):
-        ax4.plot(thtbins_all[nsect_i],M0_atbins_alls[n][nsect_i], color=color_this, ls=linestyles[nsect_i], label=f'n={n} and nsect={nsect_i}')
+    # thtbins_all = thtbins_alls[n]
+    # for nsect_i in range(0,3):
+    #     ax4.plot(thtbins_all[nsect_i],M0_atbins_alls[n][nsect_i], color=color_this, ls=linestyles[nsect_i], label=f'n={n} and nsect={nsect_i}')
 
-    thtshsol = thtsh_sols[n]
-    ax4.axvline(thtsh_sols[n], color=color_this, label=r'$\theta_{s}=$'+f'{thtsh_sols[n]:.6g}')
-    print(f'n={n}', thtshsol)
+    # thtshsol = thtsh_sols[n]
+    # ax4.axvline(thtsh_sols[n], color=color_this, label=r'$\theta_{s}=$'+f'{thtsh_sols[n]:.6g}')
+    # print(f'n={n}', thtshsol)
 
     resdf_prof_gas = pd.read_hdf(f'profiles_gasdm_s{s:g}_gam{gam:.3g}.hdf5', key=f'gas/iter{n}', mode='r')
     resdf_prof_dm = pd.read_hdf(f'profiles_gasdm_s{s:g}_gam{gam:.3g}.hdf5', key=f'dm/iter{n}', mode='r')
     resdf_traj_dm = pd.read_hdf(f'traj_gasdm_s{s:g}_gam{gam:.3g}.hdf5', key=f'dm/iter{n}', mode='r')
+    #resdf_traj_dm_d = pd.read_hdf(f'traj_gasdm_s{s:g}_gam{gam:.3g}_desktop.hdf5', key=f'dm/iter{n}', mode='r')
 
     axs5[0,0].plot(resdf_prof_gas.l, -resdf_prof_gas.V, color=color_this, label=f'n={n}')
     axs5[0,1].plot(resdf_prof_gas.l, resdf_prof_gas.D, color=color_this)
@@ -336,6 +338,7 @@ for n in plot_iters:
     # axs5[1,0].plot(lam_all,M_all+M_dm(lam_all), color=color_this, ls='dashed')
 
     ax6.plot(resdf_traj_dm.xi,resdf_traj_dm.lam, color=color_this, label=f'n={n}')
+    # ax6.plot(resdf_traj_dm_d.xi,resdf_traj_dm_d.lam, label=f'n={n}_desktop')
 
     # V_intrp = interp1d(resdf_prof_gas.l, resdf_prof_gas.V, fill_value="extrapolate")
     # lamshsol, bcs = get_shock_bcs(thtshsol)
@@ -365,10 +368,10 @@ for n in plot_iters:
 axs5[1,0].plot(dmo_prfl['l'], dmo_prfl['M']*Mta, color='k', ls='dashed')
 
 
-ax4.set_xlabel(r'$\theta$')
-ax4.set_ylabel(r'$M(\lambda=0)$')
-# ax4.set_ylim(-2,5)
-ax4.legend()
+# ax4.set_xlabel(r'$\theta$')
+# ax4.set_ylabel(r'$M(\lambda=0)$')
+# # ax4.set_ylim(-2,5)
+# ax4.legend()
     
 axs5[0,0].set_xscale('log')
 axs5[0,0].set_xlim(1e-4,1)
