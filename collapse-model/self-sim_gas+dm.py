@@ -92,7 +92,7 @@ def get_soln_gas_full(lamsh):
     res_pre = solve_ivp(odefunc_prof_init_Pless, (1,lamsh), preshock(np.pi)[1:], max_step=0.01 )
     V1, D1, M1 = res_pre.y[0][-1], res_pre.y[1][-1], res_pre.y[2][-1]
     bcs = shock_jump(lamsh, V1, D1, M1) #get_shock_bcs(thtsh_sols[s])[1] #
-    res_post = solve_ivp(odefunc, (np.log(lamsh),np.log(1e-4)), bcs, method='Radau', max_step=np.inf, vectorized=False)
+    res_post = solve_ivp(odefunc, (np.log(lamsh),np.log(1e-8)), bcs, method='Radau', max_step=np.inf, vectorized=False)
     return res_pre, res_post
 
 def get_soln_gas_pre(lamsh):
@@ -190,7 +190,7 @@ for n in range(0, 1):
 
     # thtshsol = 1.95*np.pi
     # lamsh = preshock(thtshsol)[0]
-    lamsh = 1e-4
+    lamsh = 1e-1
 
     res_prof_gas_pre, res_prof_gas_post = get_soln_gas_full(lamsh=lamsh)
 
@@ -201,8 +201,8 @@ for n in range(0, 1):
     # res_prof_gas = get_soln(thtshsol)
     # res_prof_gas = get_soln(1.95*np.pi)
 
-    lamsh_post = np.exp(res_prof_gas_post.t)
-    V_post, D_post, M_post, P_post = res_prof_gas_post.y
+    lamsh_post = np.exp(res_prof_gas_post.t)[:1]*0
+    V_post, D_post, M_post, P_post = res_prof_gas_post.y[:,:1]*0
 
     # thtsh_preange = np.arange(1*np.pi, thtshsol,0.01)
 
