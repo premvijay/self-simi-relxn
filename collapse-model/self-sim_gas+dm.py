@@ -92,8 +92,12 @@ def get_soln_gas_full(lamsh):
     res_pre = solve_ivp(odefunc_prof_init_Pless, (1,lamsh), preshock(np.pi)[1:], max_step=0.01 )
     V1, D1, M1 = res_pre.y[0][-1], res_pre.y[1][-1], res_pre.y[2][-1]
     bcs = shock_jump(lamsh, V1, D1, M1) #get_shock_bcs(thtsh_sols[s])[1] #
-    res_post = solve_ivp(odefunc, (np.log(lamsh),np.log(1e-9)), bcs, method='Radau', max_step=np.inf, vectorized=False)
+    res_post = solve_ivp(odefunc, (np.log(lamsh),np.log(1e-4)), bcs, method='Radau', max_step=np.inf, vectorized=False)
     return res_pre, res_post
+
+def get_soln_gas_pre(lamsh):
+    res_pre = solve_ivp(odefunc_prof_init_Pless, (1,lamsh), preshock(np.pi)[1:], max_step=0.01 )
+    return res_pre
 
 def M0_num(lamsh):
     res = get_soln_gas_full(lamsh)[1]
@@ -184,9 +188,9 @@ for n in range(0, 1):
     # t_bef, t_now = t_now, time()
     # print(f'{t_now-t_bef:.4g}s', f'{n}th iter gas shock radius solved')
 
-    thtshsol = 1.95*np.pi
-    lamsh = preshock(thtshsol)[0]
-    # lamsh = 0.01
+    # thtshsol = 1.95*np.pi
+    # lamsh = preshock(thtshsol)[0]
+    lamsh = 1e-4
 
     res_prof_gas_pre, res_prof_gas_post = get_soln_gas_full(lamsh=lamsh)
 
@@ -222,6 +226,8 @@ for n in range(0, 1):
     resdf_gas = pd.DataFrame(data={'l':lam_all, 'M':M_all, 'V':V_all, 'D':D_all, 'P':P_all,})
     resdf_gas.to_hdf(f'profiles_gasdm_s{s:g}_gam{gam:.3g}.hdf5', 'gas/main', mode='a')
     resdf_gas.to_hdf(f'profiles_gasdm_s{s:g}_gam{gam:.3g}.hdf5', f'gas/iter{n}', mode='a')
+    # resdf_gas = pd.read_hdf(f'profiles_gasdm_s{s:g}_gam{gam:.3g}.hdf5', key=f'gas/iter{n}', mode='r')
+    # M_gas = interp1d(resdf_gas.l, resdf_gas.M, fill_value="extrapolate")
 
     t_bef, t_now = t_now, time()
     print(f'{t_now-t_bef:.4g}s', f'{n}th iter gas profiles updated')

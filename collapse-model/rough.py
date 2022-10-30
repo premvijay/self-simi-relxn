@@ -92,8 +92,18 @@ ax4.set_yscale('log')
 # plt.plot(xi,lam)
 # %%
 
+# %%
+traj_soln = pd.DataFrame(data={'xi':xi,'lam':lam,'v':v})
+traj_soln.to_hdf(f'traj_rough_dm.hdf5', key='main')
+
 #%%
-plt.figure(figsize=(9,7))
+traj_soln_p = pd.read_hdf(f'traj_rough_dm_p.hdf5', key='main')
+# %%
+
+#%%
+xi, lam, v = traj_soln_p[['xi','lam','v']].to_numpy().T
+#%%
+# plt.figure(figsize=(9,7))
 plt.plot(xi, -2/9 * (3*np.pi/4)**2* M_func(np.abs(lam))/(lam**2+1e-6) * np.sign(lam) - de*(de-1)*lam - (2*de-1)*v, label='accel_total')
 plt.plot(xi, -2/9 * (3*np.pi/4)**2* M_func(np.abs(lam))/(lam**2+1e-6) * np.sign(lam), label='accel_mass')
 plt.plot(xi, - de*(de-1)*lam, label='accel_shm')
