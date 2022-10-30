@@ -190,7 +190,7 @@ for n in range(0, 1):
 
     # thtshsol = 1.95*np.pi
     # lamsh = preshock(thtshsol)[0]
-    lamsh = 1e-1
+    lamsh = 1e-2
 
     res_prof_gas_pre, res_prof_gas_post = get_soln_gas_full(lamsh=lamsh)
 
