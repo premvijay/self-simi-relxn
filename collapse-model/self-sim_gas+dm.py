@@ -160,12 +160,12 @@ M_dm = lambda lam: M_dmo(lam)*(1-fb)
 de = 2* (1+s/3) /3
 upsil = 1 if s >= 3/2 else 3*s/(s+3)
 
-plot_iters = [0]#1,2,3] #,5,6,7]
+plot_iters = [0,1,2]#,3] #,5,6,7]
 
 t_bef, t_now = t_now, time()
 print(f'{t_now-t_bef:.4g}s', 'Initialised vals and funcs for iteration')
 
-for n in range(0, 1):
+for n in range(0, 3):
     # thtbins_all = [np.linspace(1.2*np.pi, 1.99*np.pi, 8)]
     # M0_atbins_all = []
     # for nsect_i in range(0,3):
@@ -476,9 +476,9 @@ plt.scatter(MiMf,rfri,c=np.log10(rf), cmap='nipy_spectral', label=f"s={s} "+r'$\
 # plt.scatter(MiMf[100:],rfri[100:],c=np.log10(rf[100:]), cmap='nipy_spectral')
 plt.plot(MiMf,1+0.25*(MiMf-1),'k',label='$q=0.25$')
 plt.plot(MiMf,1+0.25*(MiMf-1)-0.02,'k',label='$q=0.25$ and $q_0=0.02$')
-plt.colorbar(label='rf (defined as relaxed $\lambda$)')
-plt.xlabel('Mi/Mf')
-plt.ylabel('rf/ri')
+plt.colorbar(label='$r_f$ (defined as relaxed $\lambda$)')
+plt.xlabel('$M_i/M_f$')
+plt.ylabel('$r_f/r_i$')
 plt.legend()
 plt.savefig('ratio_plot_anyl.pdf')
 # %%
