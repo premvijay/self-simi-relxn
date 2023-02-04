@@ -214,6 +214,7 @@ M0_sols = {}
 for s in s_vals[::]:
     t_now = time()
     de = 2* (1+s/3) /3
+    alpha_D = -9/(s+3)
     lambins = np.linspace(0.5, 0.05, 8)
     for nsect_i in range(0,3):
         M0_atbins[s] = list(map(M0_num,lambins))
