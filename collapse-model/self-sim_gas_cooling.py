@@ -92,7 +92,7 @@ def odefunc(l, depvars):
     # except:
     #     veclen = 1
     # linMat = np.array([[D, Vb, 0*V, 0*V], [Vb, 0*V, 0*V, 1/D], [0*V, -Vb*gam/D, 0*V, Vb/P], [0*V, 0*V, 1+V-V, 0*V]])
-    linb = -np.array([2*D*V-2*D*lam, (de-1)*V*lam+2/9*M/lam, -((2-Lam0*D**(2-nu)*P**(nu-1))*(gam-1)+2*(de-1))*lam, -3*lam**3*D])
+    linb = -np.array([2*D*V-2*D*lam, (de-1)*V*lam+2/9*M/lam+1e-3/lam**3, -((2-Lam0*D**(2-nu)*P**(nu-1))*(gam-1)+2*(de-1))*lam, -3*lam**3*D])
     # try:
     #     linMat1 = np.transpose(linMat,(2,0,1)) #linMat.reshape(veclen,4,4)
     #     linb1 = np.transpose(linb, (1,0)) #linb.reshape(veclen,4)
@@ -356,8 +356,8 @@ ax6.plot(tau_anlt, lamF_anlt, color=color_this)
 ax6.legend(loc='lower left')
 ax6.set_xlabel(r'$\tau$')
 ax6.set_ylabel('$\lambda_F$')
-ax6.set_xlim(-1,5)
-ax6.set_ylim(0,1.1)
+ax6.set_xlim(-1,9)
+ax6.set_ylim(-0.1,1.1)
     
 axs5[0,0].set_xscale('log')
 axs5[0,0].set_xlim(1e-5,1)
@@ -367,9 +367,9 @@ axs5[1,1].set_xlabel('$\lambda$')
 
 if gam>1.66:
     axs5[0,0].set_xlim(1e-2,1)
-    axs5[0,1].set_ylim(1e-1,1e6)
-    axs5[1,0].set_ylim(1e0,1e1)
-    axs5[1,1].set_ylim(1e0,1e7)
+    axs5[0,1].set_ylim(1e-1,1e9)
+    axs5[1,0].set_ylim(5e-1,1e1)
+    axs5[1,1].set_ylim(1e0,1e13)
 
 axs5[0,0].set_ylabel('-V')
 axs5[0,1].set_ylabel('D')
