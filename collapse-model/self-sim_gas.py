@@ -165,7 +165,7 @@ def get_soln_gas_full(lamsh):
 def M0_num(lamsh):
     res = get_soln_gas_full(lamsh)[1]
     M0val = res.y[2][-1]
-    return M0val-3e-3 #if M0val>0 else -(-M0val)**(1/11)
+    return M0val-3e-4 #if M0val>0 else -(-M0val)**(1/11)
 
 #%%
 def solve_bisect(func,bounds):
@@ -244,13 +244,13 @@ ax4.legend()
 #%%
 
 
-fig5, axs5 = plt.subplots(2,2, dpi=100, figsize=(12,10), sharex=True)
+fig5, axs5 = plt.subplots(2,3, dpi=100, figsize=(18,12), sharex=True)
 fig6, (ax6,ax62) = plt.subplots(1,2, dpi=100, figsize=(10,5))
 
 for s in s_vals[::]:
     t_now = time()
     de = 2* (1+s/3) /3
-    lamshsol = lamsh_sols[s]#+1e-10
+    lamshsol = lamsh_sols[s] +5e-3
     res_pre, res_post = get_soln_gas_full(lamshsol)
     print(res_post.y[2][-1])
     # print(M0(lamshsol))
@@ -275,6 +275,7 @@ for s in s_vals[::]:
     D_all = np.concatenate([D_post, D_pre][::-1])
     M_all = np.concatenate([M_post, M_pre][::-1])
     P_all = np.concatenate([P_post, P_pre][::-1])
+    Vb_all = V_all - de*lam_all
 
     color_this = plt.cm.turbo(s/4)
 
@@ -282,6 +283,9 @@ for s in s_vals[::]:
     axs5[0,1].plot(lam_all,D_all, color=color_this)
     axs5[1,0].plot(lam_all,M_all, color=color_this)
     axs5[1,1].plot(lam_all,P_all, color=color_this)
+    axs5[0,2].plot(lam_all, P_all/D_all, color=color_this)
+    axs5[1,2].plot(lam_all, P_all/D_all**gam, color=color_this)
+    # axs5[1,2].plot(lam_all, D_all*Vb_all**2-gam*P_all, color=color_this)
 
 
     PderD_post = np.gradient(P_post,lamsh_post)/D_post
@@ -305,7 +309,7 @@ for s in s_vals[::]:
     # bcs = shock_jump(lamshsol, V1, D1, M1)
     # taush = (thtshsol - np.sin(thtshsol)) / np.pi
     # xish = np.log(taush)
-    res = solve_ivp(odefunc_traj, (0,2.2), (1,), method='RK45', max_step=0.001, dense_output=False, vectorized=True)
+    res = solve_ivp(odefunc_traj, (0,2.2), (1,), method='RK45', max_step=0.01, dense_output=False, vectorized=True)
     # res1 = solve_ivp(fun, (res.t[-1],15), np.array([res.y[0][-1],-res.y[1][-1]]), max_step=0.1, dense_output=True)
 
     t_bef, t_now = t_now, time()
@@ -362,19 +366,25 @@ axs5[1,1].set_xlabel('$\lambda$')
 
 if gam>1.66:
     axs5[0,0].set_xlim(1e-2,1)
+    axs5[0,0].set_ylim(6e-3,1e1)
     axs5[0,1].set_ylim(1e-1,1e6)
     axs5[1,0].set_ylim(1e-2,1e1)
     axs5[1,1].set_ylim(1e0,1e7)
+    axs5[0,2].set_ylim(1e-1,1e4)
 
 axs5[0,0].set_ylabel('-V')
 axs5[0,1].set_ylabel('D')
 axs5[1,0].set_ylabel('M')
 axs5[1,1].set_ylabel('P')
+axs5[0,2].set_ylabel('T')
+axs5[1,2].set_ylabel('K')
 
 axs5[0,0].set_yscale('log')
 axs5[0,1].set_yscale('log')
 axs5[1,0].set_yscale('log')
 axs5[1,1].set_yscale('log')
+axs5[0,2].set_yscale('log')
+axs5[1,2].set_yscale('log')
 
 fig5.savefig(f'Eds-gas-{gam:.02f}_profiles.pdf')
 fig6.savefig(f'Eds-gas-{gam:.02f}_trajectory.pdf')
