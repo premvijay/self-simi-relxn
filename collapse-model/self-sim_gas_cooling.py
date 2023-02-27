@@ -92,7 +92,7 @@ def odefunc(l, depvars):
     # except:
     #     veclen = 1
     # linMat = np.array([[D, Vb, 0*V, 0*V], [Vb, 0*V, 0*V, 1/D], [0*V, -Vb*gam/D, 0*V, Vb/P], [0*V, 0*V, 1+V-V, 0*V]])
-    linb = -np.array([2*D*V-2*D*lam, (de-1)*V*lam+2/9*M/lam, -(2*(gam-1)+2*(de-1))*lam, -3*lam**3*D])
+    linb = -np.array([2*D*V-2*D*lam, (de-1)*V*lam+2/9*M/lam, -((2-Lam0*D**(2-nu)*P**(nu-1))*(gam-1)+2*(de-1))*lam, -3*lam**3*D])
     # try:
     #     linMat1 = np.transpose(linMat,(2,0,1)) #linMat.reshape(veclen,4,4)
     #     linb1 = np.transpose(linb, (1,0)) #linb.reshape(veclen,4)
@@ -203,6 +203,8 @@ def my_bisect(f, a, b, tol=1e-4):
 # thtshsol = fsolve(M0, 1.5*np.pi)
 s = 2
 gam = 5/3
+Lam0 = 1e-6
+nu=1/2
 s_vals = [0.5,1,1.5,2,3,5]
 fb = 0.2
 fig4, ax4 = plt.subplots(1, dpi=120, figsize=(10,7))
@@ -243,14 +245,17 @@ ax4.legend()
 
 #%%
 
-
+s = 1
+gam = 5/3
+Lam0 = 1e-6
+nu=1/2
 fig5, axs5 = plt.subplots(2,2, dpi=100, figsize=(12,10), sharex=True)
 fig6, (ax6,ax62) = plt.subplots(1,2, dpi=100, figsize=(10,5))
 
 # for s in s_vals[::]:
 t_now = time()
 de = 2* (1+s/3) /3
-lamshsol = lamsh_sols[s]#+1e-10
+lamshsol = 0.2 #lamsh_sols[s] #-1e-1
 res_pre, res_post = get_soln_gas_full(lamshsol)
 print(res_post.y[2][-1])
 # print(M0(lamshsol))
@@ -363,7 +368,7 @@ axs5[1,1].set_xlabel('$\lambda$')
 if gam>1.66:
     axs5[0,0].set_xlim(1e-2,1)
     axs5[0,1].set_ylim(1e-1,1e6)
-    axs5[1,0].set_ylim(1e-2,1e1)
+    axs5[1,0].set_ylim(1e0,1e1)
     axs5[1,1].set_ylim(1e0,1e7)
 
 axs5[0,0].set_ylabel('-V')
@@ -376,8 +381,8 @@ axs5[0,1].set_yscale('log')
 axs5[1,0].set_yscale('log')
 axs5[1,1].set_yscale('log')
 
-# fig5.savefig(f'Eds-gas-{gam:.02f}_profiles.pdf')
-# fig6.savefig(f'Eds-gas-{gam:.02f}_trajectory.pdf')
+fig5.savefig(f'Eds-gas-cooling-{gam:.02f}_profiles.pdf')
+fig6.savefig(f'Eds-gas-cooling-{gam:.02f}_trajectory.pdf')
 axs5[0,0].set_xlim(1e-3,1)
 # axs5[1,0].set_ylim(1e-4,1e1)
 
