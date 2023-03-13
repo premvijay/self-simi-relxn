@@ -129,6 +129,31 @@ def odefunc(l, depvars):
     #     # raise Exception
     #     return der #depvars*0
 
+# %%
+def odefunc_tilde(l, depvars):
+    # lam = 1/laminv
+    lam = np.exp(l)
+    V,Dt,Mt,Pt = depvars
+    Vb = V - de*lam
+    # aD = -9/(s+3)
+    # aP = 2*aD+2
+    # aM = aD+3
+    D,M,P = Dt*lam**aD, Mt*lam**aM, Pt*lam**aP
+    # linMat = np.array([[D, Vb, 0*V, 0*V], [Vb, 0*V, 0*V, 1/D], [0*V, -Vb*gam/D, 0*V, Vb/P], [0*V, 0*V, 1+V-V, 0*V]])
+    # linb = -np.array([2*D*V-2*D*lam+Vb*aD*D, (de-1)*V*lam+2/9*M/lam+aP*P/D, (2*(gam-1)+2*(de-1))*lam+Vb*(aD*gam-aP), -3*lam**3*D+aM*M])
+    linb1 = -np.array([2*D*V-2*D*lam, (de-1)*V*lam+2/9*M/lam, (2*(gam-1)+2*(de-1))*lam, -3*lam**3*D])
+    linb2 = -np.array([Vb*aD/D, aP*P/D, Vb*(aD*gam-aP), aM*M])
+    linb = linb1+linb2
+    # der_num = np.transpose(np.linalg.solve(linMat1,linb1), (1,0))
+    linMat_det1 = D*Vb**2-gam*P
+    # if linMat_det1 == 0: print(depvars)
+    linMat_cofac1 = np.array([[-gam*P/D,D*Vb,-P,0],[Dt*Vb,-Dt*D,Dt*P/Vb,0],[0,0,0,lam**(-aM)*linMat_det1],[gam*Pt*Vb,-gam*D*Pt,D*Pt*Vb,0]])
+    linMat_inv = linMat_cofac1/ linMat_det1
+
+    der = np.matmul(linMat_inv,linb)
+
+    return der #*lam**2
+
 
 #%%
 # thtsh = 4.58324+1
@@ -162,10 +187,28 @@ def get_soln_gas_full(lamsh):
     res_post = solve_ivp(odefunc, (np.log(lamsh),np.log(1e-12)), bcs, method='Radau', max_step=np.inf, vectorized=False)
     return res_pre, res_post
 
+def get_soln_gas_full_tilde(lamsh):
+    res_pre = solve_ivp(odefunc_prof_init_Pless, (1,lamsh), preshock(np.pi)[1:], max_step=0.01 )
+    V1, D1, M1 = res_pre.y[0][-1], res_pre.y[1][-1], res_pre.y[2][-1]
+    bcs = shock_jump(lamsh, V1, D1, M1) #get_shock_bcs(thtsh_sols[s])[1] #
+    # aD = -9/(s+3)
+    # aP = 2*aD+2
+    # aM = 0 #aD+3
+    bcs[1] *= lamsh**(-aD)
+    bcs[2] *= lamsh**(-aM)
+    bcs[3] *= lamsh**(-aP)
+    res_post = solve_ivp(odefunc_tilde, (np.log(lamsh),np.log(1e-12)), bcs, method='Radau', max_step=np.inf, vectorized=False)
+    return res_pre, res_post
+
 def M0_num(lamsh):
     res = get_soln_gas_full(lamsh)[1]
     M0val = res.y[2][-1]
     return M0val-3e-4 #if M0val>0 else -(-M0val)**(1/11)
+
+def M0_num_tilde(lamsh):
+    res = get_soln_gas_full_tilde(lamsh)[1]
+    M0val = res.y[2][-1]
+    return M0val-1 #if M0val>0 else -(-M0val)**(1/11)
 
 #%%
 def solve_bisect(func,bounds):
@@ -215,9 +258,11 @@ for s in s_vals[::]:
     t_now = time()
     de = 2* (1+s/3) /3
     alpha_D = -9/(s+3)
-    lambins = np.linspace(0.5, 0.05, 8)
+    aD, aP, aM = alpha_D, 2*alpha_D+2, alpha_D+3
+    print(s, aD, aP, aM)
+    lambins = np.linspace(0.7, 0.03, 8)
     for nsect_i in range(0,3):
-        M0_atbins[s] = list(map(M0_num,lambins))
+        M0_atbins[s] = list(map(M0_num_tilde,lambins))
         t_bef, t_now = t_now, time()
         print(f'{t_now-t_bef:.4g}s', f's={s}: grid M0 obtained')
         ax4.plot(lambins,M0_atbins[s], label=f's={s} and nsect={nsect_i}')
@@ -227,13 +272,13 @@ for s in s_vals[::]:
         lamshsol = lambins[idx_M0neg+1]
         lambins = np.linspace(lambins[idx_M0neg], max(2*lamshsol-lambins[idx_M0neg],0.01), 8)
 
-    lamshsol = my_bisect(M0, lambins[0], lambins[-1], tol=1e-4)#+1e-5
+    lamshsol = my_bisect(M0_num_tilde, lambins[0], lambins[-1], tol=1e-4)#+1e-5
     # lamshsol = thetbins[idx_M0neg+1]
     t_bef, t_now = t_now, time()
     print(f'{t_now-t_bef:.4g}s', f's={s}: root thetsh obtained')
     # lamshsol1 = minimize_scalar(M0, method='bounded', bounds=(1.5*np.pi, 1.9*np.pi))
     lamsh_sols[s] = lamshsol
-    M0_sols[s] = M0(lamshsol)
+    M0_sols[s] = M0_num_tilde(lamshsol)
     ax4.scatter(lamshsol, M0_sols[s])
     print(f's={s}', lamshsol, M0_sols[s])
 ax4.set_xlabel(r'$\lambda_{sh}}$')
@@ -250,8 +295,10 @@ fig6, (ax6,ax62) = plt.subplots(1,2, dpi=100, figsize=(10,5))
 for s in s_vals[::]:
     t_now = time()
     de = 2* (1+s/3) /3
-    lamshsol = lamsh_sols[s] +5e-3
-    res_pre, res_post = get_soln_gas_full(lamshsol)
+    alpha_D = -9/(s+3)
+    aD, aP, aM = alpha_D, 2*alpha_D+2, alpha_D+3
+    lamshsol = 0.3 #lamsh_sols[s] +5e-3
+    res_pre, res_post = get_soln_gas_full_tilde(lamshsol)
     print(res_post.y[2][-1])
     # print(M0(lamshsol))
     t_bef, t_now = t_now, time()
