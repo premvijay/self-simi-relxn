@@ -130,15 +130,16 @@ def odefunc(l, depvars):
     #     return der #depvars*0
 
 # %%
-def odefunc_tilde(l, depvars):
+def odefunc_tilde_full(l, depvars):
     # lam = 1/laminv
     lam = np.exp(l)
-    V,Dt,Mt,Pt = depvars
-    Vb = V - de*lam
-    # aD = -9/(s+3)
-    # aP = 2*aD+2
-    # aM = aD+3
+    # lmV,lDt,lMt,lPt = depvars
+    mVb,Dt,Mt,Pt = np.exp(depvars)
+    Vb = -mVb
+    # Vb = V - de*lam
+    V = Vb + de*lam
     D,M,P = Dt*lam**aD, Mt*lam**aM, Pt*lam**aP
+    Z0 = 0*V
     # linMat = np.array([[D, Vb, 0*V, 0*V], [Vb, 0*V, 0*V, 1/D], [0*V, -Vb*gam/D, 0*V, Vb/P], [0*V, 0*V, 1+V-V, 0*V]])
     # linb = -np.array([2*D*V-2*D*lam+Vb*aD*D, (de-1)*V*lam+2/9*M/lam+aP*P/D, (2*(gam-1)+2*(de-1))*lam+Vb*(aD*gam-aP), -3*lam**3*D+aM*M])
     linb1 = -np.array([2*D*V-2*D*lam, (de-1)*V*lam+2/9*M/lam, (2*(gam-1)+2*(de-1))*lam, -3*lam**3*D])
@@ -147,12 +148,26 @@ def odefunc_tilde(l, depvars):
     # der_num = np.transpose(np.linalg.solve(linMat1,linb1), (1,0))
     linMat_det1 = D*Vb**2-gam*P
     # if linMat_det1 == 0: print(depvars)
-    linMat_cofac1 = np.array([[-gam*P/D,D*Vb,-P,0],[Dt*Vb,-Dt*D,Dt*P/Vb,0],[0,0,0,lam**(-aM)*linMat_det1],[gam*Pt*Vb,-gam*D*Pt,D*Pt*Vb,0]])
+    # linMat_cofac1 = np.array([[-gam*P/D,D*Vb,-P,0],[Dt*Vb,-Dt*D,Dt*P/Vb,0],[0,0,0,lam**(-aM)*linMat_det1],[gam*Pt*Vb,-gam*D*Pt,D*Pt*Vb,0]])
+    linMat_cofac1 = np.array([[-gam*P/(D*Vb),D,-P/Vb,Z0],[Vb,-D,P/Vb,Z0],[Z0,Z0,Z0,linMat_det1/M],[gam*Vb,-gam*D,D*Vb,Z0]])
     linMat_inv = linMat_cofac1/ linMat_det1
 
-    der = np.matmul(linMat_inv,linb)
+    # print(linMat_inv.shape,linb[:,np.newaxis].transpose((2,0,1)).shape)
 
-    return der #*lam**2
+    if np.isscalar(V):
+        der = np.matmul(linMat_inv, linb )+ np.array([-de/Vb*lam,Z0,Z0,Z0])
+        # if der[0]<0:
+            # print(der, linMat_det1, linb, linMat_cofac1)
+    else:
+        der = np.matmul(linMat_inv.transpose((2,0,1)), linb[:,np.newaxis].transpose((2,0,1)) )+ np.array([-de/Vb*lam,Z0,Z0,Z0])[:,np.newaxis].transpose((2,0,1))
+        der = der.transpose((1,2,0))[:,0,:]
+    der[2] = linb[3]/(M+1e-10)
+
+
+    return der, linMat_det1, linb, linMat_cofac1 #*lam**2
+
+def odefunc_tilde(l, depvars):
+    return odefunc_tilde_full(l, depvars)[0]
 
 
 #%%
@@ -191,13 +206,15 @@ def get_soln_gas_full_tilde(lamsh):
     res_pre = solve_ivp(odefunc_prof_init_Pless, (1,lamsh), preshock(np.pi)[1:], max_step=0.01 )
     V1, D1, M1 = res_pre.y[0][-1], res_pre.y[1][-1], res_pre.y[2][-1]
     bcs = shock_jump(lamsh, V1, D1, M1) #get_shock_bcs(thtsh_sols[s])[1] #
-    # aD = -9/(s+3)
-    # aP = 2*aD+2
-    # aM = 0 #aD+3
+    # print(bcs)
+    bcs[0] *= -1
+    bcs[0] += de*lamsh
     bcs[1] *= lamsh**(-aD)
     bcs[2] *= lamsh**(-aM)
     bcs[3] *= lamsh**(-aP)
-    res_post = solve_ivp(odefunc_tilde, (np.log(lamsh),np.log(1e-12)), bcs, method='Radau', max_step=np.inf, vectorized=False)
+    # print(bcs)
+    bcs = np.log(bcs)
+    res_post = solve_ivp(odefunc_tilde, (np.log(lamsh),np.log(1e-4)), bcs, method='RK45', max_step=np.inf, vectorized=False)
     return res_pre, res_post
 
 def M0_num(lamsh):
@@ -207,8 +224,8 @@ def M0_num(lamsh):
 
 def M0_num_tilde(lamsh):
     res = get_soln_gas_full_tilde(lamsh)[1]
-    M0val = res.y[2][-1]
-    return M0val-1 #if M0val>0 else -(-M0val)**(1/11)
+    M0val = res.y[2][-1] + (aM*res.t[-1])
+    return np.exp(M0val)-1 #if M0val>0 else -(-M0val)**(1/11)
 
 #%%
 def solve_bisect(func,bounds):
@@ -258,7 +275,7 @@ for s in s_vals[::]:
     t_now = time()
     de = 2* (1+s/3) /3
     alpha_D = -9/(s+3)
-    aD, aP, aM = alpha_D, 2*alpha_D+2, alpha_D+3
+    aD, aP, aM = alpha_D, (2*alpha_D+2), alpha_D+3
     print(s, aD, aP, aM)
     lambins = np.linspace(0.7, 0.03, 8)
     for nsect_i in range(0,3):
@@ -290,14 +307,14 @@ ax4.legend()
 
 
 fig5, axs5 = plt.subplots(2,3, dpi=100, figsize=(18,12), sharex=True)
-fig6, (ax6,ax62) = plt.subplots(1,2, dpi=100, figsize=(10,5))
+fig6, (ax62,ax6) = plt.subplots(1,2, dpi=100, figsize=(10,5))
 
-for s in s_vals[::]:
+for s in s_vals[1:2:]:
     t_now = time()
     de = 2* (1+s/3) /3
     alpha_D = -9/(s+3)
-    aD, aP, aM = alpha_D, 2*alpha_D+2, alpha_D+3
-    lamshsol = 0.3 #lamsh_sols[s] +5e-3
+    aD, aP, aM = alpha_D, 1*(2*alpha_D+2), alpha_D+3
+    lamshsol = 0.338976 #lamsh_sols[s] +5e-3
     res_pre, res_post = get_soln_gas_full_tilde(lamshsol)
     print(res_post.y[2][-1])
     # print(M0(lamshsol))
@@ -308,8 +325,9 @@ for s in s_vals[::]:
     V_pre, D_pre, M_pre = res_pre.y
 
     lamsh_post = np.exp(res_post.t)
-    V_post, D_post, M_post, P_post = res_post.y
-
+    mVb_post, Dt_post, Mt_post, Pt_post = np.exp(res_post.y)
+    V_post = -mVb_post + de*lamsh_post
+    D_post, M_post, P_post = Dt_post*lamsh_post**aD, Mt_post*lamsh_post**aM, Pt_post*lamsh_post**aP
     # lamsh_preange = np.arange(1.1*np.pi, lamshsol,0.01)
 
     # lamsh_pre, V_pre, D_pre, M_pre = preshock(thtsh_preange)
@@ -326,7 +344,7 @@ for s in s_vals[::]:
 
     color_this = plt.cm.turbo(s/4)
 
-    axs5[0,0].plot(lam_all,-V_all, color=color_this, label=f's={s}')
+    axs5[0,0].plot(lam_all,-Vb_all, color=color_this, label=f's={s}')
     axs5[0,1].plot(lam_all,D_all, color=color_this)
     axs5[1,0].plot(lam_all,M_all, color=color_this)
     axs5[1,1].plot(lam_all,P_all, color=color_this)
@@ -370,7 +388,7 @@ for s in s_vals[::]:
     lamFres = lamres*taures**de
 
     ax6.plot(taures,lamFres, color=color_this, label=f's={s}')
-    # ax6.plot(xires,lamres, color=color_this)
+    ax62.plot(xires,lamres, color=color_this)
 
     #trajectory analytical
     thet_range = np.linspace(0.5, 1.2*np.pi,2000)
@@ -403,7 +421,14 @@ ax6.legend(loc='lower left')
 ax6.set_xlabel(r'$\tau$')
 ax6.set_ylabel('$\lambda_F$')
 ax6.set_xlim(-1,5)
-ax6.set_ylim(0,1.1)
+# ax6.set_ylim(0,1.1)
+ax6.set_yscale('log')
+
+ax62.set_xlabel(r'$\xi$')
+ax62.set_ylabel('$\lambda$')
+# ax62.set_xlim(,)
+ax62.set_ylim(0.01,1.1)
+ax62.set_yscale('log')
     
 axs5[0,0].set_xscale('log')
 axs5[0,0].set_xlim(1e-5,1)
@@ -413,7 +438,7 @@ axs5[1,1].set_xlabel('$\lambda$')
 
 if gam>1.66:
     axs5[0,0].set_xlim(1e-2,1)
-    axs5[0,0].set_ylim(6e-3,1e1)
+    # axs5[0,0].set_ylim(6e-3,1e1)
     axs5[0,1].set_ylim(1e-1,1e6)
     axs5[1,0].set_ylim(1e-2,1e1)
     axs5[1,1].set_ylim(1e0,1e7)
@@ -437,6 +462,20 @@ fig5.savefig(f'Eds-gas-{gam:.02f}_profiles.pdf')
 fig6.savefig(f'Eds-gas-{gam:.02f}_trajectory.pdf')
 axs5[0,0].set_xlim(1e-3,1)
 # axs5[1,0].set_ylim(1e-4,1e1)
+
+
+
+#%%
+fig7,(ax71, ax72, ax73) = plt.subplots(3)
+ax71.plot(lamsh_post, res_post.y[0])
+ax72.plot(lamsh_post, odefunc_tilde(np.log(lamsh_post),res_post.y)[0])
+ax72.plot(lamsh_post[1:], np.diff(res_post.y[0])/np.diff(np.log(lamsh_post)))
+
+ax73.plot(lamsh_post, odefunc_tilde_full(lamsh_post,res_post.y)[3][0,1])
+#%%
+plt.plot(lamsh_pre, odefunc_tilde_full(np.log(lamsh_pre),shock_jump(lamsh_pre, *res_pre.y))[1])
+#%%
+
 
 
 
