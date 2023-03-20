@@ -230,7 +230,7 @@ def get_soln_gas_full_tilde(lamsh):
     bcs = to_btilde(lamsh, *bcs)
     # print(bcs)
     bcs = np.log(bcs)
-    res_post = solve_ivp(odefunc_tilde, (np.log(lamsh),np.log(1e-7)), bcs, events=stop_event, method='Radau', max_step=np.inf, vectorized=True)
+    res_post = solve_ivp(odefunc_tilde, (np.log(lamsh),np.log(1e-7)), bcs, events=stop_event, method='Radau', max_step=0.05, vectorized=True)
     return res_pre, res_post
 
 def M0_num(lamsh):
@@ -284,7 +284,7 @@ def my_bisect(f, a, b, xtol=1e-4):
 #%%
 # thtshsol = fsolve(M0, 1.5*np.pi)
 s = 1
-gam = 5/3
+gam = 4.5/3
 s_vals = [0.5,1,1.5,2,3,5]
 
 #%%
