@@ -141,7 +141,6 @@ def from_btilde(lam, mVb,Dt,Mt,Pt):
     return V,D,M,P
 
 def odefunc_tilde_full(l, depvars):
-    # lam = 1/laminv
     lam = np.exp(l)
     # lmV,lDt,lMt,lPt = depvars
     mVb,Dt,Mt,Pt = np.exp(depvars)
@@ -149,12 +148,9 @@ def odefunc_tilde_full(l, depvars):
     # Vb = V - de*lam
     V,D,M,P = from_btilde(lam, mVb,Dt,Mt,Pt)
     Z0 = 0*V
-    # linMat = np.array([[D, Vb, 0*V, 0*V], [Vb, 0*V, 0*V, 1/D], [0*V, -Vb*gam/D, 0*V, Vb/P], [0*V, 0*V, 1+V-V, 0*V]])
-    # linb = -np.array([2*D*V-2*D*lam+Vb*aD*D, (de-1)*V*lam+2/9*M/lam+aP*P/D, (2*(gam-1)+2*(de-1))*lam+Vb*(aD*gam-aP), -3*lam**3*D+aM*M])
     linb1 = -np.array([2*D*V-2*D*lam, (de-1)*V*lam+2/9*M/lam, (2*(gam-1)+2*(de-1))*lam])
-    linb2 = -np.array([Vb*aD*D, aP*P/D, -Vb*(aD*gam-aP)])
-    linb = linb1+linb2
-    # der_num = np.transpose(np.linalg.solve(linMat1,linb1), (1,0))
+    # linb2 = -np.array([Vb*aD*D, aP*P/D, -Vb*(aD*gam-aP)])
+    linb = linb1 #+linb2
     linMat_det1 = D*Vb**2-gam*P
     # if linMat_det1 == 0: print(depvars)
     # linMat_cofac1 = np.array([[-gam*P/D,D*Vb,-P,0],[Dt*Vb,-Dt*D,Dt*P/Vb,0],[0,0,0,lam**(-aM)*linMat_det1],[gam*Pt*Vb,-gam*D*Pt,D*Pt*Vb,0]])
@@ -162,10 +158,10 @@ def odefunc_tilde_full(l, depvars):
     linMat_inv = linMat_cofac1/ linMat_det1
 
     # print(linMat_inv.shape,linb[:,np.newaxis].transpose((2,0,1)).shape)
-    linc = np.array([de/Vb*lam,aD,aP])
+    linc = np.array([de/Vb*lam,aD+Z0,aP+Z0])
     if np.isscalar(V):
-        # der = np.matmul(linMat_inv, linb ) - linc
-        der = np.matmul(linMat_inv, linb )+ np.array([-de/Vb*lam,Z0,Z0])
+        der = np.matmul(linMat_inv, linb ) - linc
+        # der = np.matmul(linMat_inv, linb )+ np.array([-de/Vb*lam,Z0,Z0])
         # if der[0]<0:
             # print(der, linMat_det1, linb, linMat_cofac1)
     else:
