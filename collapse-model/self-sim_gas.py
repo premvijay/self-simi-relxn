@@ -445,12 +445,13 @@ axs5[1,0].set_xlabel('$\lambda$')
 axs5[1,1].set_xlabel('$\lambda$')
 
 if gam>1.66:
-    axs5[0,0].set_xlim(1e-2,1)
-    # axs5[0,0].set_ylim(6e-3,1e1)
+    axs5[0,0].set_xlim(9e-3,1)
+    axs5[0,0].set_ylim(5e-6,1e1)
     axs5[0,1].set_ylim(1e-1,1e6)
     axs5[1,0].set_ylim(1e-2,1e1)
     axs5[1,1].set_ylim(1e0,1e7)
-    axs5[0,2].set_ylim(1e-1,1e4)
+    axs5[0,2].set_ylim(1e-1,1e1)
+    axs5[1,2].set_ylim(1e-4,5e-1)
 
 axs5[0,0].set_ylabel('-V')
 axs5[0,1].set_ylabel('D')
@@ -468,7 +469,7 @@ axs5[1,2].set_yscale('log')
 
 fig5.savefig(f'Eds-gas-{gam:.02f}_profiles.pdf')
 fig6.savefig(f'Eds-gas-{gam:.02f}_trajectory.pdf')
-axs5[0,0].set_xlim(1e-3,1)
+# axs5[0,0].set_xlim(1e-3,1)
 # axs5[1,0].set_ylim(1e-4,1e1)
 
 
