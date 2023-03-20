@@ -140,6 +140,10 @@ def from_btilde(lam, mVb,Dt,Mt,Pt):
     D,M,P = Dt*lam**aD, Mt*lam**aM, Pt*lam**aP
     return V,D,M,P
 
+def stop_event(t,y):
+    return y[2]+10 #+de*np.exp(t)
+stop_event.terminal = True
+
 def odefunc_tilde_full(l, depvars):
     lam = np.exp(l)
     # lmV,lDt,lMt,lPt = depvars
@@ -181,6 +185,8 @@ def odefunc_tilde_full(l, depvars):
 def odefunc_tilde(l, depvars):
     der3, derM = odefunc_tilde_full(l, depvars)[:2]
     der = np.insert(der3, 2, derM, axis=0)
+    if not np.isfinite(der).all():
+        print(der,l,depvars)
     return der
 
 
@@ -224,7 +230,7 @@ def get_soln_gas_full_tilde(lamsh):
     bcs = to_btilde(lamsh, *bcs)
     # print(bcs)
     bcs = np.log(bcs)
-    res_post = solve_ivp(odefunc_tilde, (np.log(lamsh),np.log(1e-5)), bcs, method='Radau', max_step=np.inf, vectorized=True)
+    res_post = solve_ivp(odefunc_tilde, (np.log(lamsh),np.log(1e-7)), bcs, events=stop_event, method='Radau', max_step=np.inf, vectorized=True)
     return res_pre, res_post
 
 def M0_num(lamsh):
@@ -235,14 +241,20 @@ def M0_num(lamsh):
 def M0_num_tilde(lamsh):
     res = get_soln_gas_full_tilde(lamsh)[1]
     M0val = res.y[2][-1] + (aM*res.t[-1])
-    return np.exp(M0val)-1e-3 #if M0val>0 else -(-M0val)**(1/11)
+    stopM0 = np.exp(M0val)-1e-3
+    # stopM0 = res.y[2][-1] + 10
+    return stopM0 #, np.exp(res.t[-1]), lamsh #if M0val>0 else -(-M0val)**(1/11)
+
+def lam_atM0(lamsh):
+    res = get_soln_gas_full_tilde(lamsh)[1]
+    return res.t[-1]/np.log(10)+6.999
 
 #%%
 def solve_bisect(func,bounds):
     b0, b1 = bounds
     bmid = (b0+b1)/2
 
-def my_bisect(f, a, b, tol=1e-4): 
+def my_bisect(f, a, b, xtol=1e-4): 
     # approximates a root, R, of f bounded 
     # by a and b to within tolerance 
     # | f(m) | < tol with m the midpoint 
@@ -257,17 +269,17 @@ def my_bisect(f, a, b, tol=1e-4):
     sfm = np.sign(f_at_m)
 
     # print(a,b,m,f_at_m)
-    if abs(b-a) < tol:
+    if abs(b-a) < xtol:
         # stopping condition, report m as root
         return m if f_at_m >0 else b
     elif sfa == sfm:
         # case where m is an improvement on a. 
         # Make recursive call with a = m
-        return my_bisect(f, m, b, tol)
+        return my_bisect(f, m, b, xtol)
     elif sfb == sfm:
         # case where m is an improvement on b. 
         # Make recursive call with b = m
-        return my_bisect(f, a, m, tol)
+        return my_bisect(f, a, m, xtol)
 
 #%%
 # thtshsol = fsolve(M0, 1.5*np.pi)
@@ -300,7 +312,7 @@ for s in s_vals[::]:
         lamshsol = lambins[idx_M0neg+1]
         lambins = np.linspace(lambins[idx_M0neg], max(2*lamshsol-lambins[idx_M0neg],0.01), 8)
 
-    lamshsol = my_bisect(M0_num_tilde, lambins[0], lambins[-1], tol=1e-6)#+1e-5
+    lamshsol = my_bisect(M0_num_tilde, lambins[0], lambins[-1], xtol=1e-6)#+1e-5
     # lamshsol = thetbins[idx_M0neg+1]
     t_bef, t_now = t_now, time()
     print(f'{t_now-t_bef:.4g}s', f's={s}: root thetsh obtained')
@@ -315,8 +327,28 @@ ax4.set_ylim(-2,5)
 ax4.legend()
 
 #%%
+lamsh_sols = {}
+lam_atM0_sols = {}
+lambins = np.linspace(0.01, 0.5, 8)
+
+for s in s_vals[::]:
+    t_now = time()
+    de = 2* (1+s/3) /3
+    alpha_D = -9/(s+3)
+    aD, aP, aM = alpha_D, (2*alpha_D+2), alpha_D+3
+    print(s, aD, aP, aM)
+
+    lamshsol = my_bisect(lam_atM0, lambins[0], lambins[-1], xtol=1e-7)#+1e-5
+    # lamshsol = thetbins[idx_M0neg+1]
+    t_bef, t_now = t_now, time()
+    print(f'{t_now-t_bef:.4g}s', f's={s}: root thetsh obtained')
+    # lamshsol1 = minimize_scalar(M0, method='bounded', bounds=(1.5*np.pi, 1.9*np.pi))
+    lamsh_sols[s] = lamshsol
+    lam_atM0_sols[s] = lam_atM0(lamshsol)
+    print(f's={s}', lamshsol, lam_atM0_sols[s])
 
 
+#%%
 fig5, axs5 = plt.subplots(2,3, dpi=100, figsize=(18,12), sharex=True)
 fig6, (ax62,ax6) = plt.subplots(1,2, dpi=100, figsize=(10,5))
 
@@ -439,7 +471,7 @@ ax6.set_ylim(-0.01,1.1)
 ax62.set_xlabel(r'$\xi$')
 ax62.set_ylabel('$\lambda$')
 # ax62.set_xlim(,)
-ax62.set_ylim(0.01,1.1)
+# ax62.set_ylim(0.01,1.1)
 ax62.set_yscale('log')
     
 axs5[0,0].set_xscale('log')
@@ -448,16 +480,16 @@ axs5[0,0].legend()
 axs5[1,0].set_xlabel('$\lambda$')
 axs5[1,1].set_xlabel('$\lambda$')
 
-if gam>1.66:
-    axs5[0,0].set_xlim(9e-3,1)
-    axs5[0,0].set_ylim(5e-6,1e1)
-    axs5[0,1].set_ylim(1e-1,1e6)
-    axs5[1,0].set_ylim(1e-2,1e1)
-    axs5[1,1].set_ylim(1e0,1e7)
-    axs5[0,2].set_ylim(1e-1,1e1)
-    axs5[1,2].set_ylim(1e-4,5e-1)
-elif gam==4/3:
+if gam==5/3:
     axs5[0,0].set_xlim(9e-5,1)
+    axs5[0,0].set_ylim(5e-6,1e1)
+    axs5[0,1].set_ylim(1e-1,1e11)
+    axs5[1,0].set_ylim(1e-3,1e1)
+    axs5[1,1].set_ylim(1e0,1e14)
+    axs5[0,2].set_ylim(1e-1,1e2)
+    axs5[1,2].set_ylim(1e-5,5e-1)
+elif gam==4/3:
+    axs5[0,0].set_xlim(1e-5,1)
     axs5[0,0].set_ylim(5e-6,1e1)
     axs5[0,1].set_ylim(1e0,1e11)
     axs5[1,0].set_ylim(1e-2,1e1)
@@ -482,7 +514,7 @@ axs5[1,2].set_yscale('log')
 
 fig5.savefig(f'Eds-gas-{gam:.02f}_profiles.pdf')
 fig6.savefig(f'Eds-gas-{gam:.02f}_trajectory.pdf')
-# axs5[0,0].set_xlim(1e-3,1)
+axs5[0,0].set_xlim(1e-6,1)
 # axs5[1,0].set_ylim(1e-4,1e1)
 
 
@@ -493,7 +525,7 @@ ax71.plot(lamsh_post, res_post.y[0])
 ax72.plot(lamsh_post, odefunc_tilde(np.log(lamsh_post),res_post.y)[0])
 ax72.plot(lamsh_post[1:], np.diff(res_post.y[0])/np.diff(np.log(lamsh_post)))
 
-ax73.plot(lamsh_post, odefunc_tilde_full(lamsh_post,res_post.y)[4][0,1])
+ax73.plot(lamsh_post, odefunc_tilde_full(lamsh_post,res_post.y)[2][0,1])
 
 ax71.set_xscale('log')
 #%%
