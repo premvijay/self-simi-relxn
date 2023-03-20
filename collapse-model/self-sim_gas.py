@@ -267,7 +267,7 @@ def my_bisect(f, a, b, tol=1e-4):
 #%%
 # thtshsol = fsolve(M0, 1.5*np.pi)
 s = 1
-gam = 5/3
+gam = 4/3
 s_vals = [0.5,1,1.5,2,3,5]
 fb = 0.2
 
