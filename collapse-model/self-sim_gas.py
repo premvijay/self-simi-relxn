@@ -219,7 +219,7 @@ def get_soln_gas_full_tilde(lamsh):
     bcs = to_btilde(lamsh, *bcs)
     # print(bcs)
     bcs = np.log(bcs)
-    res_post = solve_ivp(odefunc_tilde, (np.log(lamsh),np.log(1e-5)), bcs, method='RK45', max_step=np.inf, vectorized=False)
+    res_post = solve_ivp(odefunc_tilde, (np.log(lamsh),np.log(1e-5)), bcs, method='Radau', max_step=np.inf, vectorized=False)
     return res_pre, res_post
 
 def M0_num(lamsh):
@@ -267,9 +267,8 @@ def my_bisect(f, a, b, tol=1e-4):
 #%%
 # thtshsol = fsolve(M0, 1.5*np.pi)
 s = 1
-gam = 5/3
+gam = 4/3
 s_vals = [0.5,1,1.5,2,3,5]
-fb = 0.2
 
 #%%
 fig4, ax4 = plt.subplots(1, dpi=120, figsize=(10,7))
@@ -452,6 +451,15 @@ if gam>1.66:
     axs5[1,1].set_ylim(1e0,1e7)
     axs5[0,2].set_ylim(1e-1,1e1)
     axs5[1,2].set_ylim(1e-4,5e-1)
+elif gam==4/3:
+    axs5[0,0].set_xlim(9e-5,1)
+    axs5[0,0].set_ylim(5e-6,1e1)
+    axs5[0,1].set_ylim(1e0,1e11)
+    axs5[1,0].set_ylim(1e-2,1e1)
+    axs5[1,1].set_ylim(1e1,1e14)
+    axs5[0,2].set_ylim(1e0,1e3)
+    axs5[1,2].set_ylim(1e-2,5e-1)
+
 
 axs5[0,0].set_ylabel('-V')
 axs5[0,1].set_ylabel('D')
