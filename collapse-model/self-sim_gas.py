@@ -219,7 +219,7 @@ def get_soln_gas_full_tilde(lamsh):
     bcs = to_btilde(lamsh, *bcs)
     # print(bcs)
     bcs = np.log(bcs)
-    res_post = solve_ivp(odefunc_tilde, (np.log(lamsh),np.log(1e-3)), bcs, method='RK45', max_step=np.inf, vectorized=False)
+    res_post = solve_ivp(odefunc_tilde, (np.log(lamsh),np.log(1e-5)), bcs, method='RK45', max_step=np.inf, vectorized=False)
     return res_pre, res_post
 
 def M0_num(lamsh):
@@ -230,7 +230,7 @@ def M0_num(lamsh):
 def M0_num_tilde(lamsh):
     res = get_soln_gas_full_tilde(lamsh)[1]
     M0val = res.y[2][-1] + (aM*res.t[-1])
-    return np.exp(M0val)-1e-2 #if M0val>0 else -(-M0val)**(1/11)
+    return np.exp(M0val)-1e-3 #if M0val>0 else -(-M0val)**(1/11)
 
 #%%
 def solve_bisect(func,bounds):
@@ -267,7 +267,7 @@ def my_bisect(f, a, b, tol=1e-4):
 #%%
 # thtshsol = fsolve(M0, 1.5*np.pi)
 s = 1
-gam = 4/3
+gam = 5/3
 s_vals = [0.5,1,1.5,2,3,5]
 fb = 0.2
 
@@ -284,8 +284,8 @@ for s in s_vals[::]:
     alpha_D = -9/(s+3)
     aD, aP, aM = alpha_D, (2*alpha_D+2), alpha_D+3
     print(s, aD, aP, aM)
-    lambins = np.linspace(0.7, 0.03, 8)
-    for nsect_i in range(0,3):
+    lambins = np.linspace(0.7, 0.01, 8)
+    for nsect_i in range(0,4):
         M0_atbins[s] = list(map(M0_num_tilde,lambins))
         t_bef, t_now = t_now, time()
         print(f'{t_now-t_bef:.4g}s', f's={s}: grid M0 obtained')
@@ -296,7 +296,7 @@ for s in s_vals[::]:
         lamshsol = lambins[idx_M0neg+1]
         lambins = np.linspace(lambins[idx_M0neg], max(2*lamshsol-lambins[idx_M0neg],0.01), 8)
 
-    lamshsol = my_bisect(M0_num_tilde, lambins[0], lambins[-1], tol=1e-4)#+1e-5
+    lamshsol = my_bisect(M0_num_tilde, lambins[0], lambins[-1], tol=1e-6)#+1e-5
     # lamshsol = thetbins[idx_M0neg+1]
     t_bef, t_now = t_now, time()
     print(f'{t_now-t_bef:.4g}s', f's={s}: root thetsh obtained')
@@ -429,8 +429,8 @@ ax6.legend(loc='lower left')
 ax6.set_xlabel(r'$\tau$')
 ax6.set_ylabel('$\lambda_F$')
 ax6.set_xlim(-1,5)
-ax6.set_ylim(0.01,1.1)
-ax6.set_yscale('log')
+ax6.set_ylim(-0.01,1.1)
+# ax6.set_yscale('log')
 
 ax62.set_xlabel(r'$\xi$')
 ax62.set_ylabel('$\lambda$')
