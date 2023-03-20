@@ -145,17 +145,22 @@ def odefunc_tilde_full(l, depvars):
     # lmV,lDt,lMt,lPt = depvars
     mVb,Dt,Mt,Pt = np.exp(depvars)
     Vb = -mVb
-    # Vb = V - de*lam
-    V,D,M,P = from_btilde(lam, mVb,Dt,Mt,Pt)
+    V = Vb + de*lam
+    # V,D,M,P = from_btilde(lam, mVb,Dt,Mt,Pt)
     Z0 = 0*V
-    linb1 = -np.array([2*D*V-2*D*lam, (de-1)*V*lam+2/9*M/lam, (2*(gam-1)+2*(de-1))*lam])
+    ar1 = V/V
+    # linb1 = -np.array([2*D*V-2*D*lam, (de-1)*V*lam+2/9*M/lam, (2*(gam-1)+2*(de-1))*lam])
     # linb2 = -np.array([Vb*aD*D, aP*P/D, -Vb*(aD*gam-aP)])
-    linb = linb1 #+linb2
-    linMat_det1 = D*Vb**2-gam*P
-    # if linMat_det1 == 0: print(depvars)
-    # linMat_cofac1 = np.array([[-gam*P/D,D*Vb,-P,0],[Dt*Vb,-Dt*D,Dt*P/Vb,0],[0,0,0,lam**(-aM)*linMat_det1],[gam*Pt*Vb,-gam*D*Pt,D*Pt*Vb,0]])
-    linMat_cofac1 = np.array([[-gam*P/(D*Vb),D,-P/Vb],[Vb,-D,P/Vb],[gam*Vb,-gam*D,D*Vb]])
-    linMat_inv = linMat_cofac1/ linMat_det1
+    # linb = linb1 +linb2
+    # linMat_det1 = D*Vb**2-gam*P
+    # # if linMat_det1 == 0: print(depvars)
+    # # linMat_cofac1 = np.array([[-gam*P/D,D*Vb,-P,0],[Dt*Vb,-Dt*D,Dt*P/Vb,0],[0,0,0,lam**(-aM)*linMat_det1],[gam*Pt*Vb,-gam*D*Pt,D*Pt*Vb,0]])
+    # linMat_cofac1 = np.array([[-gam*P/(D*Vb),D,-P/Vb],[Vb,-D,P/Vb],[gam*Vb,-gam*D,D*Vb]])
+    # linMat_inv = linMat_cofac1/ linMat_det1
+
+    Tv = Pt/Dt*lam**(aP-aD) /Vb**2
+    linMat_inv = 1/Vb**2/(1-gam*Tv) * np.array([[-gam*Tv, ar1, -Tv],[ar1,-ar1,Tv],[gam*ar1,-gam*ar1,ar1]])
+    linb = -np.array([2*Vb* (V-lam), (de-1)*V*lam+2/9*Mt*lam**(aM-1), 2*Vb*lam*((gam-1)+(de-1))])
 
     # print(linMat_inv.shape,linb[:,np.newaxis].transpose((2,0,1)).shape)
     linc = np.array([de/Vb*lam,aD+Z0,aP+Z0])
@@ -168,10 +173,10 @@ def odefunc_tilde_full(l, depvars):
         der = np.matmul(linMat_inv.transpose((2,0,1)), linb[:,np.newaxis].transpose((2,0,1)) ) - linc[:,np.newaxis].transpose((2,0,1))
         der = der.transpose((1,2,0))[:,0,:]
 
-    derM = (3*lam**3*D) /(M) - aM
+    derM = 3*Dt*lam**(aD+3-aM) /Mt - aM
 
 
-    return der, derM, linMat_det1, linb1, linMat_cofac1 #*lam**2
+    return der, derM, linMat_inv #, linb1, linMat_cofac1 #*lam**2
 
 def odefunc_tilde(l, depvars):
     der3, derM = odefunc_tilde_full(l, depvars)[:2]
@@ -219,7 +224,7 @@ def get_soln_gas_full_tilde(lamsh):
     bcs = to_btilde(lamsh, *bcs)
     # print(bcs)
     bcs = np.log(bcs)
-    res_post = solve_ivp(odefunc_tilde, (np.log(lamsh),np.log(1e-5)), bcs, method='Radau', max_step=np.inf, vectorized=False)
+    res_post = solve_ivp(odefunc_tilde, (np.log(lamsh),np.log(1e-5)), bcs, method='Radau', max_step=np.inf, vectorized=True)
     return res_pre, res_post
 
 def M0_num(lamsh):
@@ -267,7 +272,7 @@ def my_bisect(f, a, b, tol=1e-4):
 #%%
 # thtshsol = fsolve(M0, 1.5*np.pi)
 s = 1
-gam = 4/3
+gam = 5/3
 s_vals = [0.5,1,1.5,2,3,5]
 
 #%%
@@ -492,8 +497,8 @@ ax73.plot(lamsh_post, odefunc_tilde_full(lamsh_post,res_post.y)[4][0,1])
 
 ax71.set_xscale('log')
 #%%
-plt.loglog(lamsh_post, -odefunc_tilde_full(np.log(lamsh_post),res_post.y)[2])
-plt.loglog(lamsh_pre, -odefunc_tilde_full(np.log(lamsh_pre),np.log(to_btilde(lamsh_pre,*shock_jump(lamsh_pre, *res_pre.y))))[2])
+plt.loglog(lamsh_post, odefunc_tilde_full(np.log(lamsh_post),res_post.y)[2][0,0])
+plt.loglog(lamsh_pre, odefunc_tilde_full(np.log(lamsh_pre),np.log(to_btilde(lamsh_pre,*shock_jump(lamsh_pre, *res_pre.y))))[2][0,0])
 #%%
 
 
