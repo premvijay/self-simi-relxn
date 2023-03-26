@@ -69,9 +69,9 @@ def odefunc_prof_init_Pless(lam, depvars):
     Vb = V - de*lam
     linb = -np.array([2*D*V-2*D*lam, (de-1)*V*lam+2/9*M/lam, -3*lam**3*D])/lam
     # der_num = np.transpose(np.linalg.solve(linMat1,linb1), (1,0))
-    linMat_det1 = D*Vb**2
+    linMat_det1 = Vb**2
     # if linMat_det1 == 0: print(depvars)
-    linMat_cofac1 = np.array([[0,D*Vb,0],[D*Vb,-D**2,0],[0,0,linMat_det1]])
+    linMat_cofac1 = np.array([[0,Vb,0],[Vb,-D,0],[0,0,linMat_det1]])
     linMat_inv = linMat_cofac1/ linMat_det1
     der = np.matmul(linMat_inv,linb)
     return der #*lam**2
