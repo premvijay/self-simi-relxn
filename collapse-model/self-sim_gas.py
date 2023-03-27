@@ -67,13 +67,15 @@ def odefunc_prof_init_Pless(lam, depvars):
     # lam = np.exp(l)
     V,D,M = depvars
     Vb = V - de*lam
-    linb = -np.array([2*D*V-2*D*lam, (de-1)*V*lam+2/9*M/lam, -3*lam**3*D])/lam
-    # der_num = np.transpose(np.linalg.solve(linMat1,linb1), (1,0))
-    linMat_det1 = Vb**2
-    # if linMat_det1 == 0: print(depvars)
-    linMat_cofac1 = np.array([[0,Vb,0],[Vb,-D,0],[0,0,linMat_det1]])
-    linMat_inv = linMat_cofac1/ linMat_det1
-    der = np.matmul(linMat_inv,linb)
+    # linb = -np.array([2*D*V-2*D*lam, (de-1)*V*lam+2/9*M/lam, -3*lam**3*D])/lam
+    # # der_num = np.transpose(np.linalg.solve(linMat1,linb1), (1,0))
+    # linMat_det1 = Vb**2
+    # # if linMat_det1 == 0: print(depvars)
+    # linMat_cofac1 = np.array([[0,Vb,0],[Vb,-D,0],[0,0,linMat_det1]])
+    # linMat_inv = linMat_cofac1/ linMat_det1
+    # der = np.matmul(linMat_inv,linb)
+    Fterm = (de-1)*V + 2/9*M/lam**2
+    der = np.array([-Fterm/Vb, (2*Vb*(lam-V)/lam + Fterm) *D/Vb**2, 3*lam**2*D])
     return der #*lam**2
 
 # tht_ran = np.linspace(np.pi,1.5*np.pi)
@@ -336,6 +338,7 @@ for s in s_vals[::]:
     de = 2* (1+s/3) /3
     alpha_D = -9/(s+3)
     aD, aP, aM = alpha_D, (2*alpha_D+2), alpha_D+3
+    aD, aP, aM = 0,0,0
     print(s, aD, aP, aM)
 
     lamshsol = my_bisect(lam_atM0, lambins[0], lambins[-1], xtol=1e-7)#+1e-5
@@ -357,7 +360,7 @@ for s in s_vals[::]:
     de = 2* (1+s/3) /3
     alpha_D = -9/(s+3)
     aD, aP, aM = alpha_D, 1*(2*alpha_D+2), alpha_D+3
-    # aD, aP, aM = 0,0,0
+    aD, aP, aM = 0,0,0
     lamshsol = lamsh_sols[s] #+5e-3 # 0.338976 #
     res_pre, res_post = get_soln_gas_full_tilde(lamshsol)
     print(res_post.y[2][-1])
