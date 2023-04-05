@@ -165,8 +165,8 @@ def odefunc_tilde_full(l, depvars):
     # linMat_inv = linMat_cofac1/ linMat_det1
 
     Tv = Pt/Dt*lam**(aP-aD) /Vb**2
-    linMat_inv = 1/Vb**2/(1-gam*Tv) * np.array([[-gam*Tv, ar1, -Tv],[ar1,-ar1,Tv],[gam*ar1,-gam*ar1,ar1]])
-    linb = -np.array([2*Vb* (V-lam), (de-1)*V*lam+2/9*Mt*lam**(aM-1), 2*Vb*lam*((gam-1)+(de-1))])
+    linMat_inv = 1/Vb**2/(gam*Tv-1) * np.array([[-gam*Tv, ar1, -Tv],[ar1,-ar1,Tv],[gam*ar1,-gam*ar1,ar1]])
+    linb = np.array([2*Vb* (V-lam), (de-1)*V*lam+2/9*Mt*lam**(aM-1), 2*Vb*lam*((gam-1)+(de-1))])
 
     # print(linMat_inv.shape,linb[:,np.newaxis].transpose((2,0,1)).shape)
     linc = np.array([de/Vb*lam,aD+Z0,aP+Z0])
