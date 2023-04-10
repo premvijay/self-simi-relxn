@@ -355,13 +355,13 @@ for s in s_vals[::]:
 fig5, axs5 = plt.subplots(2,3, dpi=100, figsize=(18,12), sharex=True)
 fig6, (ax62,ax6) = plt.subplots(1,2, dpi=100, figsize=(10,5))
 
-for s in s_vals[::]:
+for s in s_vals[:2:]:
     t_now = time()
     de = 2* (1+s/3) /3
     alpha_D = -9/(s+3)
     aD, aP, aM = alpha_D, 1*(2*alpha_D+2), alpha_D+3
     aD, aP, aM = 0,0,0
-    lamshsol = lamsh_sols[s] #+5e-3 # 0.338976 #
+    lamshsol = lamsh_sols[s] +1e-2 # 0.338976 #
     res_pre, res_post = get_soln_gas_full_tilde(lamshsol)
     print(res_post.y[2][-1])
     # print(M0(lamshsol))
@@ -540,7 +540,33 @@ plt.loglog(lamsh_pre, odefunc_tilde_full(np.log(lamsh_pre),np.log(to_btilde(lams
 
 
 #%%
+ts = np.linspace(.25,5,30)
+rs = ts**de
 
+rs = np.logspace(-1,1,50)
+ts = rs**(1/de)
+
+r = np.outer(lamFres,rs)
+t = np.outer(taures,ts)
+
+r_anlt = np.outer(lamF_anlt,rs)
+t_anlt = np.outer(tau_anlt,ts)
+
+plt.plot(t,r, lw=1)
+plt.plot(t_anlt,r_anlt, lw=1)
+
+
+plt.grid(visible=True,axis='y', which='minor', color='k', linestyle='-', alpha=0.2)
+plt.minorticks_on()
+
+plt.xlim(0,10)
+plt.ylim(3e-2,1e1)
+plt.yscale('log')
+plt.ylabel('r')
+plt.xlabel('t')
+
+
+#%%
 
 # axs5[0,0].
 # axs5[0,1].
