@@ -47,7 +47,7 @@ def odefunc(l, depvars):
     lam = np.exp(l)
     V,D,M,P = depvars
     Vb = V - de*lam
-    linb = -np.array([2*D*V-2*D*lam, (de-1)*V*lam+2/9*(M+M_dm(lam))/lam, (2*(gam-1)+2*(de-1))*lam, -3*lam**3*D])
+    linb = -np.array([2*D*V-2*D*lam, (de-1)*V*lam+2/9*(M+M_dm(lam))/lam+3e-4/lam**3, ((2-Lam0*D**(2-nu)*P**(nu-1))*(gam-1)+2*(de-1))*lam, -3*lam**3*D])
     # der_num = np.transpose(np.linalg.solve(linMat1,linb1), (1,0))
     linMat_det1 = D*Vb**2-gam*P
     # if linMat_det1 == 0: print(depvars)
@@ -160,12 +160,12 @@ M_dm = lambda lam: M_dmo(lam)*(1-fb)
 de = 2* (1+s/3) /3
 upsil = 1 if s >= 3/2 else 3*s/(s+3)
 
-plot_iters = [0,1,2]#,3] #,5,6,7]
+plot_iters = [0]#,3] #,5,6,7]
 
 t_bef, t_now = t_now, time()
 print(f'{t_now-t_bef:.4g}s', 'Initialised vals and funcs for iteration')
 
-for n in range(0, 3):
+for n in range(0, 1):
     # thtbins_all = [np.linspace(1.2*np.pi, 1.99*np.pi, 8)]
     # M0_atbins_all = []
     # for nsect_i in range(0,3):
@@ -190,7 +190,7 @@ for n in range(0, 3):
 
     # thtshsol = 1.95*np.pi
     # lamsh = preshock(thtshsol)[0]
-    lamsh = 1e-2
+    lamsh = 5e-2
 
     res_prof_gas_pre, res_prof_gas_post = get_soln_gas_full(lamsh=lamsh)
 
@@ -201,8 +201,8 @@ for n in range(0, 3):
     # res_prof_gas = get_soln(thtshsol)
     # res_prof_gas = get_soln(1.95*np.pi)
 
-    lamsh_post = np.exp(res_prof_gas_post.t)[:1]*0
-    V_post, D_post, M_post, P_post = res_prof_gas_post.y[:,:1]*0
+    lamsh_post = np.exp(res_prof_gas_post.t)[:]#*0
+    V_post, D_post, M_post, P_post = res_prof_gas_post.y[:,:]#*0
 
     # thtsh_preange = np.arange(1*np.pi, thtshsol,0.01)
 
@@ -409,7 +409,7 @@ axs5[1,1].set_yscale('log')
 
 
 
-# ax6.set_xlim(0,4)
+ax6.set_xlim(0,4)
 ax6.set_ylim(0,1)
 ax6.set_yscale('log')
 ax6.set_ylim(resdf_prof_dm.l[1],1)
