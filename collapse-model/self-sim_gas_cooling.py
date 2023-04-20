@@ -92,7 +92,7 @@ def odefunc(l, depvars):
     # except:
     #     veclen = 1
     # linMat = np.array([[D, Vb, 0*V, 0*V], [Vb, 0*V, 0*V, 1/D], [0*V, -Vb*gam/D, 0*V, Vb/P], [0*V, 0*V, 1+V-V, 0*V]])
-    linb = -np.array([2*D*V-2*D*lam, (de-1)*V*lam+2/9*M/lam+1e-3/lam**3, -((2-Lam0*D**(2-nu)*P**(nu-1))*(gam-1)+2*(de-1))*lam, -3*lam**3*D])
+    linb = -np.array([2*D*V-2*D*lam, (de-1)*V*lam+2/9*M/lam+2e-5/lam**2, ((2+Lam0*D**(2-nu)*P**(nu-1))*(gam-1)+2*(de-1))*lam, -3*lam**3*D])
     # try:
     #     linMat1 = np.transpose(linMat,(2,0,1)) #linMat.reshape(veclen,4,4)
     #     linb1 = np.transpose(linb, (1,0)) #linb.reshape(veclen,4)
@@ -245,9 +245,9 @@ ax4.legend()
 
 #%%
 
-s = 1
+s = 0.5
 gam = 5/3
-Lam0 = 1e-6
+Lam0 = 1e-2
 nu=1/2
 fig5, axs5 = plt.subplots(2,2, dpi=100, figsize=(12,10), sharex=True)
 fig6, (ax6,ax62) = plt.subplots(1,2, dpi=100, figsize=(10,5))
@@ -255,7 +255,7 @@ fig6, (ax6,ax62) = plt.subplots(1,2, dpi=100, figsize=(10,5))
 # for s in s_vals[::]:
 t_now = time()
 de = 2* (1+s/3) /3
-lamshsol = 0.2 #lamsh_sols[s] #-1e-1
+lamshsol = 0.3 #lamsh_sols[s] #-1e-1
 res_pre, res_post = get_soln_gas_full(lamshsol)
 print(res_post.y[2][-1])
 # print(M0(lamshsol))
@@ -324,7 +324,7 @@ taures = np.exp(xires)
 lamFres = lamres*taures**de
 
 ax6.plot(taures,lamFres, color=color_this, label=f's={s}')
-# ax6.plot(xires,lamres, color=color_this)
+ax62.plot(xires,lamres, color=color_this)
 
 #trajectory analytical
 thet_range = np.linspace(0.5, 1.2*np.pi,2000)
@@ -333,7 +333,7 @@ xi_anlt = np.log(tau_anlt)
 lam_anlt = preshock(thet_range)[0]
 lamF_anlt = lam_anlt*tau_anlt**de
 
-# ax6.plot(xi_anlt, lam_anlt, color=color_this)
+# ax62.plot(xi_anlt, lam_anlt, color=color_this)
 
 
 
@@ -357,7 +357,14 @@ ax6.legend(loc='lower left')
 ax6.set_xlabel(r'$\tau$')
 ax6.set_ylabel('$\lambda_F$')
 ax6.set_xlim(-1,9)
-ax6.set_ylim(-0.1,1.1)
+# ax6.set_ylim(-0.1,1.1)
+ax6.set_yscale('log')
+
+ax62.set_xlabel(r'$\xi$')
+ax62.set_ylabel('$\lambda$')
+# ax62.set_xlim(,)
+# ax62.set_ylim(-0.1,1.1)
+ax62.set_yscale('log')
     
 axs5[0,0].set_xscale('log')
 axs5[0,0].set_xlim(1e-5,1)
@@ -385,6 +392,39 @@ fig5.savefig(f'Eds-gas-cooling-{gam:.02f}_profiles.pdf')
 fig6.savefig(f'Eds-gas-cooling-{gam:.02f}_trajectory.pdf')
 axs5[0,0].set_xlim(1e-3,1)
 # axs5[1,0].set_ylim(1e-4,1e1)
+
+
+#%%
+
+
+
+
+
+#%%
+ts = np.linspace(.25,5,30)
+rs = ts**de
+
+rs = np.logspace(-1,1,50)
+ts = rs**(1/de)
+
+r = np.outer(lamFres,rs)
+t = np.outer(taures,ts)
+
+r_anlt = np.outer(lamF_anlt,rs)
+t_anlt = np.outer(tau_anlt,ts)
+
+plt.plot(t,r, lw=1)
+plt.plot(t_anlt,r_anlt, lw=1)
+
+
+plt.grid(visible=True,axis='y', which='minor', color='k', linestyle='-', alpha=0.2)
+plt.minorticks_on()
+
+plt.xlim(0,10)
+plt.ylim(3e-2,1e1)
+plt.yscale('log')
+plt.ylabel('r')
+plt.xlabel('t')
 
 
 #%%

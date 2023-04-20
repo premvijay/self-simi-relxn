@@ -113,7 +113,7 @@ def odefunc_tilde_full(l, depvars):
 
     Tv = Pt/Dt*lam**(aP-aD) /Vb**2
     linMat_inv = 1/Vb**2/(gam*Tv-1) * np.array([[-gam*Tv, ar1, -Tv],[ar1,-ar1,Tv],[gam*ar1,-gam*ar1,ar1]])
-    linb = np.array([2*Vb* (V-lam), (de-1)*V*lam+2/9*Mt*lam**(aM-1)-1e-5/lam**2, 2*Vb*lam*((gam-1)+(de-1))])
+    linb = np.array([2*Vb* (V-lam), (de-1)*V*lam+2/9*Mt*lam**(aM-1)+1e-2/lam**2, 2*Vb*lam*((gam-1)+(de-1))])
 
     # print(linMat_inv.shape,linb[:,np.newaxis].transpose((2,0,1)).shape)
     linc = np.array([de/Vb*lam,aD+Z0,aP+Z0])
@@ -146,30 +146,30 @@ def get_shock_bcs(thtsh):
     lamsh, V1, D1, M1 = preshock(thtsh)
     return lamsh, shock_jump(lamsh, V1, D1, M1)
 
-def get_soln(thtsh):
-    lamsh, bcs = get_shock_bcs(thtsh)
-    # print(thtsh)#(lamsh, 1e-9) #np.log(lamsh),np.log(1e-9))
-    return solve_ivp(odefunc, (np.log(lamsh),np.log(1e-9)), bcs, method='Radau', max_step=np.inf, vectorized=False)
-def M0(thtsh):
-    res = get_soln(thtsh)
-    lamsh_post = np.exp(res.t)
-    V_post, D_post, M_post, P_post = res.y
-    M0_expected = M_post[0]*(lamsh_post[-1]/lamsh_post[0])**(alpha_D+3)
-    M0val = res.y[2][-1]
-    return M0val-M0_expected #3e-3 #if M0val>0 else -(-M0val)**(1/11)
+# def get_soln(thtsh):
+#     lamsh, bcs = get_shock_bcs(thtsh)
+#     # print(thtsh)#(lamsh, 1e-9) #np.log(lamsh),np.log(1e-9))
+#     return solve_ivp(odefunc, (np.log(lamsh),np.log(1e-9)), bcs, method='Radau', max_step=np.inf, vectorized=False)
+# def M0(thtsh):
+#     res = get_soln(thtsh)
+#     lamsh_post = np.exp(res.t)
+#     V_post, D_post, M_post, P_post = res.y
+#     M0_expected = M_post[0]*(lamsh_post[-1]/lamsh_post[0])**(alpha_D+3)
+#     M0val = res.y[2][-1]
+#     return M0val-M0_expected #3e-3 #if M0val>0 else -(-M0val)**(1/11)
 
-def P0(thtsh):
-    res = get_soln(thtsh)
-    return res.y[3][-1]
-    # return M0val-M0_expected #3e-3 #if M0val>0 else -(-M0val)**(1/11)
+# def P0(thtsh):
+#     res = get_soln(thtsh)
+#     return res.y[3][-1]
+#     # return M0val-M0_expected #3e-3 #if M0val>0 else -(-M0val)**(1/11)
 
-#%%
-def get_soln_gas_full(lamsh):
-    res_pre = solve_ivp(odefunc_prof_init_Pless, (1,lamsh), preshock(np.pi)[1:], max_step=0.01 )
-    V1, D1, M1 = res_pre.y[0][-1], res_pre.y[1][-1], res_pre.y[2][-1]
-    bcs = shock_jump(lamsh, V1, D1, M1) #get_shock_bcs(thtsh_sols[s])[1] #
-    res_post = solve_ivp(odefunc, (np.log(lamsh),np.log(1e-12)), bcs, method='Radau', max_step=np.inf, vectorized=False)
-    return res_pre, res_post
+# #%%
+# def get_soln_gas_full(lamsh):
+#     res_pre = solve_ivp(odefunc_prof_init_Pless, (1,lamsh), preshock(np.pi)[1:], max_step=0.01 )
+#     V1, D1, M1 = res_pre.y[0][-1], res_pre.y[1][-1], res_pre.y[2][-1]
+#     bcs = shock_jump(lamsh, V1, D1, M1) #get_shock_bcs(thtsh_sols[s])[1] #
+#     res_post = solve_ivp(odefunc, (np.log(lamsh),np.log(1e-12)), bcs, method='Radau', max_step=np.inf, vectorized=False)
+#     return res_pre, res_post
 
 def get_soln_gas_full_tilde(lamsh):
     res_pre = solve_ivp(odefunc_prof_init_Pless, (1,lamsh), preshock(np.pi)[1:], max_step=0.01 )
@@ -182,10 +182,10 @@ def get_soln_gas_full_tilde(lamsh):
     res_post = solve_ivp(odefunc_tilde, (np.log(lamsh),np.log(1e-7)), bcs, events=stop_event, method='Radau', max_step=0.5, vectorized=True)
     return res_pre, res_post
 
-def M0_num(lamsh):
-    res = get_soln_gas_full(lamsh)[1]
-    M0val = res.y[2][-1]
-    return M0val-3e-4 #if M0val>0 else -(-M0val)**(1/11)
+# def M0_num(lamsh):
+#     res = get_soln_gas_full(lamsh)[1]
+#     M0val = res.y[2][-1]
+#     return M0val-3e-4 #if M0val>0 else -(-M0val)**(1/11)
 
 def M0_num_tilde(lamsh):
     res = get_soln_gas_full_tilde(lamsh)[1]
@@ -233,7 +233,7 @@ def my_bisect(f, a, b, xtol=1e-4):
 #%%
 # thtshsol = fsolve(M0, 1.5*np.pi)
 s = 1
-gam = 4.5/3
+gam = 5/3
 s_vals = [0.5,1,1.5,2,3,5]
 
 #%%
@@ -302,13 +302,13 @@ for s in s_vals[::]:
 fig5, axs5 = plt.subplots(2,3, dpi=100, figsize=(18,12), sharex=True)
 fig6, (ax62,ax6) = plt.subplots(1,2, dpi=100, figsize=(10,5))
 
-for s in s_vals[::]:
+for s in s_vals[:2:]:
     t_now = time()
     de = 2* (1+s/3) /3
     alpha_D = -9/(s+3)
     aD, aP, aM = alpha_D, 1*(2*alpha_D+2), alpha_D+3
     aD, aP, aM = 0,0,0
-    lamshsol = lamsh_sols[s] #+5e-3 # 0.338976 #
+    lamshsol = 0.25 #lamsh_sols[s] #+5e-3 # 0.338976 #
     res_pre, res_post = get_soln_gas_full_tilde(lamshsol)
     print(res_post.y[2][-1])
     # print(M0(lamshsol))
@@ -503,3 +503,32 @@ plt.xscale('log')
 
 
 # %%
+
+
+
+
+#%%
+ts = np.linspace(.25,5,30)
+rs = ts**de
+
+rs = np.logspace(-1,1,50)
+ts = rs**(1/de)
+
+r = np.outer(lamFres,rs)
+t = np.outer(taures,ts)
+
+r_anlt = np.outer(lamF_anlt,rs)
+t_anlt = np.outer(tau_anlt,ts)
+
+plt.plot(t,r, lw=1)
+plt.plot(t_anlt,r_anlt, lw=1)
+
+
+plt.grid(visible=True,axis='y', which='minor', color='k', linestyle='-', alpha=0.2)
+plt.minorticks_on()
+
+plt.xlim(0,10)
+# plt.ylim(3e-2,1e1)
+plt.yscale('log')
+plt.ylabel('r')
+plt.xlabel('t')
