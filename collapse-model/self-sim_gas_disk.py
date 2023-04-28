@@ -93,6 +93,8 @@ def stop_event(t,y):
     return y[2]+10 #+de*np.exp(t)
 stop_event.terminal = True
 
+zero_hold_func = lambda x: 1+np.heaviside(x-1,0.5)-np.heaviside(x+0.0,0.5)
+
 def odefunc_tilde_full(l, depvars):
     lam = np.exp(l)
     # lmV,lDt,lMt,lPt = depvars
@@ -113,17 +115,21 @@ def odefunc_tilde_full(l, depvars):
 
     Tv = Pt/Dt*lam**(aP-aD) /Vb**2
     linMat_inv = 1/Vb**2/(gam*Tv-1) * np.array([[-gam*Tv, ar1, -Tv],[ar1,-ar1,Tv],[gam*ar1,-gam*ar1,ar1]])
-    linb = np.array([2*Vb* (V-lam), (de-1)*V*lam+2/9*Mt*lam**(aM-1)+1e-2/lam**2, 2*Vb*lam*((gam-1)+(de-1))])
+    linb = np.array([2*Vb* (V-lam), (de-1)*V*lam+2/9*Mt*lam**(aM-1)+1e-16/lam**10, 2*Vb*lam*((gam-1)+(de-1))])
 
     # print(linMat_inv.shape,linb[:,np.newaxis].transpose((2,0,1)).shape)
     linc = np.array([de/Vb*lam,aD+Z0,aP+Z0])
     if np.isscalar(V):
-        der = np.matmul(linMat_inv, linb ) - linc
+        der = np.matmul(linMat_inv, linb ) 
+        der[0] *= zero_hold_func(V)
+        der -= linc
         # der = np.matmul(linMat_inv, linb )+ np.array([-de/Vb*lam,Z0,Z0])
         # if der[0]<0:
             # print(der, linMat_det1, linb, linMat_cofac1)
     else:
-        der = np.matmul(linMat_inv.transpose((2,0,1)), linb[:,np.newaxis].transpose((2,0,1)) ) - linc[:,np.newaxis].transpose((2,0,1))
+        der = np.matmul(linMat_inv.transpose((2,0,1)), linb[:,np.newaxis].transpose((2,0,1)) )
+        der[:,0] *= zero_hold_func(V)[:,np.newaxis]
+        der -= linc[:,np.newaxis].transpose((2,0,1))
         der = der.transpose((1,2,0))[:,0,:]
 
     derM = 3*Dt*lam**(aD+3-aM) /Mt - aM
@@ -179,7 +185,7 @@ def get_soln_gas_full_tilde(lamsh):
     bcs = to_btilde(lamsh, *bcs)
     # print(bcs)
     bcs = np.log(bcs)
-    res_post = solve_ivp(odefunc_tilde, (np.log(lamsh),np.log(1e-7)), bcs, events=stop_event, method='Radau', max_step=0.5, vectorized=True)
+    res_post = solve_ivp(odefunc_tilde, (np.log(lamsh),np.log(1e-7)), bcs, method='Radau', max_step=0.5, vectorized=True) #, events=stop_event
     return res_pre, res_post
 
 # def M0_num(lamsh):
@@ -237,72 +243,72 @@ gam = 5/3
 s_vals = [0.5,1,1.5,2,3,5]
 
 #%%
-fig4, ax4 = plt.subplots(1, dpi=120, figsize=(10,7))
-lamsh_sols = {}
-# lambins = np.linspace(1.2*np.pi, 1.99*np.pi, 8)
-M0_atbins = {}
-M0_sols = {}
+# fig4, ax4 = plt.subplots(1, dpi=120, figsize=(10,7))
+# lamsh_sols = {}
+# # lambins = np.linspace(1.2*np.pi, 1.99*np.pi, 8)
+# M0_atbins = {}
+# M0_sols = {}
 
-for s in s_vals[::]:
-    t_now = time()
-    de = 2* (1+s/3) /3
-    alpha_D = -9/(s+3)
-    aD, aP, aM = alpha_D, (2*alpha_D+2), alpha_D+3
-    print(s, aD, aP, aM)
-    lambins = np.linspace(0.7, 0.01, 8)
-    for nsect_i in range(0,4):
-        M0_atbins[s] = list(map(M0_num_tilde,lambins))
-        t_bef, t_now = t_now, time()
-        print(f'{t_now-t_bef:.4g}s', f's={s}: grid M0 obtained')
-        ax4.plot(lambins,M0_atbins[s], label=f's={s} and nsect={nsect_i}')
-        idx_M0neg = np.where(np.sign(M0_atbins[s])==-1)[0].max()
-        t_bef, t_now = t_now, time()
-        print(f'{t_now-t_bef:.4g}s', f's={s}: grid M0 selected')
-        lamshsol = lambins[idx_M0neg+1]
-        lambins = np.linspace(lambins[idx_M0neg], max(2*lamshsol-lambins[idx_M0neg],0.01), 8)
+# for s in s_vals[::]:
+#     t_now = time()
+#     de = 2* (1+s/3) /3
+#     alpha_D = -9/(s+3)
+#     aD, aP, aM = alpha_D, (2*alpha_D+2), alpha_D+3
+#     print(s, aD, aP, aM)
+#     lambins = np.linspace(0.7, 0.01, 8)
+#     for nsect_i in range(0,4):
+#         M0_atbins[s] = list(map(M0_num_tilde,lambins))
+#         t_bef, t_now = t_now, time()
+#         print(f'{t_now-t_bef:.4g}s', f's={s}: grid M0 obtained')
+#         ax4.plot(lambins,M0_atbins[s], label=f's={s} and nsect={nsect_i}')
+#         idx_M0neg = np.where(np.sign(M0_atbins[s])==-1)[0].max()
+#         t_bef, t_now = t_now, time()
+#         print(f'{t_now-t_bef:.4g}s', f's={s}: grid M0 selected')
+#         lamshsol = lambins[idx_M0neg+1]
+#         lambins = np.linspace(lambins[idx_M0neg], max(2*lamshsol-lambins[idx_M0neg],0.01), 8)
 
-    lamshsol = my_bisect(M0_num_tilde, lambins[0], lambins[-1], xtol=1e-6)#+1e-5
-    # lamshsol = thetbins[idx_M0neg+1]
-    t_bef, t_now = t_now, time()
-    print(f'{t_now-t_bef:.4g}s', f's={s}: root thetsh obtained')
-    # lamshsol1 = minimize_scalar(M0, method='bounded', bounds=(1.5*np.pi, 1.9*np.pi))
-    lamsh_sols[s] = lamshsol
-    M0_sols[s] = M0_num_tilde(lamshsol)
-    ax4.scatter(lamshsol, M0_sols[s])
-    print(f's={s}', lamshsol, M0_sols[s])
-ax4.set_xlabel(r'$\lambda_{sh}}$')
-ax4.set_ylabel(r'$M(\lambda=0)$')
-ax4.set_ylim(-2,5)
-ax4.legend()
+#     lamshsol = my_bisect(M0_num_tilde, lambins[0], lambins[-1], xtol=1e-6)#+1e-5
+#     # lamshsol = thetbins[idx_M0neg+1]
+#     t_bef, t_now = t_now, time()
+#     print(f'{t_now-t_bef:.4g}s', f's={s}: root thetsh obtained')
+#     # lamshsol1 = minimize_scalar(M0, method='bounded', bounds=(1.5*np.pi, 1.9*np.pi))
+#     lamsh_sols[s] = lamshsol
+#     M0_sols[s] = M0_num_tilde(lamshsol)
+#     ax4.scatter(lamshsol, M0_sols[s])
+#     print(f's={s}', lamshsol, M0_sols[s])
+# ax4.set_xlabel(r'$\lambda_{sh}}$')
+# ax4.set_ylabel(r'$M(\lambda=0)$')
+# ax4.set_ylim(-2,5)
+# ax4.legend()
 
 #%%
 lamsh_sols = {}
 lam_atM0_sols = {}
 lambins = np.linspace(0.01, 0.5, 8)
 
-for s in s_vals[::]:
-    t_now = time()
-    de = 2* (1+s/3) /3
-    alpha_D = -9/(s+3)
-    aD, aP, aM = alpha_D, (2*alpha_D+2), alpha_D+3
-    aD, aP, aM = 0,0,0
-    print(s, aD, aP, aM)
+# for s in s_vals[::]:
+#     t_now = time()
+#     de = 2* (1+s/3) /3
+#     alpha_D = -9/(s+3)
+#     aD, aP, aM = alpha_D, (2*alpha_D+2), alpha_D+3
+#     aD, aP, aM = 0,0,0
+#     print(s, aD, aP, aM)
 
-    lamshsol = my_bisect(lam_atM0, lambins[0], lambins[-1], xtol=1e-7)#+1e-5
-    # lamshsol = thetbins[idx_M0neg+1]
-    t_bef, t_now = t_now, time()
-    print(f'{t_now-t_bef:.4g}s', f's={s}: root thetsh obtained')
-    # lamshsol1 = minimize_scalar(M0, method='bounded', bounds=(1.5*np.pi, 1.9*np.pi))
-    lamsh_sols[s] = lamshsol
-    lam_atM0_sols[s] = lam_atM0(lamshsol)
-    print(f's={s}', lamshsol, lam_atM0_sols[s])
+#     lamshsol = my_bisect(lam_atM0, lambins[0], lambins[-1], xtol=1e-7)#+1e-5
+#     # lamshsol = thetbins[idx_M0neg+1]
+#     t_bef, t_now = t_now, time()
+#     print(f'{t_now-t_bef:.4g}s', f's={s}: root thetsh obtained')
+#     # lamshsol1 = minimize_scalar(M0, method='bounded', bounds=(1.5*np.pi, 1.9*np.pi))
+#     lamsh_sols[s] = lamshsol
+#     lam_atM0_sols[s] = lam_atM0(lamshsol)
+#     print(f's={s}', lamshsol, lam_atM0_sols[s])
 
 
 #%%
 fig5, axs5 = plt.subplots(2,3, dpi=100, figsize=(18,12), sharex=True)
 fig6, (ax62,ax6) = plt.subplots(1,2, dpi=100, figsize=(10,5))
 
-for s in s_vals[:2:]:
+for s in s_vals[1:2:]:
     t_now = time()
     de = 2* (1+s/3) /3
     alpha_D = -9/(s+3)
@@ -338,7 +344,9 @@ for s in s_vals[:2:]:
 
     color_this = plt.cm.turbo(s/4)
 
-    axs5[0,0].plot(lam_all,-V_all, color=color_this, label=f's={s}')
+    axs5[0,0].plot(lam_all,de*lam_all, c='r', label='V=0')
+
+    axs5[0,0].plot(lam_all,-Vb_all, color=color_this, label=f's={s}')
     axs5[0,1].plot(lam_all,D_all, color=color_this)
     axs5[1,0].plot(lam_all,M_all, color=color_this)
     axs5[1,1].plot(lam_all,P_all, color=color_this)
@@ -448,7 +456,7 @@ elif gam==4/3:
     axs5[1,2].set_ylim(1e-2,5e-1)
 
 
-axs5[0,0].set_ylabel('-V')
+axs5[0,0].set_ylabel('-Vb')
 axs5[0,1].set_ylabel('D')
 axs5[1,0].set_ylabel('M')
 axs5[1,1].set_ylabel('P')
@@ -496,7 +504,7 @@ plt.ylim(-1,2)
 plt.xscale('log')
 
 #%%
-plt.plot(lamsh_post, odefunc_tilde_full(np.log(lamsh_post),res_post.y)[2][1])
+plt.plot(lamsh_post, odefunc_tilde_full(np.log(lamsh_post),res_post.y)[2][1,0])
 plt.ylim(-1,2)
 plt.xscale('log')
 
@@ -532,3 +540,6 @@ plt.xlim(0,10)
 plt.yscale('log')
 plt.ylabel('r')
 plt.xlabel('t')
+
+
+#%%
