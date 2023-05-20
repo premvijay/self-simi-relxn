@@ -47,7 +47,7 @@ def odefunc(l, depvars):
     lam = np.exp(l)
     V,D,M,P = depvars
     Vb = V - de*lam
-    linb = -np.array([2*D*V-2*D*lam, (de-1)*V*lam+2/9*(M+M_dm(lam))/lam+3e-4/lam**3, ((2-Lam0*D**(2-nu)*P**(nu-1))*(gam-1)+2*(de-1))*lam, -3*lam**3*D])
+    linb = -np.array([2*D*V-2*D*lam, (de-1)*V*lam+2/9*(M+M_dm(lam))/lam+3e-4/lam**3, (2*(gam-1)+2*(de-1))*lam, -3*lam**3*D])
     # der_num = np.transpose(np.linalg.solve(linMat1,linb1), (1,0))
     linMat_det1 = D*Vb**2-gam*P
     # if linMat_det1 == 0: print(depvars)
@@ -70,6 +70,90 @@ def odefunc_prof_init_Pless(lam, depvars):
     linMat_inv = linMat_cofac1/ linMat_det1
     der = np.matmul(linMat_inv,linb)
     return der #*lam**2
+
+
+# %%
+aD, aP, aM = 0,0,0
+def to_btilde(lam, V,D,M,P):
+    Vb = V - de*lam
+    Dt, Mt, Pt = D*lam**-aD, M*lam**-aM, P*lam**-aP
+    return -Vb, Dt, Mt, Pt
+
+def from_btilde(lam, mVb,Dt,Mt,Pt):
+    V = -mVb + de*lam
+    D,M,P = Dt*lam**aD, Mt*lam**aM, Pt*lam**aP
+    return V,D,M,P
+
+def stop_event(t,y):
+    return y[2]+10 #+de*np.exp(t)
+stop_event.terminal = True
+
+zero_hold_func = lambda x: 1+np.heaviside(x-1,0.5)-np.heaviside(x+0.0,0.5)
+
+def odefunc_tilde_full(l, depvars):
+    lam = np.exp(l)
+    # lmV,lDt,lMt,lPt = depvars
+    mVb,Dt,Mt,Pt = np.exp(depvars)
+    Vb = -mVb
+    V = Vb + de*lam
+    # V,D,M,P = from_btilde(lam, mVb,Dt,Mt,Pt)
+    Z0 = 0*V
+    ar1 = V/V
+    # linb1 = -np.array([2*D*V-2*D*lam, (de-1)*V*lam+2/9*M/lam, (2*(gam-1)+2*(de-1))*lam])
+    # linb2 = -np.array([Vb*aD*D, aP*P/D, -Vb*(aD*gam-aP)])
+    # linb = linb1 +linb2
+    # linMat_det1 = D*Vb**2-gam*P
+    # # if linMat_det1 == 0: print(depvars)
+    # # linMat_cofac1 = np.array([[-gam*P/D,D*Vb,-P,0],[Dt*Vb,-Dt*D,Dt*P/Vb,0],[0,0,0,lam**(-aM)*linMat_det1],[gam*Pt*Vb,-gam*D*Pt,D*Pt*Vb,0]])
+    # linMat_cofac1 = np.array([[-gam*P/(D*Vb),D,-P/Vb],[Vb,-D,P/Vb],[gam*Vb,-gam*D,D*Vb]])
+    # linMat_inv = linMat_cofac1/ linMat_det1
+
+    Tv = Pt/Dt*lam**(aP-aD) /Vb**2
+    linMat_inv = 1/Vb**2/(gam*Tv-1) * np.array([[-gam*Tv, ar1, -Tv],[ar1,-ar1,Tv],[gam*ar1,-gam*ar1,ar1]])
+    linb = np.array([2*Vb* (V-lam), (de-1)*V*lam+2/9*Mt*lam**(aM-1)+1e-16/lam**10, 2*Vb*lam*((gam-1)+(de-1))])
+
+    # print(linMat_inv.shape,linb[:,np.newaxis].transpose((2,0,1)).shape)
+    linc = np.array([de/Vb*lam,aD+Z0,aP+Z0])
+    if np.isscalar(V):
+        der = np.matmul(linMat_inv, linb ) 
+        der[0] *= zero_hold_func(V)
+        der -= linc
+        # der = np.matmul(linMat_inv, linb )+ np.array([-de/Vb*lam,Z0,Z0])
+        # if der[0]<0:
+            # print(der, linMat_det1, linb, linMat_cofac1)
+    else:
+        der = np.matmul(linMat_inv.transpose((2,0,1)), linb[:,np.newaxis].transpose((2,0,1)) )
+        der[:,0] *= zero_hold_func(V)[:,np.newaxis]
+        der -= linc[:,np.newaxis].transpose((2,0,1))
+        der = der.transpose((1,2,0))[:,0,:]
+
+    derM = 3*Dt*lam**(aD+3-aM) /Mt - aM
+
+
+    return der, derM, linMat_inv, linb #*lam**2
+
+def odefunc_tilde(l, depvars):
+    der3, derM = odefunc_tilde_full(l, depvars)[:2]
+    der = np.insert(der3, 2, derM, axis=0)
+    if not np.isfinite(der).all():
+        print(der,l,depvars)
+    return der
+
+
+def get_shock_bcs(thtsh):
+    lamsh, V1, D1, M1 = preshock(thtsh)
+    return lamsh, shock_jump(lamsh, V1, D1, M1)
+
+def get_soln_gas_full_tilde(lamsh):
+    res_pre = solve_ivp(odefunc_prof_init_Pless, (1,lamsh), preshock(np.pi)[1:], max_step=0.01 )
+    V1, D1, M1 = res_pre.y[0][-1], res_pre.y[1][-1], res_pre.y[2][-1]
+    bcs = shock_jump(lamsh, V1, D1, M1) #get_shock_bcs(thtsh_sols[s])[1] #
+    # print(bcs)
+    bcs = to_btilde(lamsh, *bcs)
+    # print(bcs)
+    bcs = np.log(bcs)
+    res_post = solve_ivp(odefunc_tilde, (np.log(lamsh),np.log(1e-7)), bcs, method='Radau', max_step=0.5, vectorized=True) #, events=stop_event
+    return res_pre, res_post
 
 #%%
 # thtsh = 4.58324+1
@@ -139,7 +223,7 @@ def odefunc_traj_dm(xi, arg):
 #%%
 t_now = time()
 # thtshsol = fsolve(M0, 1.5*np.pi)
-s = 2
+s = 1
 gam = 5/3
 fb = 0.156837
 # fb = 0.5
@@ -190,9 +274,9 @@ for n in range(0, 1):
 
     # thtshsol = 1.95*np.pi
     # lamsh = preshock(thtshsol)[0]
-    lamsh = 5e-2
+    lamsh = 5e-1
 
-    res_prof_gas_pre, res_prof_gas_post = get_soln_gas_full(lamsh=lamsh)
+    res_prof_gas_pre, res_prof_gas_post = get_soln_gas_full_tilde(lamsh=lamsh)
 
     lamsh_pre = res_prof_gas_pre.t
     V_pre, D_pre, M_pre = res_prof_gas_pre.y
