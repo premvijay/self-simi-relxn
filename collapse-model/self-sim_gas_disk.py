@@ -115,20 +115,20 @@ def odefunc_tilde_full(l, depvars):
 
     Tv = Pt/Dt*lam**(aP-aD) /Vb**2
     linMat_inv = 1/Vb**2/(gam*Tv-1) * np.array([[-gam*Tv, ar1, -Tv],[ar1,-ar1,Tv],[gam*ar1,-gam*ar1,ar1]])
-    linb = np.array([2*Vb* (V-lam), (de-1)*V*lam+2/9*Mt*lam**(aM-1)+1e-16/lam**10*zero_hold_func(V), 2*Vb*lam*((gam-1)+(de-1))])
+    linb = np.array([2*Vb* (V-lam), (de-1)*V*lam+2/9*Mt*lam**(aM-1)+1e-16/lam**10*zero_hold_func(V) + (1-zero_hold_func(V))*(-2/9*Mt*lam**(aM-1)-2*de*lam**2*Tv*(de-2)), 2*Vb*lam*((gam-1)+(de-1))])
 
     # print(linMat_inv.shape,linb[:,np.newaxis].transpose((2,0,1)).shape)
     linc = np.array([de/Vb*lam,aD+Z0,aP+Z0])
     if np.isscalar(V):
         der = np.matmul(linMat_inv, linb ) 
-        der[0] *= zero_hold_func(V)
+        # der[0] *= zero_hold_func(V)
         der -= linc
         # der = np.matmul(linMat_inv, linb )+ np.array([-de/Vb*lam,Z0,Z0])
         # if der[0]<0:
             # print(der, linMat_det1, linb, linMat_cofac1)
     else:
         der = np.matmul(linMat_inv.transpose((2,0,1)), linb[:,np.newaxis].transpose((2,0,1)) )
-        der[:,0] *= zero_hold_func(V)[:,np.newaxis]
+        # der[:,0] *= zero_hold_func(V)[:,np.newaxis]
         der -= linc[:,np.newaxis].transpose((2,0,1))
         der = der.transpose((1,2,0))[:,0,:]
 
@@ -376,7 +376,7 @@ for s in s_vals[1:2:]:
     # bcs = shock_jump(lamshsol, V1, D1, M1)
     # taush = (thtshsol - np.sin(thtshsol)) / np.pi
     # xish = np.log(taush)
-    res = solve_ivp(odefunc_traj, (0,2.2), (1,), method='RK45', max_step=0.01, dense_output=False, vectorized=True)
+    res = solve_ivp(odefunc_traj, (0,5), (1,), method='RK45', max_step=0.01, dense_output=False, vectorized=True)
     # res1 = solve_ivp(fun, (res.t[-1],15), np.array([res.y[0][-1],-res.y[1][-1]]), max_step=0.1, dense_output=True)
 
     t_bef, t_now = t_now, time()
@@ -478,39 +478,39 @@ axs5[0,0].set_xlim(1e-6,1)
 
 
 #%%
-fig7,(ax71, ax72, ax73) = plt.subplots(3, dpi=120, figsize=(7,10), sharex=True)
-ax71.plot(lamsh_post, res_post.y[0])
-ax72.plot(lamsh_post, odefunc_tilde(np.log(lamsh_post),res_post.y)[0])
-ax72.plot(lamsh_post[1:], np.diff(res_post.y[0])/np.diff(np.log(lamsh_post)))
+# fig7,(ax71, ax72, ax73) = plt.subplots(3, dpi=120, figsize=(7,10), sharex=True)
+# ax71.plot(lamsh_post, res_post.y[0])
+# ax72.plot(lamsh_post, odefunc_tilde(np.log(lamsh_post),res_post.y)[0])
+# ax72.plot(lamsh_post[1:], np.diff(res_post.y[0])/np.diff(np.log(lamsh_post)))
 
-ax73.plot(lamsh_post, odefunc_tilde_full(lamsh_post,res_post.y)[2][1,2]/odefunc_tilde_full(lamsh_post,res_post.y)[2][1,0])
+# ax73.plot(lamsh_post, odefunc_tilde_full(lamsh_post,res_post.y)[2][1,2]/odefunc_tilde_full(lamsh_post,res_post.y)[2][1,0])
 
-ax71.set_xscale('log')
-ax72.set_yscale('log')
-ax73.set_yscale('log')
-#%%
-plt.loglog(lamsh_post, odefunc_tilde_full(np.log(lamsh_post),res_post.y)[2][1,2]/odefunc_tilde_full(np.log(lamsh_post),res_post.y)[2][1,0])
-plt.loglog(lamsh_pre, odefunc_tilde_full(np.log(lamsh_pre),np.log(to_btilde(lamsh_pre,*shock_jump(lamsh_pre, *res_pre.y))))[2][0,1])
+# ax71.set_xscale('log')
+# ax72.set_yscale('log')
+# ax73.set_yscale('log')
+# #%%
+# plt.loglog(lamsh_post, odefunc_tilde_full(np.log(lamsh_post),res_post.y)[2][1,2]/odefunc_tilde_full(np.log(lamsh_post),res_post.y)[2][1,0])
+# plt.loglog(lamsh_pre, odefunc_tilde_full(np.log(lamsh_pre),np.log(to_btilde(lamsh_pre,*shock_jump(lamsh_pre, *res_pre.y))))[2][0,1])
 
-#%%
-plt.loglog(lamsh_post, odefunc_tilde_full(np.log(lamsh_post),res_post.y)[2][1,2]/odefunc_tilde_full(np.log(lamsh_post),res_post.y)[2][1,0])
-plt.loglog(lamsh_post, np.exp(res_post.y[3]-res_post.y[0]*2-res_post.y[1]))
-bcs_all = to_btilde(lamsh_pre,*shock_jump(lamsh_pre, *res_pre.y))
-plt.loglog(lamsh_pre, bcs_all[3]/bcs_all[0]**2/bcs_all[1])
-plt.ylabel('$\mathcal{T}$')
-#%%
-plt.plot(lamsh_post, odefunc_tilde_full(np.log(lamsh_post),res_post.y)[3][1])
-plt.ylim(-1,2)
-plt.xscale('log')
+# #%%
+# plt.loglog(lamsh_post, odefunc_tilde_full(np.log(lamsh_post),res_post.y)[2][1,2]/odefunc_tilde_full(np.log(lamsh_post),res_post.y)[2][1,0])
+# plt.loglog(lamsh_post, np.exp(res_post.y[3]-res_post.y[0]*2-res_post.y[1]))
+# bcs_all = to_btilde(lamsh_pre,*shock_jump(lamsh_pre, *res_pre.y))
+# plt.loglog(lamsh_pre, bcs_all[3]/bcs_all[0]**2/bcs_all[1])
+# plt.ylabel('$\mathcal{T}$')
+# #%%
+# plt.plot(lamsh_post, odefunc_tilde_full(np.log(lamsh_post),res_post.y)[3][1])
+# plt.ylim(-1,2)
+# plt.xscale('log')
 
-#%%
-plt.plot(lamsh_post, odefunc_tilde_full(np.log(lamsh_post),res_post.y)[2][1,0])
-plt.ylim(-1,2)
-plt.xscale('log')
+# #%%
+# plt.plot(lamsh_post, odefunc_tilde_full(np.log(lamsh_post),res_post.y)[2][1,0])
+# plt.ylim(-1,2)
+# plt.xscale('log')
 
 
 
-# %%
+## %%
 
 
 
