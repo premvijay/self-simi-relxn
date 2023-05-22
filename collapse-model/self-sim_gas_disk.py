@@ -90,10 +90,10 @@ def from_btilde(lam, mVb,Dt,Mt,Pt):
     return V,D,M,P
 
 def stop_event(t,y):
-    return y[2]+10 #+de*np.exp(t)
+    return y[2]+9 #+de*np.exp(t)
 stop_event.terminal = True
 
-zero_hold_func = lambda x: 1+np.heaviside(x-1,0.5)-np.heaviside(x+0.0,0.5)
+zero_hold_func = lambda x: 1+np.heaviside(x-10,0.5)-np.heaviside(x+5e-4,0.5)
 
 def odefunc_tilde_full(l, depvars):
     lam = np.exp(l)
@@ -115,8 +115,10 @@ def odefunc_tilde_full(l, depvars):
 
     Tv = Pt/Dt*lam**(aP-aD) /Vb**2
     linMat_inv = 1/Vb**2/(gam*Tv-1) * np.array([[-gam*Tv, ar1, -Tv],[ar1,-ar1,Tv],[gam*ar1,-gam*ar1,ar1]])
-    linb = np.array([2*Vb* (V-lam), (de-1)*V*lam+2/9*Mt*lam**(aM-1)+1e-16/lam**10*zero_hold_func(V) + (1-zero_hold_func(V))*(-2/9*Mt*lam**(aM-1)-2*de*lam**2*Tv*(de-2)), 2*Vb*lam*((gam-1)+(de-1))])
+    linb = np.array([2*Vb* (V-lam), (de-1)*V*lam+2/9*Mt*lam**(aM-1)+1e-16/lam**10*zero_hold_func(V) + (1-zero_hold_func(V))*(-2/9*Mt*lam**(aM-1)+2*Vb*lam*Tv*(de-2)+2*gam*Tv*Vb*V), 2*Vb*lam*((gam-1)+(de-1))])
 
+    # if not np.isfinite(V/lam).all():
+    #     print(V, lam)
     # print(linMat_inv.shape,linb[:,np.newaxis].transpose((2,0,1)).shape)
     linc = np.array([de/Vb*lam,aD+Z0,aP+Z0])
     if np.isscalar(V):
@@ -141,7 +143,8 @@ def odefunc_tilde(l, depvars):
     der3, derM = odefunc_tilde_full(l, depvars)[:2]
     der = np.insert(der3, 2, derM, axis=0)
     if not np.isfinite(der).all():
-        print(der,l,depvars)
+        # print(der,l,depvars)
+        return np.nan_to_num(der)
     return der
 
 
