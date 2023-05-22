@@ -90,10 +90,10 @@ def from_btilde(lam, mVb,Dt,Mt,Pt):
     return V,D,M,P
 
 def stop_event(t,y):
-    return y[2]+9 #+de*np.exp(t)
+    return y[0]+10 #+de*np.exp(t)
 stop_event.terminal = True
 
-zero_hold_func = lambda x: 1+np.heaviside(x-10,0.5)-np.heaviside(x+5e-4,0.5)
+zero_hold_func = lambda x: 1+np.heaviside(x-10,0.5)-np.heaviside(x,0.5)
 
 def odefunc_tilde_full(l, depvars):
     lam = np.exp(l)
@@ -188,7 +188,7 @@ def get_soln_gas_full_tilde(lamsh):
     bcs = to_btilde(lamsh, *bcs)
     # print(bcs)
     bcs = np.log(bcs)
-    res_post = solve_ivp(odefunc_tilde, (np.log(lamsh),np.log(1e-7)), bcs, method='Radau', max_step=0.5, vectorized=True) #, events=stop_event
+    res_post = solve_ivp(odefunc_tilde, (np.log(lamsh),np.log(1e-7)), bcs, method='Radau', max_step=0.5, vectorized=True, events=stop_event)
     return res_pre, res_post
 
 # def M0_num(lamsh):
