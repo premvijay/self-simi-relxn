@@ -85,10 +85,10 @@ def from_btilde(lam, mVb,Dt,Mt,Pt):
     return V,D,M,P
 
 def stop_event(t,y):
-    return y[2]+10 #+de*np.exp(t)
+    return y[0]+10 #+de*np.exp(t)
 stop_event.terminal = True
 
-zero_hold_func = lambda x: 1+np.heaviside(x-1,0.5)-np.heaviside(x+0.0,0.5)
+zero_hold_func = lambda x: 1+np.heaviside(x-10,0.5)-np.heaviside(x+0.0,0.5)
 
 def odefunc_tilde_full(l, depvars):
     lam = np.exp(l)
@@ -110,7 +110,7 @@ def odefunc_tilde_full(l, depvars):
 
     Tv = Pt/Dt*lam**(aP-aD) /Vb**2
     linMat_inv = 1/Vb**2/(gam*Tv-1) * np.array([[-gam*Tv, ar1, -Tv],[ar1,-ar1,Tv],[gam*ar1,-gam*ar1,ar1]])
-    linb = np.array([2*Vb* (V-lam), (de-1)*V*lam+2/9*Mt*lam**(aM-1)+1e-16/lam**10, 2*Vb*lam*((gam-1)+(de-1))])
+    linb = np.array([2*Vb* (V-lam), (de-1)*V*lam+2/9*(Mt+M_dm(lam))*lam**(aM-1)+1e-16/lam**10*zero_hold_func(V) + (1-zero_hold_func(V))*(-2/9*(Mt+M_dm(lam))*lam**(aM-1)+2*Vb*lam*Tv*(de-2)+2*gam*Tv*Vb*V), 2*Vb*lam*((gam-1)+(de-1))])
 
     # print(linMat_inv.shape,linb[:,np.newaxis].transpose((2,0,1)).shape)
     linc = np.array([de/Vb*lam,aD+Z0,aP+Z0])
@@ -137,6 +137,7 @@ def odefunc_tilde(l, depvars):
     der = np.insert(der3, 2, derM, axis=0)
     if not np.isfinite(der).all():
         print(der,l,depvars)
+        return np.nan_to_num(der)
     return der
 
 
@@ -152,7 +153,8 @@ def get_soln_gas_full_tilde(lamsh):
     bcs = to_btilde(lamsh, *bcs)
     # print(bcs)
     bcs = np.log(bcs)
-    res_post = solve_ivp(odefunc_tilde, (np.log(lamsh),np.log(1e-7)), bcs, method='Radau', max_step=0.5, vectorized=True) #, events=stop_event
+    # print(bcs,D1)
+    res_post = solve_ivp(odefunc_tilde, (np.log(lamsh),np.log(1e-4)), bcs, method='Radau', max_step=0.5, vectorized=True, events=stop_event)
     return res_pre, res_post
 
 #%%
@@ -274,7 +276,7 @@ for n in range(0, 1):
 
     # thtshsol = 1.95*np.pi
     # lamsh = preshock(thtshsol)[0]
-    lamsh = 5e-1
+    lamsh = 2.4e-1
 
     res_prof_gas_pre, res_prof_gas_post = get_soln_gas_full_tilde(lamsh=lamsh)
 
@@ -286,7 +288,10 @@ for n in range(0, 1):
     # res_prof_gas = get_soln(1.95*np.pi)
 
     lamsh_post = np.exp(res_prof_gas_post.t)[:]#*0
-    V_post, D_post, M_post, P_post = res_prof_gas_post.y[:,:]#*0
+    # Vb_post, D_post, M_post, P_post = np.exp(res_prof_gas_post.y)
+    mVb_post, Dt_post, Mt_post, Pt_post = np.exp(res_prof_gas_post.y)
+    # V_post = -mVb_post + de*lamsh_post
+    V_post, D_post, M_post, P_post = from_btilde(lamsh_post, mVb_post, Dt_post, Mt_post, Pt_post)
 
     # thtsh_preange = np.arange(1*np.pi, thtshsol,0.01)
 
@@ -301,13 +306,14 @@ for n in range(0, 1):
     D_all = np.concatenate([D_post, D_pre][::-1])
     M_all = np.concatenate([M_post, M_pre][::-1])
     P_all = np.concatenate([P_post, P_pre][::-1])
+    Vb_all = V_all - de*lam_all
 
     # M_all = lam_all**(upsil)*M_all[0]
     M_gas = interp1d(lam_all, M_all, fill_value="extrapolate")
 
     M_tot = lambda lam : M_dm(lam)+M_gas(lam)
 
-    resdf_gas = pd.DataFrame(data={'l':lam_all, 'M':M_all, 'V':V_all, 'D':D_all, 'P':P_all,})
+    resdf_gas = pd.DataFrame(data={'l':lam_all, 'M':M_all, 'V':V_all, 'D':D_all, 'P':P_all, 'Vb':Vb_all,})
     resdf_gas.to_hdf(f'profiles_gasdm_s{s:g}_gam{gam:.3g}.hdf5', 'gas/main', mode='a')
     resdf_gas.to_hdf(f'profiles_gasdm_s{s:g}_gam{gam:.3g}.hdf5', f'gas/iter{n}', mode='a')
     # resdf_gas = pd.read_hdf(f'profiles_gasdm_s{s:g}_gam{gam:.3g}.hdf5', key=f'gas/iter{n}', mode='r')
@@ -318,7 +324,7 @@ for n in range(0, 1):
 
     xi_max = np.log(1e-4**upsil)*-3/2/s
 
-    res_traj_dm = solve_ivp(odefunc_traj_dm, (0,xi_max), np.array([1,-de]), method='Radau', t_eval=(np.linspace(0,xi_max**3,500000))**(1/4), max_step=np.inf, dense_output=False, vectorized=True)
+    res_traj_dm = solve_ivp(odefunc_traj_dm, (0,xi_max), np.array([1,-de]), method='Radau', t_eval=(np.linspace(0,xi_max**4,1000000))**(1/4), max_step=np.inf, dense_output=False, vectorized=True)
     # res1 = solve_ivp(fun, (res.t[-1],15), np.array([res.y[0][-1],-res.y[1][-1]]), max_step=0.1, dense_output=True)
 
     xi = res_traj_dm.t
@@ -412,7 +418,7 @@ for n in plot_iters:
     resdf_traj_dm = pd.read_hdf(f'traj_gasdm_s{s:g}_gam{gam:.3g}.hdf5', key=f'dm/iter{n}', mode='r')
     #resdf_traj_dm_d = pd.read_hdf(f'traj_gasdm_s{s:g}_gam{gam:.3g}_desktop.hdf5', key=f'dm/iter{n}', mode='r')
 
-    axs5[0,0].plot(resdf_prof_gas.l, -resdf_prof_gas.V, color=color_this, label=f'n={n}')
+    axs5[0,0].plot(resdf_prof_gas.l, -resdf_prof_gas.Vb, color=color_this, label=f'n={n}')
     axs5[0,1].plot(resdf_prof_gas.l, resdf_prof_gas.D, color=color_this)
     axs5[1,0].plot(resdf_prof_gas.l, resdf_prof_gas.M, color=color_this, ls='dashdot')
     axs5[1,1].plot(resdf_prof_gas.l, resdf_prof_gas.P, color=color_this)
@@ -474,13 +480,13 @@ axs5[1,0].plot([], ls='dashdot', color='k', label='Gas')
 axs5[1,0].plot([], ls='dashed', color='k', label='DMo')
 axs5[1,0].legend()
 
-if gam>1.66:
+if gam>1.67:
     # axs5[0,0].set_xlim(1e-2,1)
     axs5[0,1].set_ylim(1e-1,1e6)
     axs5[1,0].set_ylim(1e-2,1e1)
     axs5[1,1].set_ylim(1e0,1e7)
 
-axs5[0,0].set_ylabel('-V')
+axs5[0,0].set_ylabel('-Vb')
 axs5[0,1].set_ylabel('D')
 axs5[1,0].set_ylabel('M')
 axs5[1,1].set_ylabel('P')
@@ -494,7 +500,7 @@ axs5[1,1].set_yscale('log')
 
 
 ax6.set_xlim(0,4)
-ax6.set_ylim(0,1)
+ax6.set_ylim(1e-5,1)
 ax6.set_yscale('log')
 ax6.set_ylim(resdf_prof_dm.l[1],1)
 ax6.xaxis.get_ticklocs(minor=True)     # []
