@@ -246,12 +246,12 @@ M_dm = lambda lam: M_dmo(lam)*(1-fb)
 de = 2* (1+s/3) /3
 upsil = 1 if s >= 3/2 else 3*s/(s+3)
 
-plot_iters = [0]#,3] #,5,6,7]
+plot_iters = [0,1,3] #,5,6,7]
 
 t_bef, t_now = t_now, time()
 print(f'{t_now-t_bef:.4g}s', 'Initialised vals and funcs for iteration')
 
-for n in range(0, 1):
+for n in range(0, 4):
     # thtbins_all = [np.linspace(1.2*np.pi, 1.99*np.pi, 8)]
     # M0_atbins_all = []
     # for nsect_i in range(0,3):
@@ -322,7 +322,7 @@ for n in range(0, 1):
     t_bef, t_now = t_now, time()
     print(f'{t_now-t_bef:.4g}s', f'{n}th iter gas profiles updated')
 
-    xi_max = np.log(1e-4**upsil)*-3/2/s
+    xi_max = np.log(1e-4**upsil)*-3/2/s/1.5
 
     res_traj_dm = solve_ivp(odefunc_traj_dm, (0,xi_max), np.array([1,-de]), method='Radau', t_eval=(np.linspace(0,xi_max**4,1000000))**(1/4), max_step=np.inf, dense_output=False, vectorized=True)
     # res1 = solve_ivp(fun, (res.t[-1],15), np.array([res.y[0][-1],-res.y[1][-1]]), max_step=0.1, dense_output=True)
