@@ -90,7 +90,7 @@ def from_btilde(lam, mVb,Dt,Mt,Pt):
     return V,D,M,P
 
 def stop_event(t,y):
-    return y[0]+10 #+de*np.exp(t)
+    return y[0]+12 #+de*np.exp(t)
 stop_event.terminal = True
 
 zero_hold_func = lambda x: 1+np.heaviside(x-10,0.5)-np.heaviside(x,0.5)
@@ -115,7 +115,7 @@ def odefunc_tilde_full(l, depvars):
 
     Tv = Pt/Dt*lam**(aP-aD) /Vb**2
     linMat_inv = 1/Vb**2/(gam*Tv-1) * np.array([[-gam*Tv, ar1, -Tv],[ar1,-ar1,Tv],[gam*ar1,-gam*ar1,ar1]])
-    linb = np.array([2*Vb* (V-lam), (de-1)*V*lam+2/9*Mt*lam**(aM-1)+1e-16/lam**10*zero_hold_func(V) + (1-zero_hold_func(V))*(-2/9*Mt*lam**(aM-1)+2*Vb*lam*Tv*(de-2)+2*gam*Tv*Vb*V), 2*Vb*lam*((gam-1)+(de-1))])
+    linb = np.array([2*Vb* (V-lam), (de-1)*V*lam+2/9*Mt*lam**(aM-1)+1e-6/lam**5*(-V) + (1+V)*(-2/9*Mt*lam**(aM-1)+2*Vb*lam*Tv*(de-2)+2*gam*Tv*Vb*V), 2*Vb*lam*((gam-1)+(de-1))])
 
     # if not np.isfinite(V/lam).all():
     #     print(V, lam)
