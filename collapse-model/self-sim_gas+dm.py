@@ -85,7 +85,7 @@ def from_btilde(lam, mVb,Dt,Mt,Pt):
     return V,D,M,P
 
 def stop_event(t,y):
-    return y[0]+10 #+de*np.exp(t)
+    return y[0]+12 #+de*np.exp(t)
 stop_event.terminal = True
 
 zero_hold_func = lambda x: 1+np.heaviside(x-10,0.5)-np.heaviside(x+0.0,0.5)
@@ -110,20 +110,20 @@ def odefunc_tilde_full(l, depvars):
 
     Tv = Pt/Dt*lam**(aP-aD) /Vb**2
     linMat_inv = 1/Vb**2/(gam*Tv-1) * np.array([[-gam*Tv, ar1, -Tv],[ar1,-ar1,Tv],[gam*ar1,-gam*ar1,ar1]])
-    linb = np.array([2*Vb* (V-lam), (de-1)*V*lam+2/9*(Mt+M_dm(lam))*lam**(aM-1)+1e-16/lam**10*zero_hold_func(V) + (1-zero_hold_func(V))*(-2/9*(Mt+M_dm(lam))*lam**(aM-1)+2*Vb*lam*Tv*(de-2)+2*gam*Tv*Vb*V), 2*Vb*lam*((gam-1)+(de-1))])
+    linb = np.array([2*Vb* (V-lam), (de-1)*V*lam+2/9*(Mt+M_dm(lam))*lam**(aM-1)+1e-6/lam**5*(-V) + (1+V)*(-2/9*(Mt+M_dm(lam))*lam**(aM-1)+2*Vb*lam*Tv*(de-2)+2*gam*Tv*Vb*V), 2*Vb*lam*((gam-1)+(de-1))])
 
     # print(linMat_inv.shape,linb[:,np.newaxis].transpose((2,0,1)).shape)
     linc = np.array([de/Vb*lam,aD+Z0,aP+Z0])
     if np.isscalar(V):
         der = np.matmul(linMat_inv, linb ) 
-        der[0] *= zero_hold_func(V)
+        # der[0] *= zero_hold_func(V)
         der -= linc
         # der = np.matmul(linMat_inv, linb )+ np.array([-de/Vb*lam,Z0,Z0])
         # if der[0]<0:
             # print(der, linMat_det1, linb, linMat_cofac1)
     else:
         der = np.matmul(linMat_inv.transpose((2,0,1)), linb[:,np.newaxis].transpose((2,0,1)) )
-        der[:,0] *= zero_hold_func(V)[:,np.newaxis]
+        # der[:,0] *= zero_hold_func(V)[:,np.newaxis]
         der -= linc[:,np.newaxis].transpose((2,0,1))
         der = der.transpose((1,2,0))[:,0,:]
 
@@ -500,9 +500,9 @@ axs5[1,1].set_yscale('log')
 
 
 ax6.set_xlim(0,4)
-ax6.set_ylim(1e-5,1)
+ax6.set_ylim(1e-3,1)
 ax6.set_yscale('log')
-ax6.set_ylim(resdf_prof_dm.l[1],1)
+# ax6.set_ylim(resdf_prof_dm.l[1],1)
 ax6.xaxis.get_ticklocs(minor=True)     # []
 ax6.minorticks_on()
 ax6.grid(visible=True, which='both', axis='x')
