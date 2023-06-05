@@ -246,12 +246,12 @@ M_dm = lambda lam: M_dmo(lam)*(1-fb)
 de = 2* (1+s/3) /3
 upsil = 1 if s >= 3/2 else 3*s/(s+3)
 
-plot_iters = [0,1,3] #,5,6,7]
+plot_iters = [0,1,3,5] #,5,6,7]
 
 t_bef, t_now = t_now, time()
 print(f'{t_now-t_bef:.4g}s', 'Initialised vals and funcs for iteration')
 
-for n in range(0, 4):
+for n in range(0, 6):
     # thtbins_all = [np.linspace(1.2*np.pi, 1.99*np.pi, 8)]
     # M0_atbins_all = []
     # for nsect_i in range(0,3):
@@ -312,6 +312,7 @@ for n in range(0, 4):
     M_gas = interp1d(lam_all, M_all, fill_value="extrapolate")
 
     M_tot = lambda lam : M_dm(lam)+M_gas(lam)
+    if n==0: M_tot = M_dmo #lambda lam : M_dm(lam)/fd
 
     resdf_gas = pd.DataFrame(data={'l':lam_all, 'M':M_all, 'V':V_all, 'D':D_all, 'P':P_all, 'Vb':Vb_all,})
     resdf_gas.to_hdf(f'profiles_gasdm_s{s:g}_gam{gam:.3g}.hdf5', 'gas/main', mode='a')
@@ -324,7 +325,7 @@ for n in range(0, 4):
 
     xi_max = np.log(1e-4**upsil)*-3/2/s/1.5
 
-    res_traj_dm = solve_ivp(odefunc_traj_dm, (0,xi_max), np.array([1,-de]), method='Radau', t_eval=(np.linspace(0,xi_max**4,1000000))**(1/4), max_step=np.inf, dense_output=False, vectorized=True)
+    res_traj_dm = solve_ivp(odefunc_traj_dm, (0,xi_max), np.array([1,-de]), method='Radau', t_eval=(np.linspace(0,xi_max**4,5000000))**(1/4), max_step=np.inf, dense_output=False, vectorized=True)
     # res1 = solve_ivp(fun, (res.t[-1],15), np.array([res.y[0][-1],-res.y[1][-1]]), max_step=0.1, dense_output=True)
 
     xi = res_traj_dm.t
@@ -366,6 +367,7 @@ for n in range(0, 4):
     M_vals *= Mta*(1-fb) / M_vals[-1]
 
     M_dm = interp1d(l_range, M_vals, fill_value="extrapolate")
+    if n==0: M_dmo = interp1d(l_range, M_vals/fd, fill_value="extrapolate")
 
     resdf_dm = pd.DataFrame(data={'l':l_range, 'M':M_vals,})
     resdf_dm.to_hdf(f'profiles_gasdm_s{s:g}_gam{gam:.3g}.hdf5', 'dm/main', mode='a')
@@ -499,7 +501,7 @@ axs5[1,1].set_yscale('log')
 
 
 
-ax6.set_xlim(0,4)
+ax6.set_xlim(0,6)
 ax6.set_ylim(1e-3,1)
 ax6.set_yscale('log')
 # ax6.set_ylim(resdf_prof_dm.l[1],1)
@@ -534,7 +536,7 @@ lamr = np.logspace(-2.3,-0.005,300)
 r, Mdr, Mbr, Mdr_dmo = lamr, M_dm(lamr), M_gas(lamr), M_dmo(lamr_full)*fd
 ri_pre = lamr_full
 
-#%%
+##%%
 plt.figure()
 plt.plot(r,Mdr, label='DM')
 plt.plot(r,Mbr*fd/fb, label='baryon')
@@ -544,7 +546,7 @@ plt.xscale('log')
 plt.yscale('log')
 plt.legend()
 
-#%%
+##%%
 rf = r.copy()
 
 logri_logM = interp1d(np.log10(Mdr_dmo),np.log10(ri_pre), fill_value='extrapolate')
@@ -559,13 +561,13 @@ Mi = Mdr/fd
 MiMf = ( fd* (Mbr/ Mdr + 1) )**-1
 rfri = rf / ri
  
-#%%
+## %%
 plt.figure(figsize=(8,6))
 # plt.scatter(MiMf[60:-50],rfri[60:-50],c=rf[60:-50])
 plt.scatter(MiMf,rfri,c=np.log10(rf), cmap='nipy_spectral', label=f"s={s} "+r'$\gamma=$'+f"{gam:.3g}")
 # plt.scatter(MiMf[100:],rfri[100:],c=np.log10(rf[100:]), cmap='nipy_spectral')
-plt.plot(MiMf,1+0.25*(MiMf-1),'k',label='$q=0.25$')
-plt.plot(MiMf,1+0.25*(MiMf-1)-0.02,'k',label='$q=0.25$ and $q_0=0.02$')
+# plt.plot(MiMf,1+0.25*(MiMf-1),'k',label='$q=0.25$')
+plt.plot(MiMf,1+0.33*(MiMf-1)-0.02,'k',label='$q=0.33$ and $q_0=0.02$')
 plt.colorbar(label='$r_f$ (defined as relaxed $\lambda$)')
 plt.xlabel('$M_i/M_f$')
 plt.ylabel('$r_f/r_i$')
