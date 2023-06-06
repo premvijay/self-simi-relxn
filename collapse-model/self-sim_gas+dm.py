@@ -251,7 +251,7 @@ plot_iters = [0,1,3,5] #,5,6,7]
 t_bef, t_now = t_now, time()
 print(f'{t_now-t_bef:.4g}s', 'Initialised vals and funcs for iteration')
 
-for n in range(0, 6):
+for n in range(0, 4):
     # thtbins_all = [np.linspace(1.2*np.pi, 1.99*np.pi, 8)]
     # M0_atbins_all = []
     # for nsect_i in range(0,3):
@@ -325,7 +325,7 @@ for n in range(0, 6):
 
     xi_max = np.log(1e-4**upsil)*-3/2/s/1.5
 
-    res_traj_dm = solve_ivp(odefunc_traj_dm, (0,xi_max), np.array([1,-de]), method='Radau', t_eval=(np.linspace(0,xi_max**4,5000000))**(1/4), max_step=np.inf, dense_output=False, vectorized=True)
+    res_traj_dm = solve_ivp(odefunc_traj_dm, (0,xi_max), np.array([1,-de]), method='Radau', t_eval=(np.linspace(0,xi_max**4,2000000))**(1/4), max_step=np.inf, dense_output=False, vectorized=True)
     # res1 = solve_ivp(fun, (res.t[-1],15), np.array([res.y[0][-1],-res.y[1][-1]]), max_step=0.1, dense_output=True)
 
     xi = res_traj_dm.t
