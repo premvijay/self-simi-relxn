@@ -276,7 +276,7 @@ for n in range(0, 6):
 
     # thtshsol = 1.95*np.pi
     # lamsh = preshock(thtshsol)[0]
-    lamsh = 2.4e-1
+    lamsh = 2.5e-1
 
     res_prof_gas_pre, res_prof_gas_post = get_soln_gas_full_tilde(lamsh=lamsh)
 
