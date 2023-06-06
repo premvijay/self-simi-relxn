@@ -115,7 +115,7 @@ def odefunc_tilde_full(l, depvars):
 
     Tv = Pt/Dt*lam**(aP-aD) /Vb**2
     linMat_inv = 1/Vb**2/(gam*Tv-1) * np.array([[-gam*Tv, ar1, -Tv],[ar1,-ar1,Tv],[gam*ar1,-gam*ar1,ar1]])
-    linb = np.array([2*Vb* (V-lam), (de-1)*V*lam+2/9*Mt*lam**(aM-1)+1e-6/lam**5*(-V) + (1+V)*(-2/9*Mt*lam**(aM-1)+2*Vb*lam*Tv*(de-2)+2*gam*Tv*Vb*V), 2*Vb*lam*((gam-1)+(de-1))])
+    linb = np.array([2*Vb* (V-lam), (de-1)*V*lam+2/9*Mt*lam**(aM-1)+1e-10/lam**10*(-V/lam) + (1+V)*(-2/9*Mt*lam**(aM-1)+2*Vb*lam*Tv*(de-2)+2*gam*Tv*Vb*V), Vb*lam*((2-Lam0*Dt**(2-nu)*Pt**(nu-1))*(gam-1)+2*(de-1))])
 
     # if not np.isfinite(V/lam).all():
     #     print(V, lam)
@@ -244,6 +244,8 @@ def my_bisect(f, a, b, xtol=1e-4):
 s = 1
 gam = 5/3
 s_vals = [0.5,1,1.5,2,3,5]
+Lam0 = 3e-2
+nu=1/2
 
 #%%
 # fig4, ax4 = plt.subplots(1, dpi=120, figsize=(10,7))
@@ -317,7 +319,7 @@ for s in s_vals[1:2:]:
     alpha_D = -9/(s+3)
     aD, aP, aM = alpha_D, 1*(2*alpha_D+2), alpha_D+3
     aD, aP, aM = 0,0,0
-    lamshsol = 0.25 #lamsh_sols[s] #+5e-3 # 0.338976 #
+    lamshsol = 0.4 #lamsh_sols[s] #+5e-3 # 0.338976 #
     res_pre, res_post = get_soln_gas_full_tilde(lamshsol)
     print(res_post.y[2][-1])
     # print(M0(lamshsol))
