@@ -85,7 +85,7 @@ def from_btilde(lam, mVb,Dt,Mt,Pt):
     return V,D,M,P
 
 def stop_event(t,y):
-    return y[0]+12 #+de*np.exp(t)
+    return y[0]+8 #+de*np.exp(t)
 stop_event.terminal = True
 
 zero_hold_func = lambda x: 1+np.heaviside(x-10,0.5)-np.heaviside(x+0.0,0.5)
@@ -110,7 +110,7 @@ def odefunc_tilde_full(l, depvars):
 
     Tv = Pt/Dt*lam**(aP-aD) /Vb**2
     linMat_inv = 1/Vb**2/(gam*Tv-1) * np.array([[-gam*Tv, ar1, -Tv],[ar1,-ar1,Tv],[gam*ar1,-gam*ar1,ar1]])
-    linb = np.array([2*Vb* (V-lam), (de-1)*V*lam+2/9*(Mt+M_dm(lam))*lam**(aM-1)+1e-6/lam**5*(-V) + (1+V)*(-2/9*(Mt+M_dm(lam))*lam**(aM-1)+2*Vb*lam*Tv*(de-2)+2*gam*Tv*Vb*V), 2*Vb*lam*((gam-1)+(de-1))])
+    linb = np.array([2*Vb* (V-lam), (de-1)*V*lam+2/9*(Mt+M_dm(lam))*lam**(aM-1)+1e-10/lam**10*(-V/lam) + (1+V)*(-2/9*(Mt+M_dm(lam))*lam**(aM-1)+2*Vb*lam*Tv*(de-2)+2*gam*Tv*Vb*V), Vb*lam*((2-Lam0*Dt**(2-nu)*Pt**(nu-1))*(gam-1)+2*(de-1))])
 
     # print(linMat_inv.shape,linb[:,np.newaxis].transpose((2,0,1)).shape)
     linc = np.array([de/Vb*lam,aD+Z0,aP+Z0])
@@ -227,6 +227,8 @@ t_now = time()
 # thtshsol = fsolve(M0, 1.5*np.pi)
 s = 1
 gam = 5/3
+Lam0 = 0e-5
+nu=1/2
 fb = 0.156837
 # fb = 0.5
 fd = (1-fb)
@@ -246,7 +248,7 @@ M_dm = lambda lam: M_dmo(lam)*(1-fb)
 de = 2* (1+s/3) /3
 upsil = 1 if s >= 3/2 else 3*s/(s+3)
 
-plot_iters = [0,1,3,5] #,5,6,7]
+plot_iters = [0,1,3] #,5,6,7]
 
 t_bef, t_now = t_now, time()
 print(f'{t_now-t_bef:.4g}s', 'Initialised vals and funcs for iteration')
@@ -276,7 +278,7 @@ for n in range(0, 4):
 
     # thtshsol = 1.95*np.pi
     # lamsh = preshock(thtshsol)[0]
-    lamsh = 2.5e-1
+    lamsh = 3.5e-1
 
     res_prof_gas_pre, res_prof_gas_post = get_soln_gas_full_tilde(lamsh=lamsh)
 
@@ -380,16 +382,16 @@ for n in range(0, 4):
 
 
 #%%
-# del res_traj_dm, lam, loglam, xi
-import dill                            #pip install dill --user
-filename = f'soln-globalsave_s{s:g}_gam{gam:.3g}.pkl'
-dill.dump_session(filename)
+del res_traj_dm, lam, loglam, xi
+# import dill                            #pip install dill --user
+# filename = f'soln-globalsave_s{s:g}_gam{gam:.3g}.pkl'
+# dill.dump_session(filename)
 
 
-# %%
-import dill                            #pip install dill --user
-filename = f'soln-globalsave_s{s:g}_gam{gam:.3g}.pkl'
-dill.load_session(filename)
+# # %%
+# import dill                            #pip install dill --user
+# filename = f'soln-globalsave_s{s:g}_gam{gam:.3g}.pkl'
+# dill.load_session(filename)
 
 
 #%%
