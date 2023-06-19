@@ -79,30 +79,48 @@ def odefunc_prof_init_Pless(lam, depvars):
     return der #*lam**2
 
 # %%
+def to_btilde(lam, V,D,M,P):
+    Vb = V - de*lam
+    Dt, Mt, Pt = D*lam**-aD, M*lam**-aM, P*lam**-aP
+    return -Vb, Dt, Mt, Pt
+
+def from_btilde(lam, mVb,Dt,Mt,Pt):
+    V = -mVb + de*lam
+    D,M,P = Dt*lam**aD, Mt*lam**aM, Pt*lam**aP
+    return V,D,M,P
+
 def stop_event(t,y):
-    return y[0]+10 #+de*np.exp(t)
+    return y[0]+12 #+de*np.exp(t)
 stop_event.terminal = True
 
 zero_hold_func = lambda x: 1+np.heaviside(x-10,0.5)-np.heaviside(x,0.5)
 
-def odefunc_full(l, depvars):
+def odefunc_tilde_full(l, depvars):
     lam = np.exp(l)
     # lmV,lDt,lMt,lPt = depvars
-    mVb,D,M,P = np.exp(depvars)
+    mVb,Dt,Mt,Pt = np.exp(depvars)
     Vb = -mVb
     V = Vb + de*lam
     # V,D,M,P = from_btilde(lam, mVb,Dt,Mt,Pt)
     Z0 = 0*V
     ar1 = V/V
+    # linb1 = -np.array([2*D*V-2*D*lam, (de-1)*V*lam+2/9*M/lam, (2*(gam-1)+2*(de-1))*lam])
+    # linb2 = -np.array([Vb*aD*D, aP*P/D, -Vb*(aD*gam-aP)])
+    # linb = linb1 +linb2
+    # linMat_det1 = D*Vb**2-gam*P
+    # # if linMat_det1 == 0: print(depvars)
+    # # linMat_cofac1 = np.array([[-gam*P/D,D*Vb,-P,0],[Dt*Vb,-Dt*D,Dt*P/Vb,0],[0,0,0,lam**(-aM)*linMat_det1],[gam*Pt*Vb,-gam*D*Pt,D*Pt*Vb,0]])
+    # linMat_cofac1 = np.array([[-gam*P/(D*Vb),D,-P/Vb],[Vb,-D,P/Vb],[gam*Vb,-gam*D,D*Vb]])
+    # linMat_inv = linMat_cofac1/ linMat_det1
 
-    Tv = P/D/Vb**2
+    Tv = Pt/Dt*lam**(aP-aD) /Vb**2
     linMat_inv = 1/Vb**2/(gam*Tv-1) * np.array([[-gam*Tv, ar1, -Tv],[ar1,-ar1,Tv],[gam*ar1,-gam*ar1,ar1]])
-    linb = np.array([2*Vb* (V-lam), (de-1)*V*lam+2/9*M/lam+1e-10/lam**10*(-V/lam) + 0*(1+V)*(-2/9*M/lam+2*Vb*lam*Tv*(de-2)+2*gam*Tv*Vb*V), Vb*lam*((2-Lam0*D**(2-nu)*P**(nu-1))*(gam-1)+2*(de-1))])
+    linb = np.array([2*Vb* (V-lam), (de-1)*V*lam+2/9*Mt*lam**(aM-1)+1e-10/lam**10*(-V/lam) + (1+V)*(-2/9*Mt*lam**(aM-1)+2*Vb*lam*Tv*(de-2)+2*gam*Tv*Vb*V), Vb*lam*((2-Lam0*Dt**(2-nu)*Pt**(nu-1))*(gam-1)+2*(de-1))])
 
     # if not np.isfinite(V/lam).all():
     #     print(V, lam)
     # print(linMat_inv.shape,linb[:,np.newaxis].transpose((2,0,1)).shape)
-    linc = np.array([de/Vb*lam,Z0,Z0])
+    linc = np.array([de/Vb*lam,aD+Z0,aP+Z0])
     if np.isscalar(V):
         der = np.matmul(linMat_inv, linb ) 
         # der[0] *= zero_hold_func(V)
@@ -116,13 +134,13 @@ def odefunc_full(l, depvars):
         der -= linc[:,np.newaxis].transpose((2,0,1))
         der = der.transpose((1,2,0))[:,0,:]
 
-    derM = 3*D*lam**3 /M
+    derM = 3*Dt*lam**(aD+3-aM) /Mt - aM
 
 
     return der, derM, linMat_inv, linb #*lam**2
 
-def odefunc(l, depvars):
-    der3, derM = odefunc_full(l, depvars)[:2]
+def odefunc_tilde(l, depvars):
+    der3, derM = odefunc_tilde_full(l, depvars)[:2]
     der = np.insert(der3, 2, derM, axis=0)
     if not np.isfinite(der).all():
         # print(der,l,depvars)
@@ -131,35 +149,144 @@ def odefunc(l, depvars):
 
 
 #%%
+# thtsh = 4.58324+1
+
+def get_shock_bcs(thtsh):
+    lamsh, V1, D1, M1 = preshock(thtsh)
+    return lamsh, shock_jump(lamsh, V1, D1, M1)
+
+# def get_soln(thtsh):
+#     lamsh, bcs = get_shock_bcs(thtsh)
+#     # print(thtsh)#(lamsh, 1e-9) #np.log(lamsh),np.log(1e-9))
+#     return solve_ivp(odefunc, (np.log(lamsh),np.log(1e-9)), bcs, method='Radau', max_step=np.inf, vectorized=False)
+# def M0(thtsh):
+#     res = get_soln(thtsh)
+#     lamsh_post = np.exp(res.t)
+#     V_post, D_post, M_post, P_post = res.y
+#     M0_expected = M_post[0]*(lamsh_post[-1]/lamsh_post[0])**(alpha_D+3)
+#     M0val = res.y[2][-1]
+#     return M0val-M0_expected #3e-3 #if M0val>0 else -(-M0val)**(1/11)
+
+# def P0(thtsh):
+#     res = get_soln(thtsh)
+#     return res.y[3][-1]
+#     # return M0val-M0_expected #3e-3 #if M0val>0 else -(-M0val)**(1/11)
+
+# #%%
+# def get_soln_gas_full(lamsh):
+#     res_pre = solve_ivp(odefunc_prof_init_Pless, (1,lamsh), preshock(np.pi)[1:], max_step=0.01 )
+#     V1, D1, M1 = res_pre.y[0][-1], res_pre.y[1][-1], res_pre.y[2][-1]
+#     bcs = shock_jump(lamsh, V1, D1, M1) #get_shock_bcs(thtsh_sols[s])[1] #
+#     res_post = solve_ivp(odefunc, (np.log(lamsh),np.log(1e-12)), bcs, method='Radau', max_step=np.inf, vectorized=False)
+#     return res_pre, res_post
 
 def get_soln_gas_full_tilde(lamsh):
     res_pre = solve_ivp(odefunc_prof_init_Pless, (1,lamsh), preshock(np.pi)[1:], max_step=0.01 )
     V1, D1, M1 = res_pre.y[0][-1], res_pre.y[1][-1], res_pre.y[2][-1]
-    bcs = shock_jump(lamsh, V1, D1, M1)
-    bcs[0] = - bcs[0] + de*lamsh
+    bcs = shock_jump(lamsh, V1, D1, M1) #get_shock_bcs(thtsh_sols[s])[1] #
+    # print(bcs)
+    bcs = to_btilde(lamsh, *bcs)
     # print(bcs)
     bcs = np.log(bcs)
-    res_post = solve_ivp(odefunc, (np.log(lamsh),np.log(1e-7)), bcs, method='Radau', max_step=0.5, vectorized=True, events=stop_event)
+    res_post = solve_ivp(odefunc_tilde, (np.log(lamsh),np.log(1e-7)), bcs, method='Radau', max_step=0.5, vectorized=True, events=stop_event)
     return res_pre, res_post
+
+# def M0_num(lamsh):
+#     res = get_soln_gas_full(lamsh)[1]
+#     M0val = res.y[2][-1]
+#     return M0val-3e-4 #if M0val>0 else -(-M0val)**(1/11)
 
 def M0_num_tilde(lamsh):
     res = get_soln_gas_full_tilde(lamsh)[1]
-    M0val = res.y[2][-1]
+    M0val = res.y[2][-1] + (aM*res.t[-1])
     stopM0 = np.exp(M0val)-1e-3
-    return stopM0 
+    # stopM0 = res.y[2][-1] + 10
+    return stopM0 #, np.exp(res.t[-1]), lamsh #if M0val>0 else -(-M0val)**(1/11)
 
 def lam_atM0(lamsh):
     res = get_soln_gas_full_tilde(lamsh)[1]
     return res.t[-1]/np.log(10)+6.999
 
+#%%
+def solve_bisect(func,bounds):
+    b0, b1 = bounds
+    bmid = (b0+b1)/2
+
+def my_bisect(f, a, b, xtol=1e-4): 
+    # approximates a root, R, of f bounded 
+    # by a and b to within tolerance 
+    # | f(m) | < tol with m the midpoint 
+    # between a and b Recursive implementation
+
+    # get midpoint
+    m = (a + b)/2
+
+    sfa = -1
+    sfb = +1
+    f_at_m = f(m)
+    sfm = np.sign(f_at_m)
+
+    # print(a,b,m,f_at_m)
+    if abs(b-a) < xtol:
+        # stopping condition, report m as root
+        return m if f_at_m >0 else b
+    elif sfa == sfm:
+        # case where m is an improvement on a. 
+        # Make recursive call with a = m
+        return my_bisect(f, m, b, xtol)
+    elif sfb == sfm:
+        # case where m is an improvement on b. 
+        # Make recursive call with b = m
+        return my_bisect(f, a, m, xtol)
 
 #%%
+# thtshsol = fsolve(M0, 1.5*np.pi)
 s = 1
 gam = 5/3
 s_vals = [0.5,1,1.5,2,3,5]
 Lam0 = 3e-2
 nu=1/2
 
+#%%
+# fig4, ax4 = plt.subplots(1, dpi=120, figsize=(10,7))
+# lamsh_sols = {}
+# # lambins = np.linspace(1.2*np.pi, 1.99*np.pi, 8)
+# M0_atbins = {}
+# M0_sols = {}
+
+# for s in s_vals[::]:
+#     t_now = time()
+#     de = 2* (1+s/3) /3
+#     alpha_D = -9/(s+3)
+#     aD, aP, aM = alpha_D, (2*alpha_D+2), alpha_D+3
+#     print(s, aD, aP, aM)
+#     lambins = np.linspace(0.7, 0.01, 8)
+#     for nsect_i in range(0,4):
+#         M0_atbins[s] = list(map(M0_num_tilde,lambins))
+#         t_bef, t_now = t_now, time()
+#         print(f'{t_now-t_bef:.4g}s', f's={s}: grid M0 obtained')
+#         ax4.plot(lambins,M0_atbins[s], label=f's={s} and nsect={nsect_i}')
+#         idx_M0neg = np.where(np.sign(M0_atbins[s])==-1)[0].max()
+#         t_bef, t_now = t_now, time()
+#         print(f'{t_now-t_bef:.4g}s', f's={s}: grid M0 selected')
+#         lamshsol = lambins[idx_M0neg+1]
+#         lambins = np.linspace(lambins[idx_M0neg], max(2*lamshsol-lambins[idx_M0neg],0.01), 8)
+
+#     lamshsol = my_bisect(M0_num_tilde, lambins[0], lambins[-1], xtol=1e-6)#+1e-5
+#     # lamshsol = thetbins[idx_M0neg+1]
+#     t_bef, t_now = t_now, time()
+#     print(f'{t_now-t_bef:.4g}s', f's={s}: root thetsh obtained')
+#     # lamshsol1 = minimize_scalar(M0, method='bounded', bounds=(1.5*np.pi, 1.9*np.pi))
+#     lamsh_sols[s] = lamshsol
+#     M0_sols[s] = M0_num_tilde(lamshsol)
+#     ax4.scatter(lamshsol, M0_sols[s])
+#     print(f's={s}', lamshsol, M0_sols[s])
+# ax4.set_xlabel(r'$\lambda_{sh}}$')
+# ax4.set_ylabel(r'$M(\lambda=0)$')
+# ax4.set_ylim(-2,5)
+# ax4.legend()
+
+#%%
 lamsh_sols = {}
 lam_atM0_sols = {}
 lambins = np.linspace(0.01, 0.5, 8)
@@ -190,6 +317,8 @@ for s in s_vals[1:2:]:
     t_now = time()
     de = 2* (1+s/3) /3
     alpha_D = -9/(s+3)
+    aD, aP, aM = alpha_D, 1*(2*alpha_D+2), alpha_D+3
+    aD, aP, aM = 0,0,0
     lamshsol = 0.4 #lamsh_sols[s] #+5e-3 # 0.338976 #
     res_pre, res_post = get_soln_gas_full_tilde(lamshsol)
     print(res_post.y[2][-1])
@@ -201,9 +330,12 @@ for s in s_vals[1:2:]:
     V_pre, D_pre, M_pre = res_pre.y
 
     lamsh_post = np.exp(res_post.t)
-    mVb_post, D_post, M_post, P_post = np.exp(res_post.y)
+    mVb_post, Dt_post, Mt_post, Pt_post = np.exp(res_post.y)
     # V_post = -mVb_post + de*lamsh_post
-    V_post = de*lamsh_post - mVb_post
+    V_post, D_post, M_post, P_post = from_btilde(lamsh_post, mVb_post, Dt_post, Mt_post, Pt_post) #Dt_post*lamsh_post**aD, Mt_post*lamsh_post**aM, Pt_post*lamsh_post**aP
+    # lamsh_preange = np.arange(1.1*np.pi, lamshsol,0.01)
+
+    # lamsh_pre, V_pre, D_pre, M_pre = preshock(thtsh_preange)
     P_pre = lamsh_pre*0
 
     lamsh = lamsh_pre.min()
@@ -245,6 +377,8 @@ for s in s_vals[1:2:]:
         lam = arg
         return V_intrp(lam)-de*lam
 
+    # V1, D1, M1 = res_pre.y[0][-1], res_pre.y[1][-1], res_pre.y[2][-1]
+    # bcs = shock_jump(lamshsol, V1, D1, M1)
     # taush = (thtshsol - np.sin(thtshsol)) / np.pi
     # xish = np.log(taush)
     res = solve_ivp(odefunc_traj, (0,5), (1,), method='RK45', max_step=0.01, dense_output=False, vectorized=True)
@@ -271,8 +405,15 @@ for s in s_vals[1:2:]:
     lamF_anlt = lam_anlt*tau_anlt**de
 
     # ax6.plot(xi_anlt, lam_anlt, color=color_this)
+
+
+    
+
     ax6.plot(tau_anlt, lamF_anlt, color=color_this)
     
+
+
+
     # dmo_prfl = pd.read_hdf(f'profiles_dmo_{s}.hdf5')
 
     # Mta = (3*np.pi/4)**2
@@ -286,7 +427,7 @@ for s in s_vals[1:2:]:
 ax6.legend(loc='lower left')
 ax6.set_xlabel(r'$\tau$')
 ax6.set_ylabel('$\lambda_F$')
-ax6.set_xlim(-1,10)
+ax6.set_xlim(-1,5)
 ax6.set_ylim(-0.01,1.1)
 # ax6.set_yscale('log')
 
@@ -305,11 +446,11 @@ axs5[1,1].set_xlabel('$\lambda$')
 if gam==5/3:
     axs5[0,0].set_xlim(9e-5,1)
     axs5[0,0].set_ylim(5e-6,1e1)
-    # axs5[0,1].set_ylim(1e-1,1e11)
+    axs5[0,1].set_ylim(1e-1,1e11)
     axs5[1,0].set_ylim(1e-3,1e1)
-    # axs5[1,1].set_ylim(1e0,1e14)
-    # axs5[0,2].set_ylim(1e-1,1e2)
-    # axs5[1,2].set_ylim(1e-5,5e-1)
+    axs5[1,1].set_ylim(1e0,1e14)
+    axs5[0,2].set_ylim(1e-1,1e2)
+    axs5[1,2].set_ylim(1e-5,5e-1)
 elif gam==4/3:
     axs5[0,0].set_xlim(1e-5,1)
     axs5[0,0].set_ylim(5e-6,1e1)
@@ -373,7 +514,10 @@ axs5[0,0].set_xlim(1e-6,1)
 # plt.xscale('log')
 
 
+
 ## %%
+
+
 
 
 #%%
@@ -392,6 +536,7 @@ t_anlt = np.outer(tau_anlt,ts)
 plt.plot(t,r, lw=1)
 plt.plot(t_anlt,r_anlt, lw=1)
 
+
 plt.grid(visible=True,axis='y', which='minor', color='k', linestyle='-', alpha=0.2)
 plt.minorticks_on()
 
@@ -400,5 +545,6 @@ plt.xlim(0,10)
 plt.yscale('log')
 plt.ylabel('r')
 plt.xlabel('t')
+
 
 #%%
