@@ -182,8 +182,8 @@ fd = (1-fb)
 dmo_prfl = pd.read_hdf(f'profiles_dmo_{s}.hdf5', key='main')
 
 Mta = (3*np.pi/4)**2
-M_dmo = interp1d(dmo_prfl['l'], dmo_prfl['M']*Mta, fill_value="extrapolate")
-# D_dmo = interp1d(dmo_prfl['l'].iloc[1:], dmo_prfl['rho'].iloc[1:], fill_value="extrapolate")
+M_dmo = interp1d(dmo_prfl['l'], dmo_prfl['M']*Mta, fill_value=np.nan)
+# D_dmo = interp1d(dmo_prfl['l'].iloc[1:], dmo_prfl['rho'].iloc[1:], fill_value=np.nan)
 
 M_dm = lambda lam: M_dmo(lam)*(1-fb)
 
@@ -218,7 +218,7 @@ for n_i in range(-2, 3):
         P_all = np.concatenate([P_post, P_pre][::-1])
         Vb_all = V_all - de*lam_all
 
-        M_gas = interp1d(lam_all, M_all, fill_value="extrapolate")
+        M_gas = interp1d(np.append(lam_all,0), np.append(lam_all,0), fill_value=np.nan)
 
         M_tot = lambda lam : M_dm(lam)+M_gas(lam)
 
@@ -226,7 +226,7 @@ for n_i in range(-2, 3):
         resdf_gas.to_hdf(f'profiles_gasdm_s{s:g}_gam{gam:.3g}.hdf5', 'gas/main', mode='a')
         resdf_gas.to_hdf(f'profiles_gasdm_s{s:g}_gam{gam:.3g}.hdf5', f'gas/iter{n_i}', mode='a')
         # resdf_gas = pd.read_hdf(f'profiles_gasdm_s{s:g}_gam{gam:.3g}.hdf5', key=f'gas/iter{n}', mode='r')
-        # M_gas = interp1d(resdf_gas.l, resdf_gas.M, fill_value="extrapolate")
+        # M_gas = interp1d(resdf_gas.l, resdf_gas.M, fill_value=np.nan)
 
         t_bef, t_now = t_now, time()
         print(f'{t_now-t_bef:.4g}s', f'{n_i}th iter gas profiles updated')
@@ -255,7 +255,7 @@ for n_i in range(-2, 3):
     l_range[1:] = np.logspace(-2.5,0, 300)
     M_vals = np.zeros(301)
     # rho_vals = np.zeros(301)
-    # v_xi = interp1d(xi, v, fill_value="extrapolate")
+    # v_xi = interp1d(xi, v, fill_value=np.nan)
     for i in range(1,301):
         # l_range.append(l)
         l = l_range[i]
@@ -277,7 +277,7 @@ for n_i in range(-2, 3):
 
     M_vals *= Mta*(1-fb) / M_vals[-1]
 
-    M_dm = interp1d(l_range, M_vals, fill_value="extrapolate")
+    M_dm = interp1d(l_range, M_vals, fill_value=np.nan)
     if n_i<0: M_dmo = lambda lam : M_dm(lam)/fd
 
     resdf_dm = pd.DataFrame(data={'l':l_range, 'M':M_vals,})
@@ -342,7 +342,7 @@ for n in plot_iters:
     ax6.plot(resdf_traj_dm.xi,resdf_traj_dm.lam, color=color_this, label=f'n={n}')
     # ax6.plot(resdf_traj_dm_d.xi,resdf_traj_dm_d.lam, label=f'n={n}_desktop')
 
-    # V_intrp = interp1d(resdf_prof_gas.l, resdf_prof_gas.V, fill_value="extrapolate")
+    # V_intrp = interp1d(resdf_prof_gas.l, resdf_prof_gas.V, fill_value=np.nan)
     # lamshsol, bcs = get_shock_bcs(thtshsol)
     # taush = (thtshsol - np.sin(thtshsol)) / np.pi
     # xish = np.log(taush)
