@@ -71,49 +71,47 @@ def odefunc_prof_init_Pless(lam, depvars):
     der = np.matmul(linMat_inv,linb)
     return der #*lam**2
 
+def odefunc_prof_init_Pless(lam, depvars):
+    # lam = 1/laminv
+    # lam = np.exp(l)
+    V,D,M = depvars
+    Vb = V - de*lam
+    # linb = -np.array([2*D*V-2*D*lam, (de-1)*V*lam+2/9*M/lam, -3*lam**3*D])/lam
+    # # der_num = np.transpose(np.linalg.solve(linMat1,linb1), (1,0))
+    # linMat_det1 = Vb**2
+    # # if linMat_det1 == 0: print(depvars)
+    # linMat_cofac1 = np.array([[0,Vb,0],[Vb,-D,0],[0,0,linMat_det1]])
+    # linMat_inv = linMat_cofac1/ linMat_det1
+    # der = np.matmul(linMat_inv,linb)
+    Fterm = (de-1)*V + 2/9*(M+M_dm(lam))/lam**2
+    der = np.array([-Fterm/Vb, (2*Vb*(lam-V)/lam + Fterm) *D/Vb**2, 3*lam**2*D])
+    return der #*lam**2
 
 # %%
-aD, aP, aM = 0,0,0
-def to_btilde(lam, V,D,M,P):
-    Vb = V - de*lam
-    Dt, Mt, Pt = D*lam**-aD, M*lam**-aM, P*lam**-aP
-    return -Vb, Dt, Mt, Pt
-
-def from_btilde(lam, mVb,Dt,Mt,Pt):
-    V = -mVb + de*lam
-    D,M,P = Dt*lam**aD, Mt*lam**aM, Pt*lam**aP
-    return V,D,M,P
-
 def stop_event(t,y):
     return y[0]+8 #+de*np.exp(t)
 stop_event.terminal = True
 
-zero_hold_func = lambda x: 1+np.heaviside(x-10,0.5)-np.heaviside(x+0.0,0.5)
+zero_hold_func = lambda x: 1+np.heaviside(x-10,0.5)-np.heaviside(x,0.5)
 
-def odefunc_tilde_full(l, depvars):
+def odefunc_full(l, depvars):
     lam = np.exp(l)
     # lmV,lDt,lMt,lPt = depvars
-    mVb,Dt,Mt,Pt = np.exp(depvars)
+    mVb,D,M,P = np.exp(depvars)
     Vb = -mVb
     V = Vb + de*lam
     # V,D,M,P = from_btilde(lam, mVb,Dt,Mt,Pt)
     Z0 = 0*V
     ar1 = V/V
-    # linb1 = -np.array([2*D*V-2*D*lam, (de-1)*V*lam+2/9*M/lam, (2*(gam-1)+2*(de-1))*lam])
-    # linb2 = -np.array([Vb*aD*D, aP*P/D, -Vb*(aD*gam-aP)])
-    # linb = linb1 +linb2
-    # linMat_det1 = D*Vb**2-gam*P
-    # # if linMat_det1 == 0: print(depvars)
-    # # linMat_cofac1 = np.array([[-gam*P/D,D*Vb,-P,0],[Dt*Vb,-Dt*D,Dt*P/Vb,0],[0,0,0,lam**(-aM)*linMat_det1],[gam*Pt*Vb,-gam*D*Pt,D*Pt*Vb,0]])
-    # linMat_cofac1 = np.array([[-gam*P/(D*Vb),D,-P/Vb],[Vb,-D,P/Vb],[gam*Vb,-gam*D,D*Vb]])
-    # linMat_inv = linMat_cofac1/ linMat_det1
 
-    Tv = Pt/Dt*lam**(aP-aD) /Vb**2
+    Tv = P/D/Vb**2
     linMat_inv = 1/Vb**2/(gam*Tv-1) * np.array([[-gam*Tv, ar1, -Tv],[ar1,-ar1,Tv],[gam*ar1,-gam*ar1,ar1]])
-    linb = np.array([2*Vb* (V-lam), (de-1)*V*lam+2/9*(Mt+M_dm(lam))*lam**(aM-1)+1e-10/lam**10*(-V/lam) + (1+V)*(-2/9*(Mt+M_dm(lam))*lam**(aM-1)+2*Vb*lam*Tv*(de-2)+2*gam*Tv*Vb*V), Vb*lam*((2-Lam0*Dt**(2-nu)*Pt**(nu-1))*(gam-1)+2*(de-1))])
+    linb = np.array([2*Vb* (V-lam), (de-1)*V*lam+2/9*(M+M_dm(lam))/lam+1e-10/lam**10*(-V/lam) + 0*(1+V)*(-2/9*M/lam+2*Vb*lam*Tv*(de-2)+2*gam*Tv*Vb*V), Vb*lam*((2-Lam0*D**(2-nu)*P**(nu-1))*(gam-1)+2*(de-1))])
 
+    # if not np.isfinite(V/lam).all():
+    #     print(V, lam)
     # print(linMat_inv.shape,linb[:,np.newaxis].transpose((2,0,1)).shape)
-    linc = np.array([de/Vb*lam,aD+Z0,aP+Z0])
+    linc = np.array([de/Vb*lam,Z0,Z0])
     if np.isscalar(V):
         der = np.matmul(linMat_inv, linb ) 
         # der[0] *= zero_hold_func(V)
@@ -127,87 +125,37 @@ def odefunc_tilde_full(l, depvars):
         der -= linc[:,np.newaxis].transpose((2,0,1))
         der = der.transpose((1,2,0))[:,0,:]
 
-    derM = 3*Dt*lam**(aD+3-aM) /Mt - aM
+    derM = 3*D*lam**3 /M
 
 
     return der, derM, linMat_inv, linb #*lam**2
 
-def odefunc_tilde(l, depvars):
-    der3, derM = odefunc_tilde_full(l, depvars)[:2]
+def odefunc(l, depvars):
+    der3, derM = odefunc_full(l, depvars)[:2]
     der = np.insert(der3, 2, derM, axis=0)
     if not np.isfinite(der).all():
-        print(der,l,depvars)
+        # print(der,l,depvars)
         return np.nan_to_num(der)
     return der
 
-
-def get_shock_bcs(thtsh):
-    lamsh, V1, D1, M1 = preshock(thtsh)
-    return lamsh, shock_jump(lamsh, V1, D1, M1)
-
-def get_soln_gas_full_tilde(lamsh):
-    res_pre = solve_ivp(odefunc_prof_init_Pless, (1,lamsh), preshock(np.pi)[1:], max_step=0.01 )
-    V1, D1, M1 = res_pre.y[0][-1], res_pre.y[1][-1], res_pre.y[2][-1]
-    bcs = shock_jump(lamsh, V1, D1, M1) #get_shock_bcs(thtsh_sols[s])[1] #
-    # print(bcs)
-    bcs = to_btilde(lamsh, *bcs)
-    # print(bcs)
-    bcs = np.log(bcs)
-    # print(bcs,D1)
-    res_post = solve_ivp(odefunc_tilde, (np.log(lamsh),np.log(1e-4)), bcs, method='Radau', max_step=0.5, vectorized=True, events=stop_event)
-    return res_pre, res_post
-
-#%%
-# thtsh = 4.58324+1
-
-def get_shock_bcs(thtsh):
-    lamsh, V1, D1, M1 = preshock(thtsh)
-    return lamsh, shock_jump(lamsh, V1, D1, M1)
-
-def get_soln(thtsh):
-    lamsh, bcs = get_shock_bcs(thtsh)
-    # print(thtsh)#(lamsh, 1e-9) #np.log(lamsh),np.log(1e-9))
-    return solve_ivp(odefunc, (np.log(lamsh),np.log(1e-8)), bcs, method='Radau', max_step=0.1, vectorized=False)
-def M0(thtsh):
-    res = get_soln(thtsh)
-    M0val = res.y[2][-1]
-    return M0val-1e-4 #if M0val>0 else -(-M0val)**(1/11)
-
-#%%
 def get_soln_gas_full(lamsh):
     res_pre = solve_ivp(odefunc_prof_init_Pless, (1,lamsh), preshock(np.pi)[1:], max_step=0.01 )
     V1, D1, M1 = res_pre.y[0][-1], res_pre.y[1][-1], res_pre.y[2][-1]
-    bcs = shock_jump(lamsh, V1, D1, M1) #get_shock_bcs(thtsh_sols[s])[1] #
-    res_post = solve_ivp(odefunc, (np.log(lamsh),np.log(1e-8)), bcs, method='Radau', max_step=np.inf, vectorized=False)
+    bcs = shock_jump(lamsh, V1, D1, M1)
+    bcs[0] = - bcs[0] + de*lamsh
+    # print(bcs)
+    bcs = np.log(bcs)
+    if n_i!=n_true: print(n, f'changed from {n_true} to {n}')
+    res_post = solve_ivp(odefunc, (np.log(lamsh),np.log(1e-7)), bcs, method='Radau', max_step=0.5, vectorized=True, events=stop_event)
+    if n_i!=n_true: print(n, f'changed from {n_true} to {n}')
     return res_pre, res_post
-
-def get_soln_gas_pre(lamsh):
-    res_pre = solve_ivp(odefunc_prof_init_Pless, (1,lamsh), preshock(np.pi)[1:], max_step=0.01 )
-    return res_pre
 
 def M0_num(lamsh):
     res = get_soln_gas_full(lamsh)[1]
     M0val = res.y[2][-1]
     return M0val-3e-4 #if M0val>0 else -(-M0val)**(1/11)
 
-#%%
-def solve_bisect(func,bounds):
-    b0, b1 = bounds
-    bmid = (b0+b1)/2
 
-def my_bisect(f, a, b, tol=1e-4): 
-    m = (a + b)/2
-    sfa = -1
-    sfb = +1
-    f_at_m = f(m)
-    sfm = np.sign(f_at_m)
-    # print(a,b,m,f_at_m)
-    if abs(b-a) < tol:
-        return m if f_at_m >0 else b
-    elif sfa == sfm:
-        return my_bisect(f, m, b, tol)
-    elif sfb == sfm:
-        return my_bisect(f, a, m, tol)
 
 #%%
 def odefunc_traj_dm(xi, arg):
@@ -232,10 +180,6 @@ nu=1/2
 fb = 0.156837
 # fb = 0.5
 fd = (1-fb)
-# fig4, ax4 = plt.subplots(1, dpi=200, figsize=(10,7))
-thtsh_sols = []
-thtbins_alls = []
-M0_atbins_alls = []
 
 dmo_prfl = pd.read_hdf(f'profiles_dmo_{s}.hdf5', key='main')
 
@@ -253,55 +197,23 @@ plot_iters = [0,1,3] #,5,6,7]
 t_bef, t_now = t_now, time()
 print(f'{t_now-t_bef:.4g}s', 'Initialised vals and funcs for iteration')
 
-for n in range(0, 4):
-    # thtbins_all = [np.linspace(1.2*np.pi, 1.99*np.pi, 8)]
-    # M0_atbins_all = []
-    # for nsect_i in range(0,3):
-    #     thtbins = thtbins_all[nsect_i]
-    #     M0_atbins_all.append(list(map(M0,thtbins)))
-    #     # t_bef, t_now = t_now, time()
-    #     # print(f'{t_now-t_bef:.4g}s', f's={s}: grid M0 obtained')
-    #     idx_M0neg = np.where(np.sign(M0_atbins_all[nsect_i])==-1)[0].max()
-    #     # t_bef, t_now = t_now, time()
-    #     # print(f'{t_now-t_bef:.4g}s', f's={s}: grid M0 selected')
-    #     thtshsol = thtbins[idx_M0neg+1]
-    #     thtbins_all.append(np.linspace(thtbins[idx_M0neg], 2*thtshsol-thtbins[idx_M0neg], 8))
-
-    # thtshsol = my_bisect(M0, thtbins_all[nsect_i+1][0], thtbins_all[nsect_i+1][-1], tol=1e-4)
-    
-    # thtsh_sols.append(thtshsol)
-    # thtbins_alls.append(thtbins_all)
-    # M0_atbins_alls.append(M0_atbins_all)
-
-    # t_bef, t_now = t_now, time()
-    # print(f'{t_now-t_bef:.4g}s', f'{n}th iter gas shock radius solved')
-
-    # thtshsol = 1.95*np.pi
-    # lamsh = preshock(thtshsol)[0]
+for n_i in range(0, 2):
+    print('next', n_i)
+    n_true = n_i
     lamsh = 3.5e-1
 
-    res_prof_gas_pre, res_prof_gas_post = get_soln_gas_full_tilde(lamsh=lamsh)
+    res_prof_gas_pre, res_prof_gas_post = get_soln_gas_full(lamsh=lamsh)
+    print(n_i, f'changed from {n_true} to {n_i}')
 
     lamsh_pre = res_prof_gas_pre.t
     V_pre, D_pre, M_pre = res_prof_gas_pre.y
     P_pre = lamsh_pre*0
 
-    # res_prof_gas = get_soln(thtshsol)
-    # res_prof_gas = get_soln(1.95*np.pi)
-
     lamsh_post = np.exp(res_prof_gas_post.t)[:]#*0
     # Vb_post, D_post, M_post, P_post = np.exp(res_prof_gas_post.y)
-    mVb_post, Dt_post, Mt_post, Pt_post = np.exp(res_prof_gas_post.y)
+    mVb_post, D_post, M_post, P_post = np.exp(res_prof_gas_post.y)
     # V_post = -mVb_post + de*lamsh_post
-    V_post, D_post, M_post, P_post = from_btilde(lamsh_post, mVb_post, Dt_post, Mt_post, Pt_post)
-
-    # thtsh_preange = np.arange(1*np.pi, thtshsol,0.01)
-
-    # lamsh_pre, V_pre, D_pre, M_pre = preshock(thtsh_preange)
-    # P_pre = lamsh_pre*0
-    
-
-    
+    V_post = de*lamsh_post - mVb_post
 
     lam_all = np.concatenate([lamsh_post, lamsh_pre][::-1])
     V_all = np.concatenate([V_post, V_pre][::-1])
@@ -314,16 +226,17 @@ for n in range(0, 4):
     M_gas = interp1d(lam_all, M_all, fill_value="extrapolate")
 
     M_tot = lambda lam : M_dm(lam)+M_gas(lam)
-    if n==0: M_tot = M_dmo #lambda lam : M_dm(lam)/fd
+    if n_i==0: M_tot = M_dmo #lambda lam : M_dm(lam)/fd
+    if n_i!=n_true: print(n_i, f'changed from {n_true} to {n_i}')
 
     resdf_gas = pd.DataFrame(data={'l':lam_all, 'M':M_all, 'V':V_all, 'D':D_all, 'P':P_all, 'Vb':Vb_all,})
     resdf_gas.to_hdf(f'profiles_gasdm_s{s:g}_gam{gam:.3g}.hdf5', 'gas/main', mode='a')
-    resdf_gas.to_hdf(f'profiles_gasdm_s{s:g}_gam{gam:.3g}.hdf5', f'gas/iter{n}', mode='a')
+    resdf_gas.to_hdf(f'profiles_gasdm_s{s:g}_gam{gam:.3g}.hdf5', f'gas/iter{n_i}', mode='a')
     # resdf_gas = pd.read_hdf(f'profiles_gasdm_s{s:g}_gam{gam:.3g}.hdf5', key=f'gas/iter{n}', mode='r')
     # M_gas = interp1d(resdf_gas.l, resdf_gas.M, fill_value="extrapolate")
 
     t_bef, t_now = t_now, time()
-    print(f'{t_now-t_bef:.4g}s', f'{n}th iter gas profiles updated')
+    print(f'{t_now-t_bef:.4g}s', f'{n_i}th iter gas profiles updated')
 
     xi_max = np.log(1e-4**upsil)*-3/2/s/1.5
 
@@ -337,10 +250,10 @@ for n in range(0, 4):
 
     resdf_traj_dm = pd.DataFrame(data={'xi':xi, 'lam':lam,})
     resdf_traj_dm.to_hdf(f'traj_gasdm_s{s:g}_gam{gam:.3g}.hdf5', 'dm/main', mode='a')
-    resdf_traj_dm.to_hdf(f'traj_gasdm_s{s:g}_gam{gam:.3g}.hdf5', f'dm/iter{n}', mode='a')
+    resdf_traj_dm.to_hdf(f'traj_gasdm_s{s:g}_gam{gam:.3g}.hdf5', f'dm/iter{n_i}', mode='a')
 
     t_bef, t_now = t_now, time()
-    print(f'{t_now-t_bef:.4g}s', f'{n}th iter DM trajectory obtained')
+    print(f'{t_now-t_bef:.4g}s', f'{n_i}th iter DM trajectory obtained')
 
     l_range = np.zeros(301)
     l_range[1:] = np.logspace(-2.5,0, 300)
@@ -369,14 +282,15 @@ for n in range(0, 4):
     M_vals *= Mta*(1-fb) / M_vals[-1]
 
     M_dm = interp1d(l_range, M_vals, fill_value="extrapolate")
-    if n==0: M_dmo = interp1d(l_range, M_vals/fd, fill_value="extrapolate")
+    if n_i==0: M_dmo = interp1d(l_range, M_vals/fd, fill_value="extrapolate")
 
     resdf_dm = pd.DataFrame(data={'l':l_range, 'M':M_vals,})
     resdf_dm.to_hdf(f'profiles_gasdm_s{s:g}_gam{gam:.3g}.hdf5', 'dm/main', mode='a')
-    resdf_dm.to_hdf(f'profiles_gasdm_s{s:g}_gam{gam:.3g}.hdf5', f'dm/iter{n}', mode='a')
+    resdf_dm.to_hdf(f'profiles_gasdm_s{s:g}_gam{gam:.3g}.hdf5', f'dm/iter{n_i}', mode='a')
 
     t_bef, t_now = t_now, time()
-    print(f'{t_now-t_bef:.4g}s', f'{n}th iter DM mass profile updated')
+    print(f'{t_now-t_bef:.4g}s', f'{n_i}th iter DM mass profile updated')
+    if n_i!=n_true: print(n_i, f'changed from {n_true} to {n_i}')
 
 
 
@@ -409,13 +323,6 @@ print(f'{t_now-t_bef:.4g}s', 'Initialised plots and figs for iteration')
 for n in plot_iters:
     color_this = plt.cm.turbo(n/7)
     linestyles= [':', '--', '-']
-    # thtbins_all = thtbins_alls[n]
-    # for nsect_i in range(0,3):
-    #     ax4.plot(thtbins_all[nsect_i],M0_atbins_alls[n][nsect_i], color=color_this, ls=linestyles[nsect_i], label=f'n={n} and nsect={nsect_i}')
-
-    # thtshsol = thtsh_sols[n]
-    # ax4.axvline(thtsh_sols[n], color=color_this, label=r'$\theta_{s}=$'+f'{thtsh_sols[n]:.6g}')
-    # print(f'n={n}', thtshsol)
 
     resdf_prof_gas = pd.read_hdf(f'profiles_gasdm_s{s:g}_gam{gam:.3g}.hdf5', key=f'gas/iter{n}', mode='r')
     resdf_prof_dm = pd.read_hdf(f'profiles_gasdm_s{s:g}_gam{gam:.3g}.hdf5', key=f'dm/iter{n}', mode='r')
