@@ -197,13 +197,15 @@ plot_iters = [0,1,3] #,5,6,7]
 t_bef, t_now = t_now, time()
 print(f'{t_now-t_bef:.4g}s', 'Initialised vals and funcs for iteration')
 
-for n_i in range(0, 2):
+# for n_i in range(0, 2):
+n_i = 0
+while n_i<2:
     print('next', n_i)
     n_true = n_i
     lamsh = 3.5e-1
 
     res_prof_gas_pre, res_prof_gas_post = get_soln_gas_full(lamsh=lamsh)
-    print(n_i, f'changed from {n_true} to {n_i}')
+    print(f'changed from {n_true} to {n_i}')
 
     lamsh_pre = res_prof_gas_pre.t
     V_pre, D_pre, M_pre = res_prof_gas_pre.y
@@ -291,6 +293,7 @@ for n_i in range(0, 2):
     t_bef, t_now = t_now, time()
     print(f'{t_now-t_bef:.4g}s', f'{n_i}th iter DM mass profile updated')
     if n_i!=n_true: print(n_i, f'changed from {n_true} to {n_i}')
+    n_i+=1
 
 
 
