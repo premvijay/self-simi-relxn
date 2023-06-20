@@ -132,7 +132,7 @@ def odefunc(l, depvars):
 
 #%%
 
-def get_soln_gas_full_tilde(lamsh):
+def get_soln_gas_full(lamsh):
     res_pre = solve_ivp(odefunc_prof_init_Pless, (1,lamsh), preshock(np.pi)[1:], max_step=0.01 )
     V1, D1, M1 = res_pre.y[0][-1], res_pre.y[1][-1], res_pre.y[2][-1]
     bcs = shock_jump(lamsh, V1, D1, M1)
@@ -142,14 +142,14 @@ def get_soln_gas_full_tilde(lamsh):
     res_post = solve_ivp(odefunc, (np.log(lamsh),np.log(1e-7)), bcs, method='Radau', max_step=0.5, vectorized=True, events=stop_event)
     return res_pre, res_post
 
-def M0_num_tilde(lamsh):
-    res = get_soln_gas_full_tilde(lamsh)[1]
+def M0_num(lamsh):
+    res = get_soln_gas_full(lamsh)[1]
     M0val = res.y[2][-1]
     stopM0 = np.exp(M0val)-1e-3
     return stopM0 
 
 def lam_atM0(lamsh):
-    res = get_soln_gas_full_tilde(lamsh)[1]
+    res = get_soln_gas_full(lamsh)[1]
     return res.t[-1]/np.log(10)+6.999
 
 
@@ -191,7 +191,7 @@ for s in s_vals[1:2:]:
     de = 2* (1+s/3) /3
     alpha_D = -9/(s+3)
     lamshsol = 0.4 #lamsh_sols[s] #+5e-3 # 0.338976 #
-    res_pre, res_post = get_soln_gas_full_tilde(lamshsol)
+    res_pre, res_post = get_soln_gas_full(lamshsol)
     print(res_post.y[2][-1])
     # print(M0(lamshsol))
     t_bef, t_now = t_now, time()
@@ -344,31 +344,31 @@ axs5[0,0].set_xlim(1e-6,1)
 #%%
 # fig7,(ax71, ax72, ax73) = plt.subplots(3, dpi=120, figsize=(7,10), sharex=True)
 # ax71.plot(lamsh_post, res_post.y[0])
-# ax72.plot(lamsh_post, odefunc_tilde(np.log(lamsh_post),res_post.y)[0])
+# ax72.plot(lamsh_post, odefunc(np.log(lamsh_post),res_post.y)[0])
 # ax72.plot(lamsh_post[1:], np.diff(res_post.y[0])/np.diff(np.log(lamsh_post)))
 
-# ax73.plot(lamsh_post, odefunc_tilde_full(lamsh_post,res_post.y)[2][1,2]/odefunc_tilde_full(lamsh_post,res_post.y)[2][1,0])
+# ax73.plot(lamsh_post, odefunc_full(lamsh_post,res_post.y)[2][1,2]/odefunc_full(lamsh_post,res_post.y)[2][1,0])
 
 # ax71.set_xscale('log')
 # ax72.set_yscale('log')
 # ax73.set_yscale('log')
 # #%%
-# plt.loglog(lamsh_post, odefunc_tilde_full(np.log(lamsh_post),res_post.y)[2][1,2]/odefunc_tilde_full(np.log(lamsh_post),res_post.y)[2][1,0])
-# plt.loglog(lamsh_pre, odefunc_tilde_full(np.log(lamsh_pre),np.log(to_btilde(lamsh_pre,*shock_jump(lamsh_pre, *res_pre.y))))[2][0,1])
+# plt.loglog(lamsh_post, odefunc_full(np.log(lamsh_post),res_post.y)[2][1,2]/odefunc_full(np.log(lamsh_post),res_post.y)[2][1,0])
+# plt.loglog(lamsh_pre, odefunc_full(np.log(lamsh_pre),np.log(to_btilde(lamsh_pre,*shock_jump(lamsh_pre, *res_pre.y))))[2][0,1])
 
 # #%%
-# plt.loglog(lamsh_post, odefunc_tilde_full(np.log(lamsh_post),res_post.y)[2][1,2]/odefunc_tilde_full(np.log(lamsh_post),res_post.y)[2][1,0])
+# plt.loglog(lamsh_post, odefunc_full(np.log(lamsh_post),res_post.y)[2][1,2]/odefunc_full(np.log(lamsh_post),res_post.y)[2][1,0])
 # plt.loglog(lamsh_post, np.exp(res_post.y[3]-res_post.y[0]*2-res_post.y[1]))
 # bcs_all = to_btilde(lamsh_pre,*shock_jump(lamsh_pre, *res_pre.y))
 # plt.loglog(lamsh_pre, bcs_all[3]/bcs_all[0]**2/bcs_all[1])
 # plt.ylabel('$\mathcal{T}$')
 # #%%
-# plt.plot(lamsh_post, odefunc_tilde_full(np.log(lamsh_post),res_post.y)[3][1])
+# plt.plot(lamsh_post, odefunc_full(np.log(lamsh_post),res_post.y)[3][1])
 # plt.ylim(-1,2)
 # plt.xscale('log')
 
 # #%%
-# plt.plot(lamsh_post, odefunc_tilde_full(np.log(lamsh_post),res_post.y)[2][1,0])
+# plt.plot(lamsh_post, odefunc_full(np.log(lamsh_post),res_post.y)[2][1,0])
 # plt.ylim(-1,2)
 # plt.xscale('log')
 
