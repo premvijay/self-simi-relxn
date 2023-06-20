@@ -145,9 +145,7 @@ def get_soln_gas_full(lamsh):
     bcs[0] = - bcs[0] + de*lamsh
     # print(bcs)
     bcs = np.log(bcs)
-    if n_i!=n_true: print(n, f'changed from {n_true} to {n}')
     res_post = solve_ivp(odefunc, (np.log(lamsh),np.log(1e-7)), bcs, method='Radau', max_step=0.5, vectorized=True, events=stop_event)
-    if n_i!=n_true: print(n, f'changed from {n_true} to {n}')
     return res_pre, res_post
 
 def M0_num(lamsh):
@@ -197,15 +195,12 @@ plot_iters = [0,1,3] #,5,6,7]
 t_bef, t_now = t_now, time()
 print(f'{t_now-t_bef:.4g}s', 'Initialised vals and funcs for iteration')
 
-# for n_i in range(0, 2):
-n_i = 0
-while n_i<2:
+for n_i in range(0, 2):
     print('next', n_i)
-    n_true = n_i
     lamsh = 3.5e-1
 
     res_prof_gas_pre, res_prof_gas_post = get_soln_gas_full(lamsh=lamsh)
-    print(f'changed from {n_true} to {n_i}')
+    # print(f'changed from {n_true} to {n_i}')
 
     lamsh_pre = res_prof_gas_pre.t
     V_pre, D_pre, M_pre = res_prof_gas_pre.y
@@ -229,7 +224,6 @@ while n_i<2:
 
     M_tot = lambda lam : M_dm(lam)+M_gas(lam)
     if n_i==0: M_tot = M_dmo #lambda lam : M_dm(lam)/fd
-    if n_i!=n_true: print(n_i, f'changed from {n_true} to {n_i}')
 
     resdf_gas = pd.DataFrame(data={'l':lam_all, 'M':M_all, 'V':V_all, 'D':D_all, 'P':P_all, 'Vb':Vb_all,})
     resdf_gas.to_hdf(f'profiles_gasdm_s{s:g}_gam{gam:.3g}.hdf5', 'gas/main', mode='a')
@@ -292,8 +286,6 @@ while n_i<2:
 
     t_bef, t_now = t_now, time()
     print(f'{t_now-t_bef:.4g}s', f'{n_i}th iter DM mass profile updated')
-    if n_i!=n_true: print(n_i, f'changed from {n_true} to {n_i}')
-    n_i+=1
 
 
 
