@@ -190,49 +190,49 @@ M_dm = lambda lam: M_dmo(lam)*(1-fb)
 de = 2* (1+s/3) /3
 upsil = 1 if s >= 3/2 else 3*s/(s+3)
 
-plot_iters = [0,1,3] #,5,6,7]
+plot_iters = [0,1,2] #,5,6,7]
 
 t_bef, t_now = t_now, time()
 print(f'{t_now-t_bef:.4g}s', 'Initialised vals and funcs for iteration')
 
-for n_i in range(0, 2):
-    print('next', n_i)
-    lamsh = 3.5e-1
+for n_i in range(-2, 3):
+    print('starting iter ', n_i)
+    if n_i>=0:
+        lamsh = 3.5e-1
 
-    res_prof_gas_pre, res_prof_gas_post = get_soln_gas_full(lamsh=lamsh)
-    # print(f'changed from {n_true} to {n_i}')
+        res_prof_gas_pre, res_prof_gas_post = get_soln_gas_full(lamsh=lamsh)
+        # print(f'changed from {n_true} to {n_i}')
 
-    lamsh_pre = res_prof_gas_pre.t
-    V_pre, D_pre, M_pre = res_prof_gas_pre.y
-    P_pre = lamsh_pre*0
+        lamsh_pre = res_prof_gas_pre.t
+        V_pre, D_pre, M_pre = res_prof_gas_pre.y
+        P_pre = lamsh_pre*0
 
-    lamsh_post = np.exp(res_prof_gas_post.t)[:]#*0
-    # Vb_post, D_post, M_post, P_post = np.exp(res_prof_gas_post.y)
-    mVb_post, D_post, M_post, P_post = np.exp(res_prof_gas_post.y)
-    # V_post = -mVb_post + de*lamsh_post
-    V_post = de*lamsh_post - mVb_post
+        lamsh_post = np.exp(res_prof_gas_post.t)
+        mVb_post, D_post, M_post, P_post = np.exp(res_prof_gas_post.y)
+        V_post = de*lamsh_post - mVb_post
 
-    lam_all = np.concatenate([lamsh_post, lamsh_pre][::-1])
-    V_all = np.concatenate([V_post, V_pre][::-1])
-    D_all = np.concatenate([D_post, D_pre][::-1])
-    M_all = np.concatenate([M_post, M_pre][::-1])
-    P_all = np.concatenate([P_post, P_pre][::-1])
-    Vb_all = V_all - de*lam_all
+        lam_all = np.concatenate([lamsh_post, lamsh_pre][::-1])
+        V_all = np.concatenate([V_post, V_pre][::-1])
+        D_all = np.concatenate([D_post, D_pre][::-1])
+        M_all = np.concatenate([M_post, M_pre][::-1])
+        P_all = np.concatenate([P_post, P_pre][::-1])
+        Vb_all = V_all - de*lam_all
 
-    # M_all = lam_all**(upsil)*M_all[0]
-    M_gas = interp1d(lam_all, M_all, fill_value="extrapolate")
+        M_gas = interp1d(lam_all, M_all, fill_value="extrapolate")
 
-    M_tot = lambda lam : M_dm(lam)+M_gas(lam)
-    if n_i==0: M_tot = M_dmo #lambda lam : M_dm(lam)/fd
+        M_tot = lambda lam : M_dm(lam)+M_gas(lam)
 
-    resdf_gas = pd.DataFrame(data={'l':lam_all, 'M':M_all, 'V':V_all, 'D':D_all, 'P':P_all, 'Vb':Vb_all,})
-    resdf_gas.to_hdf(f'profiles_gasdm_s{s:g}_gam{gam:.3g}.hdf5', 'gas/main', mode='a')
-    resdf_gas.to_hdf(f'profiles_gasdm_s{s:g}_gam{gam:.3g}.hdf5', f'gas/iter{n_i}', mode='a')
-    # resdf_gas = pd.read_hdf(f'profiles_gasdm_s{s:g}_gam{gam:.3g}.hdf5', key=f'gas/iter{n}', mode='r')
-    # M_gas = interp1d(resdf_gas.l, resdf_gas.M, fill_value="extrapolate")
+        resdf_gas = pd.DataFrame(data={'l':lam_all, 'M':M_all, 'V':V_all, 'D':D_all, 'P':P_all, 'Vb':Vb_all,})
+        resdf_gas.to_hdf(f'profiles_gasdm_s{s:g}_gam{gam:.3g}.hdf5', 'gas/main', mode='a')
+        resdf_gas.to_hdf(f'profiles_gasdm_s{s:g}_gam{gam:.3g}.hdf5', f'gas/iter{n_i}', mode='a')
+        # resdf_gas = pd.read_hdf(f'profiles_gasdm_s{s:g}_gam{gam:.3g}.hdf5', key=f'gas/iter{n}', mode='r')
+        # M_gas = interp1d(resdf_gas.l, resdf_gas.M, fill_value="extrapolate")
 
-    t_bef, t_now = t_now, time()
-    print(f'{t_now-t_bef:.4g}s', f'{n_i}th iter gas profiles updated')
+        t_bef, t_now = t_now, time()
+        print(f'{t_now-t_bef:.4g}s', f'{n_i}th iter gas profiles updated')
+    
+    else:
+        M_tot = M_dmo #lambda lam : M_dm(lam)/fd
 
     xi_max = np.log(1e-4**upsil)*-3/2/s/1.5
 
@@ -278,7 +278,7 @@ for n_i in range(0, 2):
     M_vals *= Mta*(1-fb) / M_vals[-1]
 
     M_dm = interp1d(l_range, M_vals, fill_value="extrapolate")
-    if n_i==0: M_dmo = interp1d(l_range, M_vals/fd, fill_value="extrapolate")
+    if n_i<0: M_dmo = lambda lam : M_dm(lam)/fd
 
     resdf_dm = pd.DataFrame(data={'l':l_range, 'M':M_vals,})
     resdf_dm.to_hdf(f'profiles_gasdm_s{s:g}_gam{gam:.3g}.hdf5', 'dm/main', mode='a')
@@ -422,11 +422,6 @@ ax6.legend()
 
 #%%
 plt.show()
-
-#%%
-
-# %%
-
 # %%
 # import dill                            #pip install dill --user
 # filename = f'soln-globalsave_s{s:g}_gam{gam:.3g}.pkl'
