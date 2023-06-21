@@ -96,9 +96,8 @@ def odefunc_full(l, depvars):
     ar1 = V/V
 
     Tv = P/D/Vb**2
-    visc_fac = 1
-    linMat_inv = 1/Vb**2/(gam*Tv-visc_fac) * np.array([[-gam*Tv, ar1, -Tv],[visc_fac*ar1,-ar1,Tv],[visc_fac*gam*ar1,-gam*ar1,visc_fac*ar1]])
-    linb = np.array([2*Vb* (V-lam), (de-1)*V*lam+2/9*M/lam+1e-10*np.heaviside(0.08-lam,0.5)*(-V/lam**10) + 0*(1+V)*(-2/9*M/lam+2*Vb*lam*Tv*(de-2)+2*gam*Tv*Vb*V), Vb*lam*((2-Lam0*D**(2-nu)*P**(nu-1))*(gam-1)+2*(de-1))])
+    linMat_inv = 1/Vb**2/(gam*Tv-1) * np.array([[-gam*Tv, ar1, -Tv],[ar1,-ar1,Tv],[gam*ar1,-gam*ar1,ar1]])
+    linb = np.array([2*Vb* (V-lam), (de-1)*V*lam+2/9*M/lam+10*(-V/(lam/disk_rad)**10), Vb*lam*((2-Lam0*D**(2-nu)*P**(nu-1))*(gam-1)+2*(de-1))])
 
     # if not np.isfinite(V/lam).all():
     #     print(V, lam)
@@ -161,9 +160,12 @@ s_vals = [0.5,1,1.5,2,3,5]
 Lam0 = 3e-2
 nu=1/2
 
-lamsh_sols = {}
-lam_atM0_sols = {}
-lambins = np.linspace(0.01, 0.5, 8)
+lamsh = 0.35
+disk_rad = 0.05*lamsh
+
+# lamsh_sols = {}
+# lam_atM0_sols = {}
+# lambins = np.linspace(0.01, 0.5, 8)
 
 # for s in s_vals[::]:
 #     t_now = time()
@@ -183,7 +185,6 @@ lambins = np.linspace(0.01, 0.5, 8)
 #     print(f's={s}', lamshsol, lam_atM0_sols[s])
 
 
-#%%
 fig5, axs5 = plt.subplots(2,3, dpi=100, figsize=(18,12), sharex=True)
 fig6, (ax62,ax6) = plt.subplots(1,2, dpi=100, figsize=(10,5))
 
@@ -191,10 +192,9 @@ for s in s_vals[1:2:]:
     t_now = time()
     de = 2* (1+s/3) /3
     alpha_D = -9/(s+3)
-    lamshsol = 0.35 #lamsh_sols[s] #+5e-3 # 0.338976 #
-    res_pre, res_post = get_soln_gas_full(lamshsol)
+    # lamshsol = 0.35 #lamsh_sols[s] #+5e-3 # 0.338976 #
+    res_pre, res_post = get_soln_gas_full(lamsh)
     print(res_post.y[2][-1])
-    # print(M0(lamshsol))
     t_bef, t_now = t_now, time()
     print(f'{t_now-t_bef:.4g}s', f's={s}: post shock profiles obtained')
 
