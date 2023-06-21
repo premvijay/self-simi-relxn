@@ -8,6 +8,7 @@ plt.style.use('seaborn-darkgrid')
 import pandas as pd
 from scipy.optimize import fsolve, bisect
 from time import time
+from copy import copy
 # %%
 
 # %%
@@ -139,7 +140,7 @@ def odefunc(l, depvars):
     return der
 
 def get_soln_gas_full(lamsh):
-    res_pre = solve_ivp(odefunc_prof_init_Pless, (1,lamsh), preshock(np.pi)[1:], max_step=0.01 )
+    res_pre = solve_ivp(odefunc_prof_init_Pless, (1,lamsh), preshock(np.pi)[1:], max_step=0.001 )
     V1, D1, M1 = res_pre.y[0][-1], res_pre.y[1][-1], res_pre.y[2][-1]
     bcs = shock_jump(lamsh, V1, D1, M1)
     bcs[0] = - bcs[0] + de*lamsh
@@ -175,7 +176,7 @@ s = 1
 gam = 5/3
 Lam0 = 3e-2
 nu=1/2
-fb = 0.99156837
+fb = 0.156837
 # fb = 0.5
 fd = (1-fb)
 
@@ -219,7 +220,7 @@ for n_i in range(-2, 7):
         P_all = np.concatenate([P_post, P_pre][::-1])
         Vb_all = V_all - de*lam_all
 
-        M_gas = interp1d(np.append(lam_all,0), np.append(lam_all,0), fill_value=np.nan)
+        M_gas = interp1d(np.append(lam_all,0), np.append(M_all,0), fill_value=np.nan)
 
         M_tot = lambda lam : M_dm(lam)+M_gas(lam)
 
@@ -231,6 +232,7 @@ for n_i in range(-2, 7):
 
         t_bef, t_now = t_now, time()
         print(f'{t_now-t_bef:.4g}s', f'{n_i}th iter gas profiles updated')
+        # print('M', M_tot(1), M_dm(1),M_gas(1))
     
     else:
         M_tot = M_dmo #lambda lam : M_dm(lam)/fd
@@ -280,7 +282,8 @@ for n_i in range(-2, 7):
     M_vals *= Mta*(1-fb) / M_vals[-1]
 
     M_dm = interp1d(l_range, M_vals, fill_value=np.nan)
-    if n_i<0: M_dmo = lambda lam : M_dm(lam)/fd
+    if n_i<0: 
+        M_dmo = interp1d(l_range, M_vals/(1-fb), fill_value=np.nan)
 
     resdf_dm = pd.DataFrame(data={'l':l_range, 'M':M_vals,})
     resdf_dm.to_hdf(f'profiles_gasdm_s{s:g}_gam{gam:.3g}.hdf5', 'dm/main', mode='a')
