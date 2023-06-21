@@ -96,8 +96,9 @@ def odefunc_full(l, depvars):
     ar1 = V/V
 
     Tv = P/D/Vb**2
-    linMat_inv = 1/Vb**2/(gam*Tv-1) * np.array([[-gam*Tv, ar1, -Tv],[ar1,-ar1,Tv],[gam*ar1,-gam*ar1,ar1]])
-    linb = np.array([2*Vb* (V-lam), (de-1)*V*lam+2/9*M/lam+1e-10/lam**10*(-V/lam) + 0*(1+V)*(-2/9*M/lam+2*Vb*lam*Tv*(de-2)+2*gam*Tv*Vb*V), Vb*lam*((2-Lam0*D**(2-nu)*P**(nu-1))*(gam-1)+2*(de-1))])
+    visc_fac = 1
+    linMat_inv = 1/Vb**2/(gam*Tv-visc_fac) * np.array([[-gam*Tv, ar1, -Tv],[visc_fac*ar1,-ar1,Tv],[visc_fac*gam*ar1,-gam*ar1,visc_fac*ar1]])
+    linb = np.array([2*Vb* (V-lam), (de-1)*V*lam+2/9*M/lam+1e-10*np.heaviside(0.08-lam,0.5)*(-V/lam**10) + 0*(1+V)*(-2/9*M/lam+2*Vb*lam*Tv*(de-2)+2*gam*Tv*Vb*V), Vb*lam*((2-Lam0*D**(2-nu)*P**(nu-1))*(gam-1)+2*(de-1))])
 
     # if not np.isfinite(V/lam).all():
     #     print(V, lam)
@@ -190,7 +191,7 @@ for s in s_vals[1:2:]:
     t_now = time()
     de = 2* (1+s/3) /3
     alpha_D = -9/(s+3)
-    lamshsol = 0.4 #lamsh_sols[s] #+5e-3 # 0.338976 #
+    lamshsol = 0.35 #lamsh_sols[s] #+5e-3 # 0.338976 #
     res_pre, res_post = get_soln_gas_full(lamshsol)
     print(res_post.y[2][-1])
     # print(M0(lamshsol))
