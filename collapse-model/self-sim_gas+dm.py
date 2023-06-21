@@ -106,7 +106,7 @@ def odefunc_full(l, depvars):
 
     Tv = P/D/Vb**2
     linMat_inv = 1/Vb**2/(gam*Tv-1) * np.array([[-gam*Tv, ar1, -Tv],[ar1,-ar1,Tv],[gam*ar1,-gam*ar1,ar1]])
-    linb = np.array([2*Vb* (V-lam), (de-1)*V*lam+2/9*(M+M_dm(lam))/lam+1e-10/lam**10*(-V/lam) + 0*(1+V)*(-2/9*M/lam+2*Vb*lam*Tv*(de-2)+2*gam*Tv*Vb*V), Vb*lam*((2-Lam0*D**(2-nu)*P**(nu-1))*(gam-1)+2*(de-1))])
+    linb = np.array([2*Vb* (V-lam), (de-1)*V*lam+2/9*(M+M_dm(lam))/lam+10*(-V/(lam/disk_rad)**10), Vb*lam*((2-Lam0*D**(2-nu)*P**(nu-1))*(gam-1)+2*(de-1))])
 
     # if not np.isfinite(V/lam).all():
     #     print(V, lam)
@@ -173,11 +173,14 @@ t_now = time()
 # thtshsol = fsolve(M0, 1.5*np.pi)
 s = 1
 gam = 5/3
-Lam0 = 0e-5
+Lam0 = 3e-2
 nu=1/2
-fb = 0.156837
+fb = 0.99156837
 # fb = 0.5
 fd = (1-fb)
+
+lamsh = 0.35
+disk_rad = 0.05*lamsh
 
 dmo_prfl = pd.read_hdf(f'profiles_dmo_{s}.hdf5', key='main')
 
@@ -190,16 +193,14 @@ M_dm = lambda lam: M_dmo(lam)*(1-fb)
 de = 2* (1+s/3) /3
 upsil = 1 if s >= 3/2 else 3*s/(s+3)
 
-plot_iters = [0,1,2] #,5,6,7]
+plot_iters = [0,1,2,5,6]
 
 t_bef, t_now = t_now, time()
 print(f'{t_now-t_bef:.4g}s', 'Initialised vals and funcs for iteration')
 
-for n_i in range(-2, 3):
+for n_i in range(-2, 7):
     print('starting iter ', n_i)
     if n_i>=0:
-        lamsh = 3.5e-1
-
         res_prof_gas_pre, res_prof_gas_post = get_soln_gas_full(lamsh=lamsh)
         # print(f'changed from {n_true} to {n_i}')
 
@@ -251,12 +252,13 @@ for n_i in range(-2, 3):
     t_bef, t_now = t_now, time()
     print(f'{t_now-t_bef:.4g}s', f'{n_i}th iter DM trajectory obtained')
 
-    l_range = np.zeros(301)
-    l_range[1:] = np.logspace(-2.5,0, 300)
-    M_vals = np.zeros(301)
+    Dm_prof_lbins = 300
+    l_range = np.zeros(Dm_prof_lbins+1)
+    l_range[1:] = np.logspace(-2.5,0, Dm_prof_lbins)
+    M_vals = np.zeros(Dm_prof_lbins+1)
     # rho_vals = np.zeros(301)
     # v_xi = interp1d(xi, v, fill_value=np.nan)
-    for i in range(1,301):
+    for i in range(1,Dm_prof_lbins+1):
         # l_range.append(l)
         l = l_range[i]
         # spl = InterpolatedUnivariateSpline(xi, loglam-np.log(l),k=3)
@@ -368,7 +370,7 @@ for n in plot_iters:
     print(f'{t_now-t_bef:.4g}s', f'{n}th iter plotted')
 
 axs5[1,0].plot(dmo_prfl['l'], dmo_prfl['M']*Mta, color='k', ls='dashed')
-
+axs5[1,0].plot(dmo_prfl['l'], M_dmo(dmo_prfl['l']), color='purple', ls='dashed')
 
 # ax4.set_xlabel(r'$\theta$')
 # ax4.set_ylabel(r'$M(\lambda=0)$')
@@ -473,3 +475,4 @@ plt.ylabel('$r_f/r_i$')
 plt.legend()
 plt.savefig('ratio_plot_anyl.pdf')
 # %%
+plt.show()
