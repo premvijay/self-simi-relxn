@@ -194,12 +194,12 @@ M_dm = lambda lam: M_dmo(lam)*(1-fb)
 de = 2* (1+s/3) /3
 upsil = 1 if s >= 3/2 else 3*s/(s+3)
 
-plot_iters = [0,1,2,5,6]
+plot_iters = [0,1,2] #,5,6]
 
 t_bef, t_now = t_now, time()
 print(f'{t_now-t_bef:.4g}s', 'Initialised vals and funcs for iteration')
 
-for n_i in range(-2, 7):
+for n_i in range(-2, 3):
     print('starting iter ', n_i)
     if n_i>=0:
         res_prof_gas_pre, res_prof_gas_post = get_soln_gas_full(lamsh=lamsh)
@@ -239,7 +239,7 @@ for n_i in range(-2, 7):
 
     xi_max = np.log(1e-4**upsil)*-3/2/s/1.5
 
-    res_traj_dm = solve_ivp(odefunc_traj_dm, (0,xi_max), np.array([1,-de]), method='Radau', t_eval=(np.linspace(0,xi_max**4,2000000))**(1/4), max_step=np.inf, dense_output=False, vectorized=True)
+    res_traj_dm = solve_ivp(odefunc_traj_dm, (0,xi_max), np.array([1,-de]), method='Radau', t_eval=np.concatenate([np.linspace(0,1-1e-10,1000), np.linspace(1,xi_max**4,2000000)**(1/4)]), max_step=0.02, dense_output=False, vectorized=True)
     # res1 = solve_ivp(fun, (res.t[-1],15), np.array([res.y[0][-1],-res.y[1][-1]]), max_step=0.1, dense_output=True)
 
     xi = res_traj_dm.t
@@ -479,3 +479,4 @@ plt.legend()
 plt.savefig('ratio_plot_anyl.pdf')
 # %%
 plt.show()
+# %%
