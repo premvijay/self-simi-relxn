@@ -172,15 +172,15 @@ def odefunc_traj_dm(xi, arg):
 #%%
 t_now = time()
 # thtshsol = fsolve(M0, 1.5*np.pi)
-s = 1
+s = 1.5
 gam = 5/3
-Lam0 = 3e-2
+Lam0 = 3e-3
 nu=1/2
 fb = 0.156837
 # fb = 0.5
 fd = (1-fb)
 
-lamsh = 0.35
+lamsh = 0.25
 disk_rad = 0.05*lamsh
 
 dmo_prfl = pd.read_hdf(f'profiles_dmo_{s}.hdf5', key='main')
@@ -433,50 +433,67 @@ plt.show()
 # dill.load_session(filename)
 
 #%%
-fd = (1-fb)
-lamr_full = np.logspace(-2.3,-0.005,300)
-lamr = np.logspace(-2.3,-0.005,300)
+ss = [1,1.5]
+gams = [1.67,1.67]
 
-r, Mdr, Mbr, Mdr_dmo = lamr, M_dm(lamr), M_gas(lamr), M_dmo(lamr_full)*fd
-ri_pre = lamr_full
+for i in range(len(ss)):
+    s, gam = ss[i], gams[i]
+    resdf_prof_gas = pd.read_hdf(f'profiles_gasdm_s{s:g}_gam{gam:.3g}.hdf5', key=f'gas/main', mode='r')
+    resdf_prof_dm = pd.read_hdf(f'profiles_gasdm_s{s:g}_gam{gam:.3g}.hdf5', key=f'dm/main', mode='r')
+    resdf_prof_dmo = pd.read_hdf(f'profiles_gasdm_s{s:g}_gam{gam:.3g}.hdf5', key=f'dm/iter-1', mode='r')
 
-##%%
-plt.figure()
-plt.plot(r,Mdr, label='DM')
-plt.plot(r,Mbr*fd/fb, label='baryon')
-plt.plot(ri_pre,Mdr_dmo, label='DM in DMO' )
-# plt.plot(r,Mdr+Mbr)
-plt.xscale('log')
-plt.yscale('log')
-plt.legend()
+    M_gas = interp1d(resdf_prof_gas.l, resdf_prof_gas.M)
+    M_dm = interp1d(resdf_prof_dm.l, resdf_prof_dm.M)
+    M_dmo = interp1d(resdf_prof_dmo.l, resdf_prof_dmo.M)
 
-##%%
-rf = r.copy()
+    fd = (1-fb)
+    lamr_full = np.logspace(-2.3,-0.005,300)
+    lamr = np.logspace(-2.3,-0.005,300)
 
-logri_logM = interp1d(np.log10(Mdr_dmo),np.log10(ri_pre), fill_value='extrapolate')
+    r, ri_pre = lamr, lamr_full
+    r, ri_pre = resdf_prof_dm.l[1:], resdf_prof_dmo.l[1:]
 
-# assert (ri_M(Mdr_dmo) == r).all()
+    Mdr, Mbr, Mdr_dmo = M_dm(r), M_gas(r), M_dmo(ri_pre)
+    # Mdr, Mbr, Mdr_dmo = resdf_prof_dm.M, resdf_prof_gas.M, resdf_prof_dmo.M 
 
-ri = 10**logri_logM(np.log10(Mdr))
+    fig7, (ax71,ax72) = plt.subplots(1,2, figsize=(12,6))
 
-Mf = Mdr+Mbr
-Mi = Mdr/fd
+    ax71.plot(r,Mdr, label='DM')
+    ax71.plot(r,Mbr*fd/fb, label='baryon')
+    ax71.plot(ri_pre,Mdr_dmo, label='DM in DMO' )
+    # plt.plot(r,Mdr+Mbr)
+    ax71.set_xscale('log')
+    ax71.set_yscale('log')
 
-MiMf = ( fd* (Mbr/ Mdr + 1) )**-1
-rfri = rf / ri
- 
-## %%
-plt.figure(figsize=(8,6))
-# plt.scatter(MiMf[60:-50],rfri[60:-50],c=rf[60:-50])
-plt.scatter(MiMf,rfri,c=np.log10(rf), cmap='nipy_spectral', label=f"s={s} "+r'$\gamma=$'+f"{gam:.3g}")
-# plt.scatter(MiMf[100:],rfri[100:],c=np.log10(rf[100:]), cmap='nipy_spectral')
-# plt.plot(MiMf,1+0.25*(MiMf-1),'k',label='$q=0.25$')
-plt.plot(MiMf,1+0.33*(MiMf-1)-0.02,'k',label='$q=0.33$ and $q_0=0.02$')
-plt.colorbar(label='$r_f$ (defined as relaxed $\lambda$)')
-plt.xlabel('$M_i/M_f$')
-plt.ylabel('$r_f/r_i$')
-plt.legend()
-plt.savefig('ratio_plot_anyl.pdf')
+
+    ##%%
+    rf = r.copy()
+
+    logri_logM = interp1d(np.log10(Mdr_dmo),np.log10(ri_pre), fill_value='extrapolate')
+
+    # assert (ri_M(Mdr_dmo) == r).all()
+
+    ri = 10**logri_logM(np.log10(Mdr))
+
+    Mf = Mdr+Mbr
+    Mi = Mdr/fd
+
+    MiMf = ( fd* (Mbr/ Mdr + 1) )**-1
+    rfri = rf / ri
+    
+    # ax71.scatter(MiMf[60:-50],rfri[60:-50],c=rf[60:-50])
+    cplot = ax72.scatter(MiMf,rfri,c=np.log10(rf), cmap='nipy_spectral', label=f"s={s} "+r'$\gamma=$'+f"{gam:.3g}")
+    # ax71.scatter(MiMf[100:],rfri[100:],c=np.log10(rf[100:]), cmap='nipy_spectral')
+    # ax71.plot(MiMf,1+0.25*(MiMf-1),'k',label='$q=0.25$')
+    ax72.plot(MiMf,1+0.33*(MiMf-1)-0.02,'k',label='$q=0.33$ and $q_0=0.02$')
+    
+    ax72.set_xlabel('$M_i/M_f$')
+    ax72.set_ylabel('$r_f/r_i$')
+
+    fig7.colorbar(cplot, ax=ax72,label='$r_f$ (defined as relaxed $\lambda$)')
+    ax71.legend()
+    ax72.legend()
+    fig7.savefig('ratio_plot_anyl.pdf')
 # %%
 plt.show()
 # %%
