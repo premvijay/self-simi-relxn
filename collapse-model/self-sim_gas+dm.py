@@ -172,16 +172,19 @@ def odefunc_traj_dm(xi, arg):
 #%%
 t_now = time()
 # thtshsol = fsolve(M0, 1.5*np.pi)
-s = 1.5
+s = 1
 gam = 5/3
-Lam0 = 3e-3
+Lam0 = 3e-2
 nu=1/2
 fb = 0.156837
 # fb = 0.5
 fd = (1-fb)
 
-lamsh = 0.25
-disk_rad = 0.05*lamsh
+lamsh = 0.35
+disk_rad_by_shock = 0.05
+disk_rad = disk_rad_by_shock*lamsh
+
+descr = f'_s={s:.2g}_gam={gam:.3g}_shk={lamsh:.1g}_Rd={disk_rad_by_shock*100:.1g}%_Lam={Lam0:.1e}_nu={nu:.1g}'
 
 dmo_prfl = pd.read_hdf(f'profiles_dmo_{s}.hdf5', key='main')
 
@@ -225,9 +228,9 @@ for n_i in range(-2, 3):
         M_tot = lambda lam : M_dm(lam)+M_gas(lam)
 
         resdf_gas = pd.DataFrame(data={'l':lam_all, 'M':M_all, 'V':V_all, 'D':D_all, 'P':P_all, 'Vb':Vb_all,})
-        resdf_gas.to_hdf(f'profiles_gasdm_s{s:g}_gam{gam:.3g}.hdf5', 'gas/main', mode='a')
-        resdf_gas.to_hdf(f'profiles_gasdm_s{s:g}_gam{gam:.3g}.hdf5', f'gas/iter{n_i}', mode='a')
-        # resdf_gas = pd.read_hdf(f'profiles_gasdm_s{s:g}_gam{gam:.3g}.hdf5', key=f'gas/iter{n}', mode='r')
+        resdf_gas.to_hdf(f'profiles_gasdm{descr:s}.hdf5', 'gas/main', mode='a')
+        resdf_gas.to_hdf(f'profiles_gasdm{descr:s}.hdf5', f'gas/iter{n_i}', mode='a')
+        # resdf_gas = pd.read_hdf(f'profiles_gasdm{descr:s}.hdf5', key=f'gas/iter{n}', mode='r')
         # M_gas = interp1d(resdf_gas.l, resdf_gas.M, fill_value=np.nan)
 
         t_bef, t_now = t_now, time()
@@ -248,8 +251,8 @@ for n_i in range(-2, 3):
     loglam = np.log(np.maximum(lam,1e-15))
 
     resdf_traj_dm = pd.DataFrame(data={'xi':xi, 'lam':lam,})
-    resdf_traj_dm.to_hdf(f'traj_gasdm_s{s:g}_gam{gam:.3g}.hdf5', 'dm/main', mode='a')
-    resdf_traj_dm.to_hdf(f'traj_gasdm_s{s:g}_gam{gam:.3g}.hdf5', f'dm/iter{n_i}', mode='a')
+    resdf_traj_dm.to_hdf(f'traj_gasdm{descr:s}.hdf5', 'dm/main', mode='a')
+    resdf_traj_dm.to_hdf(f'traj_gasdm{descr:s}.hdf5', f'dm/iter{n_i}', mode='a')
 
     t_bef, t_now = t_now, time()
     print(f'{t_now-t_bef:.4g}s', f'{n_i}th iter DM trajectory obtained')
@@ -286,8 +289,8 @@ for n_i in range(-2, 3):
         M_dmo = interp1d(l_range, M_vals/(1-fb), fill_value=np.nan)
 
     resdf_dm = pd.DataFrame(data={'l':l_range, 'M':M_vals,})
-    resdf_dm.to_hdf(f'profiles_gasdm_s{s:g}_gam{gam:.3g}.hdf5', 'dm/main', mode='a')
-    resdf_dm.to_hdf(f'profiles_gasdm_s{s:g}_gam{gam:.3g}.hdf5', f'dm/iter{n_i}', mode='a')
+    resdf_dm.to_hdf(f'profiles_gasdm{descr:s}.hdf5', 'dm/main', mode='a')
+    resdf_dm.to_hdf(f'profiles_gasdm{descr:s}.hdf5', f'dm/iter{n_i}', mode='a')
 
     t_bef, t_now = t_now, time()
     print(f'{t_now-t_bef:.4g}s', f'{n_i}th iter DM mass profile updated')
@@ -298,13 +301,13 @@ for n_i in range(-2, 3):
 #%%
 del res_traj_dm, lam, loglam, xi
 # import dill                            #pip install dill --user
-# filename = f'soln-globalsave_s{s:g}_gam{gam:.3g}.pkl'
+# filename = f'soln-globalsave{descr:s}.pkl'
 # dill.dump_session(filename)
 
 
 # # %%
 # import dill                            #pip install dill --user
-# filename = f'soln-globalsave_s{s:g}_gam{gam:.3g}.pkl'
+# filename = f'soln-globalsave{descr:s}.pkl'
 # dill.load_session(filename)
 
 
@@ -324,10 +327,10 @@ for n in plot_iters:
     color_this = plt.cm.turbo(n/7)
     linestyles= [':', '--', '-']
 
-    resdf_prof_gas = pd.read_hdf(f'profiles_gasdm_s{s:g}_gam{gam:.3g}.hdf5', key=f'gas/iter{n}', mode='r')
-    resdf_prof_dm = pd.read_hdf(f'profiles_gasdm_s{s:g}_gam{gam:.3g}.hdf5', key=f'dm/iter{n}', mode='r')
-    resdf_traj_dm = pd.read_hdf(f'traj_gasdm_s{s:g}_gam{gam:.3g}.hdf5', key=f'dm/iter{n}', mode='r')
-    #resdf_traj_dm_d = pd.read_hdf(f'traj_gasdm_s{s:g}_gam{gam:.3g}_desktop.hdf5', key=f'dm/iter{n}', mode='r')
+    resdf_prof_gas = pd.read_hdf(f'profiles_gasdm{descr:s}.hdf5', key=f'gas/iter{n}', mode='r')
+    resdf_prof_dm = pd.read_hdf(f'profiles_gasdm{descr:s}.hdf5', key=f'dm/iter{n}', mode='r')
+    resdf_traj_dm = pd.read_hdf(f'traj_gasdm{descr:s}.hdf5', key=f'dm/iter{n}', mode='r')
+    #resdf_traj_dm_d = pd.read_hdf(f'traj_gasdm{descr:s}_desktop.hdf5', key=f'dm/iter{n}', mode='r')
 
     axs5[0,0].plot(resdf_prof_gas.l, -resdf_prof_gas.Vb, color=color_this, label=f'n={n}')
     axs5[0,1].plot(resdf_prof_gas.l, resdf_prof_gas.D, color=color_this)
@@ -429,24 +432,35 @@ ax6.legend()
 plt.show()
 # %%
 # import dill                            #pip install dill --user
-# filename = f'soln-globalsave_s{s:g}_gam{gam:.3g}.pkl'
+# filename = f'soln-globalsave{descr:s}.pkl'
 # dill.load_session(filename)
 
 #%%
-ss = [1,1.5]
-gams = [1.67,1.67]
+s = [1,1.5]
+gam = [5/3,5/3]
+Lam0 = [3e-2, 3e-3]
+nu = [1/2,1/2]
 
-for i in range(len(ss)):
-    s, gam = ss[i], gams[i]
-    resdf_prof_gas = pd.read_hdf(f'profiles_gasdm_s{s:g}_gam{gam:.3g}.hdf5', key=f'gas/main', mode='r')
-    resdf_prof_dm = pd.read_hdf(f'profiles_gasdm_s{s:g}_gam{gam:.3g}.hdf5', key=f'dm/main', mode='r')
-    resdf_prof_dmo = pd.read_hdf(f'profiles_gasdm_s{s:g}_gam{gam:.3g}.hdf5', key=f'dm/iter-1', mode='r')
+lamsh = [0.35,0.25]
+disk_rad_by_shock = [0.05,0.05]
+
+fb = 0.156837
+# fb = 0.5
+fd = (1-fb)
+
+
+
+
+for i in range(len(s)):
+    descr = f'_s={s[i]:.2g}_gam={gam[i]:.3g}_shk={lamsh[i]:.1g}_Rd={disk_rad_by_shock[i]*100:.1g}%_Lam={Lam0[i]:.1e}_nu={nu[i]:.1g}'
+    resdf_prof_gas = pd.read_hdf(f'profiles_gasdm{descr:s}.hdf5', key=f'gas/main', mode='r')
+    resdf_prof_dm = pd.read_hdf(f'profiles_gasdm{descr:s}.hdf5', key=f'dm/main', mode='r')
+    resdf_prof_dmo = pd.read_hdf(f'profiles_gasdm{descr:s}.hdf5', key=f'dm/iter-1', mode='r')
 
     M_gas = interp1d(resdf_prof_gas.l, resdf_prof_gas.M)
     M_dm = interp1d(resdf_prof_dm.l, resdf_prof_dm.M)
     M_dmo = interp1d(resdf_prof_dmo.l, resdf_prof_dmo.M)
 
-    fd = (1-fb)
     lamr_full = np.logspace(-2.3,-0.005,300)
     lamr = np.logspace(-2.3,-0.005,300)
 
@@ -482,7 +496,7 @@ for i in range(len(ss)):
     rfri = rf / ri
     
     # ax71.scatter(MiMf[60:-50],rfri[60:-50],c=rf[60:-50])
-    cplot = ax72.scatter(MiMf,rfri,c=np.log10(rf), cmap='nipy_spectral', label=f"s={s} "+r'$\gamma=$'+f"{gam:.3g}")
+    cplot = ax72.scatter(MiMf,rfri,c=np.log10(rf), cmap='nipy_spectral', label=f"s={s[i]} "+r'$\gamma=$'+f"{gam[i]:.3g}")
     # ax71.scatter(MiMf[100:],rfri[100:],c=np.log10(rf[100:]), cmap='nipy_spectral')
     # ax71.plot(MiMf,1+0.25*(MiMf-1),'k',label='$q=0.25$')
     ax72.plot(MiMf,1+0.33*(MiMf-1)-0.02,'k',label='$q=0.33$ and $q_0=0.02$')
@@ -493,7 +507,7 @@ for i in range(len(ss)):
     fig7.colorbar(cplot, ax=ax72,label='$r_f$ (defined as relaxed $\lambda$)')
     ax71.legend()
     ax72.legend()
-    fig7.savefig('ratio_plot_anyl.pdf')
+    fig7.savefig(f'ratio_plot_anyl{descr:s}.pdf')
 # %%
 plt.show()
 # %%
