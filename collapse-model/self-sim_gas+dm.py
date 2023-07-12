@@ -172,7 +172,7 @@ def odefunc_traj_dm(xi, arg):
 #%%
 t_now = time()
 # thtshsol = fsolve(M0, 1.5*np.pi)
-s = 1
+s = 0.5
 gam = 5/3
 Lam0 = 3e-2
 nu=1/2
