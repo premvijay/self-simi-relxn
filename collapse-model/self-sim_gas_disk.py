@@ -401,5 +401,6 @@ plt.xlim(0,10)
 plt.yscale('log')
 plt.ylabel('r')
 plt.xlabel('t')
+plt.savefig(f'Eds-gas-{gam:.02f}_trajectory_phys.pdf')
 
 #%%
