@@ -218,6 +218,34 @@ ax6.set_ylabel(r'$\rho$')
 plt.show()
 
 
+
+
+
+#%%
+ts = np.linspace(.25,5,30)
+rs = ts**de
+
+rs = np.logspace(-1,1,500)
+ts = rs**(1/de)
+
+r = np.outer(lamF,rs)
+t = np.outer(tau,ts)
+
+# r_anlt = np.outer(lamF_anlt,rs)
+# t_anlt = np.outer(tau_anlt,ts)
+
+plt.plot(t,r, lw=1)
+# plt.plot(t_anlt,r_anlt, lw=1)
+
+plt.grid(visible=True,axis='y', which='minor', color='k', linestyle='-', alpha=0.2)
+plt.minorticks_on()
+
+plt.xlim(0,10)
+# plt.ylim(3e-2,1e1)
+plt.yscale('log')
+plt.ylabel('r')
+plt.xlabel('t')
+
 #%%
 # fig4.tight_layout()
 # fig5.tight_layout()
