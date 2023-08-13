@@ -302,6 +302,7 @@ axs5[0,0].set_xlim(1e-5,1)
 axs5[0,0].legend()
 axs5[1,0].set_xlabel('$\lambda$')
 axs5[1,1].set_xlabel('$\lambda$')
+axs5[1,2].set_xlabel('$\lambda$')
 
 if gam==5/3:
     axs5[0,0].set_xlim(9e-5,1)
@@ -321,7 +322,7 @@ elif gam==4/3:
     axs5[1,2].set_ylim(1e-2,5e-1)
 
 
-axs5[0,0].set_ylabel('-Vb')
+axs5[0,0].set_ylabel(r'$-\bar{V}$')
 axs5[0,1].set_ylabel('D')
 axs5[1,0].set_ylabel('M')
 axs5[1,1].set_ylabel('P')
