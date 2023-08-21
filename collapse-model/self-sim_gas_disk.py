@@ -218,7 +218,7 @@ for s in s_vals[1:2:]:
 
     color_this = plt.cm.turbo(s/4)
 
-    axs5[0,0].plot(lam_all,de*lam_all, c='r', label='V=0')
+    axs5[0,0].plot(lam_all,de*lam_all, c='r', ls='--', label='V=0')
 
     axs5[0,0].plot(lam_all,-Vb_all, color=color_this, label=f's={s}')
     axs5[0,1].plot(lam_all,D_all, color=color_this)
@@ -305,10 +305,10 @@ axs5[1,1].set_xlabel('$\lambda$')
 axs5[1,2].set_xlabel('$\lambda$')
 
 if gam==5/3:
-    axs5[0,0].set_xlim(9e-5,1)
+    axs5[0,0].set_xlim(7e-5,1)
     axs5[0,0].set_ylim(5e-6,1e1)
     # axs5[0,1].set_ylim(1e-1,1e11)
-    axs5[1,0].set_ylim(1e-3,1e1)
+    # axs5[1,0].set_ylim(1e-3,1e1)
     # axs5[1,1].set_ylim(1e0,1e14)
     # axs5[0,2].set_ylim(1e-1,1e2)
     # axs5[1,2].set_ylim(1e-5,5e-1)
@@ -338,7 +338,7 @@ axs5[1,2].set_yscale('log')
 
 fig5.savefig(f'Eds-gas-{gam:.02f}_profiles.pdf')
 fig6.savefig(f'Eds-gas-{gam:.02f}_trajectory.pdf')
-axs5[0,0].set_xlim(1e-6,1)
+# axs5[0,0].set_xlim(1e-6,1)
 # axs5[1,0].set_ylim(1e-4,1e1)
 
 
