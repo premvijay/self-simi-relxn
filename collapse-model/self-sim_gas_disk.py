@@ -27,6 +27,8 @@ mpl.rcParams['ytick.labelsize'] = 16
 mpl.rcParams['axes.labelsize'] = 22
 mpl.rcParams['legend.fontsize'] = 18
 #mpl.rcParams['figure.constrained_layout.use'] = True
+mpl.rcParams['xtick.minor.visible'] = True
+mpl.rcParams['ytick.minor.visible'] = True
 mpl.rcParams['xtick.major.size'] = 6
 mpl.rcParams['xtick.minor.size'] = 3
 mpl.rcParams['ytick.major.size'] = 6
@@ -185,8 +187,8 @@ disk_rad = 0.05*lamsh
 #     print(f's={s}', lamshsol, lam_atM0_sols[s])
 
 
-fig5, axs5 = plt.subplots(2,3, dpi=100, figsize=(18,12), sharex=True)
-fig6, (ax62,ax6) = plt.subplots(1,2, dpi=100, figsize=(10,5))
+fig5, axs5 = plt.subplots(2,2, dpi=100, figsize=(12,8), sharex=True)
+fig6, (ax62,ax6) = plt.subplots(1,2, dpi=100, figsize=(9,4))
 
 for s in s_vals[1:2:]:
     t_now = time()
@@ -224,8 +226,8 @@ for s in s_vals[1:2:]:
     axs5[0,1].plot(lam_all,D_all, color=color_this)
     axs5[1,0].plot(lam_all,M_all, color=color_this)
     axs5[1,1].plot(lam_all,P_all, color=color_this)
-    axs5[0,2].plot(lam_all, P_all/D_all, color=color_this)
-    axs5[1,2].plot(lam_all, P_all/D_all**gam, color=color_this)
+    # axs5[0,2].plot(lam_all, P_all/D_all, color=color_this)
+    # axs5[1,2].plot(lam_all, P_all/D_all**gam, color=color_this)
     # axs5[1,2].plot(lam_all, D_all*Vb_all**2-gam*P_all, color=color_this)
 
 
@@ -302,7 +304,7 @@ axs5[0,0].set_xlim(1e-5,1)
 axs5[0,0].legend()
 axs5[1,0].set_xlabel('$\lambda$')
 axs5[1,1].set_xlabel('$\lambda$')
-axs5[1,2].set_xlabel('$\lambda$')
+# axs5[1,2].set_xlabel('$\lambda$')
 
 if gam==5/3:
     axs5[0,0].set_xlim(7e-5,1)
@@ -318,23 +320,31 @@ elif gam==4/3:
     axs5[0,1].set_ylim(1e0,1e11)
     axs5[1,0].set_ylim(1e-2,1e1)
     axs5[1,1].set_ylim(1e1,1e14)
-    axs5[0,2].set_ylim(1e0,1e3)
-    axs5[1,2].set_ylim(1e-2,5e-1)
+    # axs5[0,2].set_ylim(1e0,1e3)
+    # axs5[1,2].set_ylim(1e-2,5e-1)
 
 
 axs5[0,0].set_ylabel(r'$-\bar{V}$')
 axs5[0,1].set_ylabel('D')
 axs5[1,0].set_ylabel('M')
 axs5[1,1].set_ylabel('P')
-axs5[0,2].set_ylabel('T')
-axs5[1,2].set_ylabel('K')
+# axs5[0,2].set_ylabel('T')
+# axs5[1,2].set_ylabel('K')
 
 axs5[0,0].set_yscale('log')
 axs5[0,1].set_yscale('log')
 axs5[1,0].set_yscale('log')
 axs5[1,1].set_yscale('log')
-axs5[0,2].set_yscale('log')
-axs5[1,2].set_yscale('log')
+# axs5[0,2].set_yscale('log')
+# axs5[1,2].set_yscale('log')
+
+# axs5[1,0].xaxis.set_minor_locator(mpl.ticker.LogLocator(base=10,subs=np.arange(2, 10)))
+# axs5[1,0].xaxis.get_ticklocs(minor=True)
+# axs5[1,0].minorticks_on()
+# axs5[1,0].xaxis.set_tick_params(which='minor', bottom=True)
+
+fig5.tight_layout()
+fig6.tight_layout()
 
 fig5.savefig(f'Eds-gas-{gam:.02f}_profiles.pdf')
 fig6.savefig(f'Eds-gas-{gam:.02f}_trajectory.pdf')
