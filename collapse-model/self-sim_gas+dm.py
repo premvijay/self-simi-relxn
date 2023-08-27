@@ -12,6 +12,27 @@ from copy import copy
 # %%
 
 # %%
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+# plt.style.use('seaborn-whitegrid')
+plt.style.use('default')
+
+#%%
+mpl.rcParams['xtick.direction'] = "in"
+mpl.rcParams['ytick.direction'] = "in"
+mpl.rcParams['xtick.top'] = True
+mpl.rcParams['ytick.right'] = True
+mpl.rcParams['xtick.labelsize'] = 16
+mpl.rcParams['ytick.labelsize'] = 16
+mpl.rcParams['axes.labelsize'] = 22
+mpl.rcParams['legend.fontsize'] = 18
+#mpl.rcParams['figure.constrained_layout.use'] = True
+mpl.rcParams['xtick.minor.visible'] = True
+mpl.rcParams['ytick.minor.visible'] = True
+mpl.rcParams['xtick.major.size'] = 6
+mpl.rcParams['xtick.minor.size'] = 3
+mpl.rcParams['ytick.major.size'] = 6
+mpl.rcParams['ytick.minor.size'] = 3
 
 # %%
 
@@ -442,7 +463,7 @@ Lam0 = [3e-2,3e-2,3e-3]
 nu = [1/2,]*3
 
 lamsh = [0.35,0.35,0.25]
-disk_rad_by_shock = [0.05,]*3
+disk_rad_by_shock = [0.05,]*3 #[0.15]+
 
 fb = 0.156837
 # fb = 0.5
@@ -470,6 +491,7 @@ for i in range(len(s)):
     Mdr, Mbr, Mdr_dmo = M_dm(r), M_gas(r), M_dmo(ri_pre)
     # Mdr, Mbr, Mdr_dmo = resdf_prof_dm.M, resdf_prof_gas.M, resdf_prof_dmo.M 
 
+    print(f'{descr[1:]}')
     fig7, (ax71,ax72) = plt.subplots(1,2, figsize=(12,6))
 
     ax71.plot(r,Mdr, label='DM')
@@ -496,10 +518,11 @@ for i in range(len(s)):
     rfri = rf / ri
     
     # ax71.scatter(MiMf[60:-50],rfri[60:-50],c=rf[60:-50])
-    cplot = ax72.scatter(MiMf,rfri,c=np.log10(rf), cmap='nipy_spectral', label=f"s={s[i]} "+r'$\gamma=$'+f"{gam[i]:.3g}")
+    cplot = ax72.scatter(MiMf,rfri,c=np.log10(rf), cmap='nipy_spectral')
+    ax72.plot(MiMf,rfri, label=f"s={s[i]} "+r'$\gamma=$'+f"{gam[i]:.3g}")
     # ax71.scatter(MiMf[100:],rfri[100:],c=np.log10(rf[100:]), cmap='nipy_spectral')
     # ax71.plot(MiMf,1+0.25*(MiMf-1),'k',label='$q=0.25$')
-    ax72.plot(MiMf,1+0.33*(MiMf-1)-0.02,'k',label='$q=0.33$ and $q_0=0.02$')
+    ax72.plot(MiMf,1+0.33*(MiMf-1)-0.02,'k:',label='$q=0.33$, $q_0=0.02$')
     
     ax72.set_xlabel('$M_i/M_f$')
     ax72.set_ylabel('$r_f/r_i$')
