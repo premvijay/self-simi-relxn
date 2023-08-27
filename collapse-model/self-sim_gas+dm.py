@@ -205,7 +205,7 @@ lamsh = 0.35
 disk_rad_by_shock = 0.05
 disk_rad = disk_rad_by_shock*lamsh
 
-descr = f'_s={s:.2g}_gam={gam:.3g}_shk={lamsh:.1g}_Rd={disk_rad_by_shock*100:.1g}%_Lam={Lam0:.1e}_nu={nu:.1g}'
+descr = f'_s={s:.2g}_gam={gam:.3g}_shk={lamsh:.1g}_Rd={disk_rad_by_shock*100:.2g}%_Lam={Lam0:.1e}_nu={nu:.1g}'
 
 dmo_prfl = pd.read_hdf(f'profiles_dmo_{s}.hdf5', key='main')
 
@@ -473,7 +473,7 @@ fd = (1-fb)
 
 
 for i in range(len(s)):
-    descr = f'_s={s[i]:.2g}_gam={gam[i]:.3g}_shk={lamsh[i]:.1g}_Rd={disk_rad_by_shock[i]*100:.1g}%_Lam={Lam0[i]:.1e}_nu={nu[i]:.1g}'
+    descr = f'_s={s[i]:.2g}_gam={gam[i]:.3g}_shk={lamsh[i]:.1g}_Rd={disk_rad_by_shock[i]*100:.2g}%_Lam={Lam0[i]:.1e}_nu={nu[i]:.1g}'
     resdf_prof_gas = pd.read_hdf(f'profiles_gasdm{descr:s}.hdf5', key=f'gas/main', mode='r')
     resdf_prof_dm = pd.read_hdf(f'profiles_gasdm{descr:s}.hdf5', key=f'dm/main', mode='r')
     resdf_prof_dmo = pd.read_hdf(f'profiles_gasdm{descr:s}.hdf5', key=f'dm/iter-1', mode='r')
