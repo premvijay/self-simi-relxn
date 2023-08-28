@@ -469,8 +469,11 @@ fb = 0.156837
 # fb = 0.5
 fd = (1-fb)
 
+fig7, (ax71,ax72) = plt.subplots(1,2, figsize=(13,6))
 
 
+# colors = plt.cm.get_cmap('hsv', 10)
+colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
 
 for i in range(len(s)):
     descr = f'_s={s[i]:.2g}_gam={gam[i]:.3g}_shk={lamsh[i]:.1g}_Rd={disk_rad_by_shock[i]*100:.2g}%_Lam={Lam0[i]:.1e}_nu={nu[i]:.1g}'
@@ -492,11 +495,11 @@ for i in range(len(s)):
     # Mdr, Mbr, Mdr_dmo = resdf_prof_dm.M, resdf_prof_gas.M, resdf_prof_dmo.M 
 
     print(f'{descr[1:]}')
-    fig7, (ax71,ax72) = plt.subplots(1,2, figsize=(12,6))
 
-    ax71.plot(r,Mdr, label='DM')
-    ax71.plot(r,Mbr*fd/fb, label='baryon')
-    ax71.plot(ri_pre,Mdr_dmo, label='DM in DMO' )
+
+    ax71.plot(r,Mdr/Mta, ls='-', c=colors[i])
+    ax71.plot(r,Mbr*fd/fb/Mta, ls='-.', c=colors[i])
+    ax71.plot(ri_pre,Mdr_dmo/Mta, ls='--', c=colors[i])
     # plt.plot(r,Mdr+Mbr)
     ax71.set_xscale('log')
     ax71.set_yscale('log')
@@ -518,19 +521,30 @@ for i in range(len(s)):
     rfri = rf / ri
     
     # ax71.scatter(MiMf[60:-50],rfri[60:-50],c=rf[60:-50])
-    cplot = ax72.scatter(MiMf,rfri,c=np.log10(rf), cmap='nipy_spectral')
-    ax72.plot(MiMf,rfri, label=f"s={s[i]} "+r'$\gamma=$'+f"{gam[i]:.3g}")
+    cplot = ax72.scatter(MiMf,rfri,c=np.log10(rf), s=60, cmap='nipy_spectral')
+    plab = f"s={s[i]} "
+    plab += r'$\lambda_s=$'+f'{lamsh[i]}'
+    # plab += r'$\gamma=$'+f"{gam[i]:.3g}"
+    ax72.plot(MiMf,rfri, label=plab, c=colors[i], lw=3)
     # ax71.scatter(MiMf[100:],rfri[100:],c=np.log10(rf[100:]), cmap='nipy_spectral')
     # ax71.plot(MiMf,1+0.25*(MiMf-1),'k',label='$q=0.25$')
-    ax72.plot(MiMf,1+0.33*(MiMf-1)-0.02,'k:',label='$q=0.33$, $q_0=0.02$')
-    
-    ax72.set_xlabel('$M_i/M_f$')
-    ax72.set_ylabel('$r_f/r_i$')
 
-    fig7.colorbar(cplot, ax=ax72,label='$r_f$ (defined as relaxed $\lambda$)')
-    ax71.legend()
-    ax72.legend()
-    fig7.savefig(f'ratio_plot_anyl{descr:s}.pdf')
+ax71.plot([],[], ls='-', c='k', label='DM')
+ax71.plot([],[], ls='-.', c='k', label='Gas')
+ax71.plot([],[], ls='--', c='k', label='DM in DMO' )
+
+ax71.set_xlabel(r'$r/r_{\rm{ta}}$')
+ax71.set_ylabel(r'$M/M_{\rm{ta}}$')
+
+ax72.plot(MiMf,1+0.33*(MiMf-1)-0.02,'k:',label='$q=0.33$, $q_0=0.02$')
+
+ax72.set_xlabel('$M_i/M_f$')
+ax72.set_ylabel('$r_f/r_i$')
+
+fig7.colorbar(cplot, ax=ax72,label=r'$r_f/r_{\rm{ta}}$')
+ax71.legend()
+ax72.legend()
+fig7.savefig(f'ratio_plot_anyl.pdf', bbox_inches='tight')
 # %%
 plt.show()
 # %%
