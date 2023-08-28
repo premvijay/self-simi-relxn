@@ -76,7 +76,7 @@ def odefunc_prof_init_Pless(lam, depvars):
     # linMat_cofac1 = np.array([[0,Vb,0],[Vb,-D,0],[0,0,linMat_det1]])
     # linMat_inv = linMat_cofac1/ linMat_det1
     # der = np.matmul(linMat_inv,linb)
-    Fterm = (de-1)*V + 2/9*M/lam**2
+    Fterm = (de-1)*V + 2/9*M/lam**2 - 10*(-V/(lam/disk_rad)**10)/lam
     der = np.array([-Fterm/Vb, (2*Vb*(lam-V)/lam + Fterm) *D/Vb**2, 3*lam**2*D])
     return der #*lam**2
 
@@ -139,10 +139,11 @@ def get_soln_gas_full(lamsh):
     V1, D1, M1 = res_pre.y[0][-1], res_pre.y[1][-1], res_pre.y[2][-1]
     bcs = shock_jump(lamsh, V1, D1, M1)
     bcs[0] = - bcs[0] + de*lamsh
-    # print(bcs)
+    print(bcs)
     bcs = np.log(bcs)
-    res_post = solve_ivp(odefunc, (np.log(lamsh),np.log(1e-7)), bcs, method='Radau', max_step=0.5, vectorized=True, events=stop_event)
-    return res_pre, res_post
+    # bcs[3] = 0
+    # res_post = solve_ivp(odefunc, (np.log(lamsh),np.log(1e-7)), bcs, method='Radau', max_step=0.5, vectorized=True, events=stop_event)
+    return res_pre, res_pre
 
 def M0_num(lamsh):
     res = get_soln_gas_full(lamsh)[1]
@@ -159,11 +160,11 @@ def lam_atM0(lamsh):
 s = 1
 gam = 5/3
 s_vals = [0.5,1,1.5,2,3,5]
-Lam0 = 3e-2
+Lam0 = 3e-2*0
 nu=1/2
 
-lamsh = 0.35
-disk_rad = 0.05*lamsh
+lamsh = 1e-4
+disk_rad = 0.05*0.3 #lamsh
 
 # lamsh_sols = {}
 # lam_atM0_sols = {}
@@ -203,19 +204,23 @@ for s in s_vals[1:2:]:
     lamsh_pre = res_pre.t
     V_pre, D_pre, M_pre = res_pre.y
 
-    lamsh_post = np.exp(res_post.t)
-    mVb_post, D_post, M_post, P_post = np.exp(res_post.y)
-    # V_post = -mVb_post + de*lamsh_post
-    V_post = de*lamsh_post - mVb_post
+    # lamsh_post = np.exp(res_post.t)
+    # mVb_post, D_post, M_post, P_post = np.exp(res_post.y)
+    # V_post = de*lamsh_post - mVb_post
     P_pre = lamsh_pre*0
 
     lamsh = lamsh_pre.min()
+    lam_all = lamsh_pre
+    V_all = V_pre
+    D_all = D_pre
+    M_all = M_pre
+    P_all = P_pre
 
-    lam_all = np.concatenate([lamsh_post, lamsh_pre][::-1])
-    V_all = np.concatenate([V_post, V_pre][::-1])
-    D_all = np.concatenate([D_post, D_pre][::-1])
-    M_all = np.concatenate([M_post, M_pre][::-1])
-    P_all = np.concatenate([P_post, P_pre][::-1])
+    # lam_all = np.concatenate([lamsh_post, lamsh_pre][::-1])
+    # V_all = np.concatenate([V_post, V_pre][::-1])
+    # D_all = np.concatenate([D_post, D_pre][::-1])
+    # M_all = np.concatenate([M_post, M_pre][::-1])
+    # P_all = np.concatenate([P_post, P_pre][::-1])
     Vb_all = V_all - de*lam_all
 
     color_this = plt.cm.turbo(s/4)
@@ -231,7 +236,7 @@ for s in s_vals[1:2:]:
     # axs5[1,2].plot(lam_all, D_all*Vb_all**2-gam*P_all, color=color_this)
 
 
-    PderD_post = np.gradient(P_post,lamsh_post)/D_post
+    # PderD_post = np.gradient(P_post,lamsh_post)/D_post
 
     M_intrp = interp1d(lam_all, M_all, fill_value="extrapolate")
     D_intrp = interp1d(lam_all, D_all, fill_value="extrapolate")
@@ -239,7 +244,7 @@ for s in s_vals[1:2:]:
     irem = P_pre.shape[0]-1
     # PderD_intrp = interp1d(np.delete(lam_all,irem), np.delete(PderD_all,irem), kind='linear', fill_value="extrapolate")
 
-    PderD_intrp = interp1d(lamsh_post, PderD_post, kind='linear', fill_value=0, bounds_error=False)
+    # PderD_intrp = interp1d(lamsh_post, PderD_post, kind='linear', fill_value=0, bounds_error=False)
 
     t_bef, t_now = t_now, time()
     print(f'{t_now-t_bef:.4g}s', f's={s}: all profiles obtained')
@@ -250,7 +255,7 @@ for s in s_vals[1:2:]:
 
     # taush = (thtshsol - np.sin(thtshsol)) / np.pi
     # xish = np.log(taush)
-    res = solve_ivp(odefunc_traj, (0,5), (1,), method='RK45', max_step=0.01, dense_output=False, vectorized=True)
+    res = solve_ivp(odefunc_traj, (0,1), (1,), method='Radau', max_step=1, dense_output=False, vectorized=True)
     # res1 = solve_ivp(fun, (res.t[-1],15), np.array([res.y[0][-1],-res.y[1][-1]]), max_step=0.1, dense_output=True)
 
     t_bef, t_now = t_now, time()
