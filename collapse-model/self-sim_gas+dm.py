@@ -201,8 +201,8 @@ fb = 0.156837
 # fb = 0.5
 fd = (1-fb)
 
-lamsh = 0.35
-disk_rad_by_shock = 0.05
+lamsh = 0.035
+disk_rad_by_shock = 0.5
 disk_rad = disk_rad_by_shock*lamsh
 
 descr = f'_s={s:.2g}_gam={gam:.3g}_shk={lamsh:.1g}_Rd={disk_rad_by_shock*100:.2g}%_Lam={Lam0:.1e}_nu={nu:.1g}'
@@ -457,13 +457,13 @@ plt.show()
 # dill.load_session(filename)
 
 #%%
-s = [0.5,1,1.5]
-gam = [5/3,]*3
-Lam0 = [3e-2,3e-2,3e-3]
-nu = [1/2,]*3
+s = [0.5]+[0.5,1,1.5]
+gam = [5/3,]*4
+Lam0 = [3e-2,]*3+[3e-3,]
+nu = [1/2,]*4
 
-lamsh = [0.35,0.35,0.25]
-disk_rad_by_shock = [0.05,]*3 #[0.15]+
+lamsh = [0.035]+[0.35,0.35,0.25]
+disk_rad_by_shock = [0.5]+[0.05,]*3 #[0.15]+
 
 fb = 0.156837
 # fb = 0.5
