@@ -295,7 +295,7 @@ for s in s_vals[:5:]:
 
 axs5[0,0].plot(lam_all,de*lam_all, c='r', ls='--', label='V=0')
 
-ax6.legend(loc='lower left')
+ax6.legend(loc='best')
 ax6.set_xlabel(r'$\tau$')
 ax6.set_ylabel('$\lambda_F$')
 ax6.set_xlim(-1,10)
