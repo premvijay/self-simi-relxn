@@ -163,8 +163,11 @@ s_vals = [0.5,1,1.5,2,3,5]
 Lam0 = 3e-2
 nu=1/2
 
-lamsh = 0.035
-disk_rad = 0.5*lamsh
+lamsh = 0.3
+disk_rad = 0.15*lamsh
+
+name = '_shocked_vary-s'
+# name = '_cold_vary-s'
 
 # lamsh_sols = {}
 # lam_atM0_sols = {}
@@ -191,7 +194,7 @@ disk_rad = 0.5*lamsh
 fig5, axs5 = plt.subplots(2,2, dpi=100, figsize=(12,8), sharex=True)
 fig6, (ax62,ax6) = plt.subplots(1,2, dpi=100, figsize=(9,4))
 
-for s in s_vals[1:2:]:
+for s in s_vals[:5:]:
     t_now = time()
     de = 2* (1+s/3) /3
     alpha_D = -9/(s+3)
@@ -225,7 +228,6 @@ for s in s_vals[1:2:]:
 
     color_this = plt.cm.turbo(s/4)
 
-    axs5[0,0].plot(lam_all,de*lam_all, c='r', ls='--', label='V=0')
 
     axs5[0,0].plot(lam_all,-Vb_all, color=color_this, label=f's={s}')
     axs5[0,1].plot(lam_all,D_all, color=color_this)
@@ -291,6 +293,8 @@ for s in s_vals[1:2:]:
 
 #Loop ends
 
+axs5[0,0].plot(lam_all,de*lam_all, c='r', ls='--', label='V=0')
+
 ax6.legend(loc='lower left')
 ax6.set_xlabel(r'$\tau$')
 ax6.set_ylabel('$\lambda_F$')
@@ -351,8 +355,8 @@ axs5[1,1].set_yscale('log')
 fig5.tight_layout()
 fig6.tight_layout()
 
-fig5.savefig(f'Eds-gas-{gam:.02f}_profiles.pdf')
-fig6.savefig(f'Eds-gas-{gam:.02f}_trajectory.pdf')
+fig5.savefig(f'Eds-gas-{gam:.02f}_profiles{name}.pdf')
+fig6.savefig(f'Eds-gas-{gam:.02f}_trajectory{name}.pdf')
 # axs5[0,0].set_xlim(1e-6,1)
 # axs5[1,0].set_ylim(1e-4,1e1)
 
@@ -417,6 +421,6 @@ plt.xlim(0,10)
 plt.yscale('log')
 plt.ylabel('r')
 plt.xlabel('t')
-plt.savefig(f'Eds-gas-{gam:.02f}_trajectory_phys.pdf')
+plt.savefig(f'Eds-gas-{gam:.02f}_trajectory_phys{name}.pdf')
 
 #%%
