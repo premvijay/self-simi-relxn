@@ -163,8 +163,8 @@ s_vals = [0.5,1,1.5,2,3,5]
 Lam0 = 3e-2
 nu=1/2
 
-lamsh = 0.35
-disk_rad = 0.05*lamsh
+lamsh = 0.035
+disk_rad = 0.5*lamsh
 
 # lamsh_sols = {}
 # lam_atM0_sols = {}
@@ -255,7 +255,7 @@ for s in s_vals[1:2:]:
 
     # taush = (thtshsol - np.sin(thtshsol)) / np.pi
     # xish = np.log(taush)
-    res = solve_ivp(odefunc_traj, (0,4), (1,), method='Radau', max_step=0.05, dense_output=False, vectorized=True)
+    res = solve_ivp(odefunc_traj, (0,5), (1,), method='Radau', max_step=0.01, dense_output=False, vectorized=True)
     # res1 = solve_ivp(fun, (res.t[-1],15), np.array([res.y[0][-1],-res.y[1][-1]]), max_step=0.1, dense_output=True)
 
     t_bef, t_now = t_now, time()
