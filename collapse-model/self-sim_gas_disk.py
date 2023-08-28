@@ -164,9 +164,10 @@ Lam0 = 3e-2
 nu=1/2
 
 lamsh = 0.3
+shock_rads = {0.5:0.4,1:0.35,1.5:0.3,2:0.25,3:0.2,5:0.1}
 disk_rad = 0.15*lamsh
 
-name = '_shocked_vary-s'
+name = '_shocked_vary-s+sh'
 # name = '_cold_vary-s'
 
 # lamsh_sols = {}
@@ -198,6 +199,7 @@ for s in s_vals[:5:]:
     t_now = time()
     de = 2* (1+s/3) /3
     alpha_D = -9/(s+3)
+    lamsh = shock_rads[s]
     # lamshsol = 0.35 #lamsh_sols[s] #+5e-3 # 0.338976 #
     res_pre, res_post = get_soln_gas_full(lamsh)
     print(res_post.y[2][-1])
