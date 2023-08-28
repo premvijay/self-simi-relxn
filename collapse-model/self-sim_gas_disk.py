@@ -76,7 +76,7 @@ def odefunc_prof_init_Pless(lam, depvars):
     # linMat_cofac1 = np.array([[0,Vb,0],[Vb,-D,0],[0,0,linMat_det1]])
     # linMat_inv = linMat_cofac1/ linMat_det1
     # der = np.matmul(linMat_inv,linb)
-    Fterm = (de-1)*V + 2/9*M/lam**2 # - 10*(-V/(lam/disk_rad)**10)/lam
+    Fterm = (de-1)*V + 2/9*M/lam**2 # - 10*(-V/(lam/lamdi)**10)/lam
     der = np.array([-Fterm/Vb, (2*Vb*(lam-V)/lam + Fterm) *D/Vb**2, 3*lam**2*D])
     return der #*lam**2
 
@@ -99,7 +99,7 @@ def odefunc_full(l, depvars):
 
     Tv = P/D/Vb**2
     linMat_inv = 1/Vb**2/(gam*Tv-1) * np.array([[-gam*Tv, ar1, -Tv],[ar1,-ar1,Tv],[gam*ar1,-gam*ar1,ar1]])
-    linb = np.array([2*Vb* (V-lam), (de-1)*V*lam+2/9*M/lam+10*(-V/(lam/disk_rad)**10), Vb*lam*((2-Lam0*D**(2-nu)*P**(nu-1))*(gam-1)+2*(de-1))])
+    linb = np.array([2*Vb* (V-lam), (de-1)*V*lam+2/9*M/lam+10*(-V/(lam/lamdi)**10), Vb*lam*((2-Lam0*D**(2-nu)*P**(nu-1))*(gam-1)+2*(de-1))])
 
     # if not np.isfinite(V/lam).all():
     #     print(V, lam)
@@ -159,16 +159,54 @@ def lam_atM0(lamsh):
 #%%
 s = 1
 gam = 5/3
-s_vals = [0.5,1,1.5,2,3,5]
 Lam0 = 3e-2
 nu=1/2
 
 lamsh = 0.3
-shock_rads = {0.5:0.4,1:0.35,1.5:0.3,2:0.25,3:0.2,5:0.1}
-disk_rad = 0.15*lamsh
+lamdi = 0.05*lamsh
 
-name = '_shocked_vary-s+sh'
+varypars=[]
+
 # name = '_cold_vary-s'
+# s_vals = [0.5,1,1.5,2,3,5]
+# varypars += ['s']
+# lamsh = 0.03
+
+# name = '_shocked_vary-s'
+# s_vals = [0.5,1,1.5,2,3,5]
+# varypars += ['s']
+
+# name = '_shocked_vary-s+sh'
+# s_vals = [0.5,1,1.5,2,3,5]
+# lamsh_vals = [0.35,0.32,0.3,0.25,0.2,0.1]
+# varypars += ['s','lamsh']
+
+# name = '_shocked_vary-s+sh+di'
+# s_vals = [0.5,1,1.5,2,3,5]
+# lamsh_vals = [0.35,0.32,0.3,0.25,0.2,0.1]
+# lamdi_vals = [0.05*lamsh for lamsh in lamsh_vals]
+# varypars += ['s','lamsh','lamdi']
+
+# name = '_shocked_vary-gam'
+# gam_vals= [5/3,7/5,4/3,]
+# varypars += ['gam']
+
+# name = '_shocked_vary-gam+sh'
+# gam_vals= [5/3,7/5,4/3,]
+# lamsh_vals = [0.35,0.3,0.25]
+# varypars += ['gam','lamsh']
+
+# name = '_shocked_vary-cooling'
+# Lam0_vals = [1e-3,3e-3,1e-2,3e-2,1e-1]
+# varypars += ['Lam0']
+
+# name = '_shocked_vary-cooling_fn'
+# nu_vals = [-1/2,1/2]
+# varypars += ['nu']
+
+# name = '_shocked_vary-lamdi'
+# lamdi_vals = [percent/100*lamsh for percent in [2,5,10,15,25]]
+# varypars += ['lamdi']
 
 # lamsh_sols = {}
 # lam_atM0_sols = {}
@@ -193,13 +231,25 @@ name = '_shocked_vary-s+sh'
 
 
 fig5, axs5 = plt.subplots(2,2, dpi=100, figsize=(12,8), sharex=True)
-fig6, (ax62,ax6) = plt.subplots(1,2, dpi=100, figsize=(9,4))
+fig6, (ax62,ax6) = plt.subplots(1,2, dpi=100, figsize=(10,5))
 
-for s in s_vals[:5:]:
+colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
+
+for i in range(5):
+    plab=''
+    try:
+        if 'gam' in varypars: gam = gam_vals[i]; plab+=r'$\gamma=$'+f"{gam:.3g} "
+        if 's' in varypars: s = s_vals[i]; plab+=f"s={s} "
+        if 'lamsh' in varypars: lamsh = lamsh_vals[i]; plab+=r'$\lambda_s=$'+f'{lamsh} '
+        if 'lamdi' in varypars: lamdi = lamdi_vals[i]; plab+=r'$\lambda_d=$'+f'{lamdi:.2g} '
+        if 'Lam0' in varypars: Lam0 = Lam0_vals[i]; plab+=r'$\Lambda_0=$'+f'{Lam0:g} '
+        if 'nu' in varypars: nu = nu_vals[i]; plab+=r'$\nu=$'+f'{nu} '
+    except IndexError: break
+
     t_now = time()
     de = 2* (1+s/3) /3
     alpha_D = -9/(s+3)
-    lamsh = shock_rads[s]
+    
     # lamshsol = 0.35 #lamsh_sols[s] #+5e-3 # 0.338976 #
     res_pre, res_post = get_soln_gas_full(lamsh)
     print(res_post.y[2][-1])
@@ -228,11 +278,11 @@ for s in s_vals[:5:]:
     P_all = np.concatenate([P_post, P_pre][::-1])
     Vb_all = V_all - de*lam_all
 
-    color_this = plt.cm.turbo(s/4)
+    color_this = colors[i] #plt.cm.turbo(s/4)
 
 
-    axs5[0,0].plot(lam_all,-Vb_all, color=color_this, label=f's={s}')
-    axs5[0,1].plot(lam_all,D_all, color=color_this)
+    axs5[0,0].plot(lam_all,-Vb_all, color=color_this)
+    axs5[0,1].plot(lam_all,D_all, color=color_this, label=plab)
     axs5[1,0].plot(lam_all,M_all, color=color_this)
     axs5[1,1].plot(lam_all,P_all, color=color_this)
     # axs5[0,2].plot(lam_all, P_all/D_all, color=color_this)
@@ -272,7 +322,7 @@ for s in s_vals[:5:]:
     taures = np.exp(xires)
     lamFres = lamres*taures**de
 
-    ax6.plot(taures,lamFres, color=color_this, label=f's={s}')
+    ax6.plot(taures,lamFres, color=color_this, label=plab)
     ax62.plot(xires,lamres, color=color_this)
 
     #trajectory analytical
@@ -295,7 +345,7 @@ for s in s_vals[:5:]:
 
 #Loop ends
 
-axs5[0,0].plot(lam_all,de*lam_all, c='r', ls='--', label='V=0')
+axs5[0,0].plot(lam_all,de*lam_all, c='k', ls='--', label='V=0')
 
 ax6.legend(loc='best')
 ax6.set_xlabel(r'$\tau$')
@@ -313,6 +363,7 @@ ax62.set_yscale('log')
 axs5[0,0].set_xscale('log')
 axs5[0,0].set_xlim(1e-5,1)
 axs5[0,0].legend()
+axs5[0,1].legend()
 axs5[1,0].set_xlabel('$\lambda$')
 axs5[1,1].set_xlabel('$\lambda$')
 # axs5[1,2].set_xlabel('$\lambda$')
