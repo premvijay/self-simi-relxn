@@ -204,9 +204,9 @@ varypars=[]
 # nu_vals = [-1/2,1/2]
 # varypars += ['nu']
 
-# name = '_shocked_vary-lamdi'
-# lamdi_vals = [percent/100*lamsh for percent in [2,5,10,15,25]]
-# varypars += ['lamdi']
+name = '_shocked_vary-lamdi'
+lamdi_vals = [percent/100*lamsh for percent in [2,5,10,15,25]]
+varypars += ['lamdi']
 
 # lamsh_sols = {}
 # lam_atM0_sols = {}
@@ -241,7 +241,7 @@ for i in range(5):
         if 'gam' in varypars: gam = gam_vals[i]; plab+=r'$\gamma=$'+f"{gam:.3g} "
         if 's' in varypars: s = s_vals[i]; plab+=f"s={s} "
         if 'lamsh' in varypars: lamsh = lamsh_vals[i]; plab+=r'$\lambda_s=$'+f'{lamsh} '
-        if 'lamdi' in varypars: lamdi = lamdi_vals[i]; plab+=r'$\lambda_d=$'+f'{lamdi:.2g} '
+        if 'lamdi' in varypars: lamdi = lamdi_vals[i]; plab+=r'$\lambda_d=$'+f'{lamdi/lamsh*100:g} '+r'$\%~ \lambda_s$'
         if 'Lam0' in varypars: Lam0 = Lam0_vals[i]; plab+=r'$\Lambda_0=$'+f'{Lam0:g} '
         if 'nu' in varypars: nu = nu_vals[i]; plab+=r'$\nu=$'+f'{nu} '
     except IndexError: break
