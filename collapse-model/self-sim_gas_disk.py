@@ -204,9 +204,18 @@ varypars=[]
 # nu_vals = [-1/2,1/2]
 # varypars += ['nu']
 
-name = '_shocked_vary-lamdi'
-lamdi_vals = [percent/100*lamsh for percent in [2,5,10,15,25]]
-varypars += ['lamdi']
+# name = '_shocked_vary-lamdi'
+# lamdi_vals = [percent/100*lamsh for percent in [2,5,10,15,25]]
+# varypars += ['lamdi']
+
+# name = '_shocked_vary-lamsh'
+# lamsh_vals = [0.35,0.3,0.25, 0.2]
+# varypars += ['lamsh']
+
+name = '_shocked_vary-lamsh-di'
+lamsh_vals = [0.35,0.3,0.25, 0.2]
+lamdi_vals = [0.05*lamsh for lamsh in lamsh_vals]
+varypars += ['lamsh','lamdi']
 
 # lamsh_sols = {}
 # lam_atM0_sols = {}
