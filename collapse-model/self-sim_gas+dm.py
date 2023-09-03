@@ -168,7 +168,7 @@ def get_soln_gas_full(lamsh):
     bcs[0] = - bcs[0] + de*lamsh
     # print(bcs)
     bcs = np.log(bcs)
-    res_post = solve_ivp(odefunc, (np.log(lamsh),np.log(1e-7)), bcs, method='Radau', max_step=0.5, vectorized=True, events=stop_event)
+    res_post = solve_ivp(odefunc, (np.log(lamsh),np.log(1e-7)), bcs, method='Radau', max_step=0.05, vectorized=True, events=stop_event)
     return res_pre, res_post
 
 def M0_num(lamsh):
