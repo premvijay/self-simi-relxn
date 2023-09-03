@@ -357,6 +357,8 @@ t_now = time()
 fig5, axs5 = plt.subplots(2,2, figsize=(10,8), sharex=True)
 fig6, ax6 = plt.subplots(1)
 
+fig7, (ax71,ax72) = plt.subplots(1,2, figsize=(13,6))
+
 # plot_iters = [0,] #1,2,3,5,6,7]
 
 t_bef, t_now = t_now, time()
@@ -382,6 +384,7 @@ for n in plot_iters:
 
     M_gas = interp1d(resdf_prof_gas.l, resdf_prof_gas.M)
     M_dm = interp1d(resdf_prof_dm.l, resdf_prof_dm.M)
+    M_dmo = interp1d(resdf_prof_dmo.l, resdf_prof_dmo.M)
 
     M_tot = lambda lam : M_dm(lam)+M_gas(lam)
 
@@ -414,6 +417,61 @@ for n in plot_iters:
 
     t_bef, t_now = t_now, time()
     print(f'{t_now-t_bef:.4g}s', f'{n}th iter plotted')
+
+    if n>=1:
+        lamr_full = np.logspace(-2.3,-0.005,300)
+        lamr = np.logspace(-2.3,-0.005,300)
+
+        r, ri_pre = lamr, lamr_full
+        # r, ri_pre = resdf_prof_dm.l[1:], resdf_prof_dmo.l[1:]
+
+        Mdr, Mbr, Mdr_dmo = M_dm(r), M_gas(r), M_dmo(ri_pre)
+        # Mdr, Mbr, Mdr_dmo = resdf_prof_dm.M, resdf_prof_gas.M, resdf_prof_dmo.M 
+
+
+        ax71.plot(r,Mdr/Mta, ls='-', c=color_this)
+        ax71.plot(r,Mbr*fd/fb/Mta, ls='-.', c=color_this)
+        ax71.plot(ri_pre,Mdr_dmo/Mta, ls='--', c=color_this)
+        # plt.plot(r,Mdr+Mbr)
+        ax71.set_xscale('log')
+        ax71.set_yscale('log')
+
+        rf = r.copy()
+
+        logri_logM = interp1d(np.log10(Mdr_dmo),np.log10(ri_pre), fill_value='extrapolate')
+
+        # assert (ri_M(Mdr_dmo) == r).all()
+
+        ri = 10**logri_logM(np.log10(Mdr))
+
+        Mf = Mdr+Mbr
+        Mi = Mdr/fd
+
+        MiMf = ( fd* (Mbr/ Mdr + 1) )**-1
+        rfri = rf / ri
+        
+        # ax71.scatter(MiMf[60:-50],rfri[60:-50],c=rf[60:-50])
+        cplot = ax72.scatter(MiMf,rfri,c=np.log10(rf), s=60, cmap='nipy_spectral')
+        plab=f'n={n}'
+        ax72.plot(MiMf,rfri, label=plab, c=color_this, lw=3)
+        # ax71.scatter(MiMf[100:],rfri[100:],c=np.log10(rf[100:]), cmap='nipy_spectral')
+        # ax71.plot(MiMf,1+0.25*(MiMf-1),'k',label='$q=0.25$')
+
+ax71.plot([],[], ls='-', c='k', label='DM')
+ax71.plot([],[], ls='-.', c='k', label='Gas')
+ax71.plot([],[], ls='--', c='k', label='DM in DMO' )
+
+ax71.set_xlabel(r'$r/r_{\rm{ta}}$')
+ax71.set_ylabel(r'$M/M_{\rm{ta}}$')
+
+# ax72.plot(MiMf,1+0.33*(MiMf-1)-0.02,'k:',label='$q=0.33$, $q_0=0.02$')
+
+ax72.set_xlabel('$M_i/M_f$')
+ax72.set_ylabel('$r_f/r_i$')
+
+fig7.colorbar(cplot, ax=ax72,label=r'$r_f/r_{\rm{ta}}$')
+ax71.legend()
+ax72.legend()
 
 axs5[1,0].plot(dmo_prfl['l'], dmo_prfl['M']*Mta, color='k', ls='dashed')
 axs5[1,0].plot(resdf_prof_dmo.l, resdf_prof_dmo.M/(1-fb), color='purple', ls='dashed')
