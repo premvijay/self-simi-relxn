@@ -53,10 +53,10 @@ def preshock(tht):
     Mta = (3*np.pi/4)**2
     # tht = np.linspace(0.01, 2*np.pi,300)
     Mn = ((tht-np.sin(tht))/np.pi)**(-2/3*s)
-    M = fb* Mta * Mn
+    M = fgas* Mta * Mn
     lam = (1-np.cos(tht))/2 * Mn**(1/3+eps)
     # D = ( 3*np.pi/8 * (1-np.cos(tht)) * Mn**(3*eps/2-1) * np.sin(tht) * Mta**-2 )**-1
-    D = fb* 9*np.pi**2/ ( (2+6*eps) *(1-np.cos(tht))**3 - 9*eps*np.sin(tht) *(tht-np.sin(tht)) *(1-np.cos(tht)) ) * Mn**(-3*eps)
+    D = fgas* 9*np.pi**2/ ( (2+6*eps) *(1-np.cos(tht))**3 - 9*eps*np.sin(tht) *(tht-np.sin(tht)) *(1-np.cos(tht)) ) * Mn**(-3*eps)
     # D_num = np.gradient(M,lam)/lam**2
     V = np.pi/2 * np.sin(tht)/(1-np.cos(tht)) * Mn**(1/3-eps/2)
     return lam,V,D,M
@@ -69,7 +69,7 @@ def odefunc(l, depvars):
     lam = np.exp(l)
     V,D,M,P = depvars
     Vb = V - de*lam
-    linb = -np.array([2*D*V-2*D*lam, (de-1)*V*lam+2/9*(M+M_dm(lam))/lam+3e-4/lam**3, (2*(gam-1)+2*(de-1))*lam, -3*lam**3*D])
+    linb = -np.array([2*D*V-2*D*lam, (de-1)*V*lam+2/9*(M+M_bg(lam))/lam+3e-4/lam**3, (2*(gam-1)+2*(de-1))*lam, -3*lam**3*D])
     # der_num = np.transpose(np.linalg.solve(linMat1,linb1), (1,0))
     linMat_det1 = D*Vb**2-gam*P
     # if linMat_det1 == 0: print(depvars)
@@ -84,7 +84,7 @@ def odefunc_prof_init_Pless(lam, depvars):
     # lam = np.exp(l)
     V,D,M = depvars
     Vb = V - de*lam
-    linb = -np.array([2*D*V-2*D*lam, (de-1)*V*lam+2/9*(M+M_dm(lam))/lam, -3*lam**3*D])/lam
+    linb = -np.array([2*D*V-2*D*lam, (de-1)*V*lam+2/9*(M+M_bg(lam))/lam, -3*lam**3*D])/lam
     # der_num = np.transpose(np.linalg.solve(linMat1,linb1), (1,0))
     linMat_det1 = D*Vb**2
     # if linMat_det1 == 0: print(depvars)
@@ -105,8 +105,9 @@ def odefunc_prof_init_Pless(lam, depvars):
     # linMat_cofac1 = np.array([[0,Vb,0],[Vb,-D,0],[0,0,linMat_det1]])
     # linMat_inv = linMat_cofac1/ linMat_det1
     # der = np.matmul(linMat_inv,linb)
-    Fterm = (de-1)*V + 2/9*(M+M_dm(lam))/lam**2
+    Fterm = (de-1)*V + 2/9*(M+M_bg(lam))/lam**2
     der = np.array([-Fterm/Vb, (2*Vb*(lam-V)/lam + Fterm) *D/Vb**2, 3*lam**2*D])
+    # if n_i==0 and lam>0.99: print(der[0])
     return der #*lam**2
 
 # %%
@@ -128,7 +129,7 @@ def odefunc_full(l, depvars):
 
     Tv = P/D/Vb**2
     linMat_inv = 1/Vb**2/(gam*Tv-1) * np.array([[-gam*Tv, ar1, -Tv],[ar1,-ar1,Tv],[gam*ar1,-gam*ar1,ar1]])
-    linb = np.array([2*Vb* (V-lam), (de-1)*V*lam+2/9*(M+M_dm(lam))/lam+10*(-V/(lam/disk_rad)**10), Vb*lam*((2-Lam0*D**(2-nu)*P**(nu-1))*(gam-1)+2*(de-1))])
+    linb = np.array([2*Vb* (V-lam), (de-1)*V*lam+2/9*(M+M_bg(lam))/lam+10*(-V/(lam/disk_rad)**10), Vb*lam*((2-Lam0*D**(2-nu)*P**(nu-1))*(gam-1)+2*(de-1))])
 
     # if not np.isfinite(V/lam).all():
     #     print(V, lam)
@@ -193,7 +194,7 @@ def odefunc_traj_dm(xi, arg):
 #%%
 t_now = time()
 # thtshsol = fsolve(M0, 1.5*np.pi)
-s = 0.5
+s = 1
 gam = 5/3
 Lam0 = 3e-2
 nu=1/2
@@ -201,8 +202,8 @@ fb = 0.156837
 # fb = 0.5
 fd = (1-fb)
 
-lamsh = 0.035
-disk_rad_by_shock = 0.5
+lamsh = 0.3
+disk_rad_by_shock = 0.05
 disk_rad = disk_rad_by_shock*lamsh
 
 descr = f'_s={s:.2g}_gam={gam:.3g}_shk={lamsh:.1g}_Rd={disk_rad_by_shock*100:.2g}%_Lam={Lam0:.1e}_nu={nu:.1g}'
@@ -218,14 +219,23 @@ M_dm = lambda lam: M_dmo(lam)*(1-fb)
 de = 2* (1+s/3) /3
 upsil = 1 if s >= 3/2 else 3*s/(s+3)
 
-plot_iters = [0,1,2] #,5,6]
+plot_iters = [0,1,2,3,5,6]
 
 t_bef, t_now = t_now, time()
 print(f'{t_now-t_bef:.4g}s', 'Initialised vals and funcs for iteration')
 
-for n_i in range(-2, 3):
+fig_conv, ax_conv = plt.subplots(1,2,figsize=(10,7))
+
+for n_i in range(-3, 7):
     print('starting iter ', n_i)
     if n_i>=0:
+        if n_i==0:
+            fgas = 1
+            M_bg = lambda lam: 0
+        else:
+            fgas = fb
+            M_bg = M_dm
+
         res_prof_gas_pre, res_prof_gas_post = get_soln_gas_full(lamsh=lamsh)
         # print(f'changed from {n_true} to {n_i}')
 
@@ -244,6 +254,10 @@ for n_i in range(-2, 3):
         P_all = np.concatenate([P_post, P_pre][::-1])
         Vb_all = V_all - de*lam_all
 
+        if n_i>=1:
+            iter_change = np.abs(M_all-M_gas(lam_all)/M_gas(1)*M_all[0])/M_all
+            ax_conv[0].loglog(lam_all, iter_change, label=f'n={n_i}')
+
         M_gas = interp1d(np.append(lam_all,0), np.append(M_all,0), fill_value=np.nan)
 
         M_tot = lambda lam : M_dm(lam)+M_gas(lam)
@@ -258,7 +272,7 @@ for n_i in range(-2, 3):
         print(f'{t_now-t_bef:.4g}s', f'{n_i}th iter gas profiles updated')
         # print('M', M_tot(1), M_dm(1),M_gas(1))
     
-    else:
+    if n_i<=0:
         M_tot = M_dmo #lambda lam : M_dm(lam)/fd
 
     xi_max = np.log(1e-4**upsil)*-3/2/s/1.5
@@ -305,8 +319,12 @@ for n_i in range(-2, 3):
 
     M_vals *= Mta*(1-fb) / M_vals[-1]
 
+    if n_i>=-2:
+        iter_change = np.abs(M_vals-M_dm(l_range))/M_vals
+        ax_conv[1].loglog(l_range, iter_change, label=f'n={n_i}')
+
     M_dm = interp1d(l_range, M_vals, fill_value=np.nan)
-    if n_i<0: 
+    if n_i<=0:  #Start backreaction at iter 1
         M_dmo = interp1d(l_range, M_vals/(1-fb), fill_value=np.nan)
 
     resdf_dm = pd.DataFrame(data={'l':l_range, 'M':M_vals,})
@@ -316,8 +334,8 @@ for n_i in range(-2, 3):
     t_bef, t_now = t_now, time()
     print(f'{t_now-t_bef:.4g}s', f'{n_i}th iter DM mass profile updated')
 
-
-
+ax_conv[0].legend()
+ax_conv[1].legend()
 
 #%%
 del res_traj_dm, lam, loglam, xi
@@ -336,7 +354,7 @@ del res_traj_dm, lam, loglam, xi
 t_now = time()
 # thtshsol = fsolve(M0, 1.5*np.pi)
 # fig4, ax4 = plt.subplots(1, dpi=200, figsize=(7,5))
-fig5, axs5 = plt.subplots(2,2, dpi=200, figsize=(10,8), sharex=True)
+fig5, axs5 = plt.subplots(2,2, figsize=(10,8), sharex=True)
 fig6, ax6 = plt.subplots(1)
 
 # plot_iters = [0,] #1,2,3,5,6,7]
@@ -352,13 +370,14 @@ for n in plot_iters:
     resdf_prof_dm = pd.read_hdf(f'profiles_gasdm{descr:s}.hdf5', key=f'dm/iter{n}', mode='r')
     resdf_traj_dm = pd.read_hdf(f'traj_gasdm{descr:s}.hdf5', key=f'dm/iter{n}', mode='r')
     #resdf_traj_dm_d = pd.read_hdf(f'traj_gasdm{descr:s}_desktop.hdf5', key=f'dm/iter{n}', mode='r')
+    resdf_prof_dmo = pd.read_hdf(f'profiles_gasdm{descr:s}.hdf5', key=f'dm/iter0', mode='r')
 
     axs5[0,0].plot(resdf_prof_gas.l, -resdf_prof_gas.Vb, color=color_this, label=f'n={n}')
     axs5[0,1].plot(resdf_prof_gas.l, resdf_prof_gas.D, color=color_this)
     axs5[1,0].plot(resdf_prof_gas.l, resdf_prof_gas.M, color=color_this, ls='dashdot')
     axs5[1,1].plot(resdf_prof_gas.l, resdf_prof_gas.P, color=color_this)
 
-    axs5[1,0].plot(resdf_prof_dm.l, resdf_prof_dm.M, ls='solid', color=color_this)
+    axs5[1,0].plot(resdf_prof_dm.l, resdf_prof_dm.M, ls='dashdot', color=color_this)
 
 
     M_gas = interp1d(resdf_prof_gas.l, resdf_prof_gas.M)
@@ -390,14 +409,14 @@ for n in plot_iters:
 
     # # ax6.plot(taures,lamFres, color=color_this, label=f's={s}')
     # ax6.plot(xires,lamres, color=color_this)
-    ax6.plot(cumtrapz(1/(resdf_prof_gas.V-de*resdf_prof_gas.l), x=resdf_prof_gas.l), resdf_prof_gas.l[1:])
+    ax6.plot(cumtrapz(1/(resdf_prof_gas.V-de*resdf_prof_gas.l), x=resdf_prof_gas.l), resdf_prof_gas.l[1:], c=color_this, ls='-.')
 
 
     t_bef, t_now = t_now, time()
     print(f'{t_now-t_bef:.4g}s', f'{n}th iter plotted')
 
 axs5[1,0].plot(dmo_prfl['l'], dmo_prfl['M']*Mta, color='k', ls='dashed')
-axs5[1,0].plot(dmo_prfl['l'], M_dmo(dmo_prfl['l']), color='purple', ls='dashed')
+axs5[1,0].plot(resdf_prof_dmo.l, resdf_prof_dmo.M, color='purple', ls='dashed')
 
 # ax4.set_xlabel(r'$\theta$')
 # ax4.set_ylabel(r'$M(\lambda=0)$')
@@ -410,8 +429,8 @@ axs5[0,0].legend()
 
 # axs5[0,0].set_ylim(1e-60,1)
 
-axs5[1,0].plot([], ls='solid', color='k', label='DM')
-axs5[1,0].plot([], ls='dashdot', color='k', label='Gas')
+axs5[1,0].plot([], ls='solid', color='k', label='Gas')
+axs5[1,0].plot([], ls='dashdot', color='k', label='DM')
 axs5[1,0].plot([], ls='dashed', color='k', label='DMo')
 axs5[1,0].legend()
 
@@ -443,14 +462,14 @@ ax6.minorticks_on()
 ax6.grid(visible=True, which='both', axis='x')
 ax6.set_xlabel(r'$\xi$')
 ax6.set_ylabel(r'$\lambda$')
-ax6.legend()
+ax6.legend(loc='upper right')
 
 # fig5.savefig(f'Eds-gas-{gam:.02f}_profiles.pdf')
 # fig5.savefig(f'Eds-gas-{gam:.02f}_trajectory.pdf')
 
 
 #%%
-plt.show()
+# plt.show()
 # %%
 # import dill                            #pip install dill --user
 # filename = f'soln-globalsave{descr:s}.pkl'
