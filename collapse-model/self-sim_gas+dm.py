@@ -374,7 +374,7 @@ for n in plot_iters:
 
     axs5[0,0].plot(resdf_prof_gas.l, -resdf_prof_gas.Vb, color=color_this, label=f'n={n}')
     axs5[0,1].plot(resdf_prof_gas.l, resdf_prof_gas.D, color=color_this)
-    axs5[1,0].plot(resdf_prof_gas.l, resdf_prof_gas.M, color=color_this, ls='dashdot')
+    axs5[1,0].plot(resdf_prof_gas.l, resdf_prof_gas.M, color=color_this)
     axs5[1,1].plot(resdf_prof_gas.l, resdf_prof_gas.P, color=color_this)
 
     axs5[1,0].plot(resdf_prof_dm.l, resdf_prof_dm.M, ls='dashdot', color=color_this)
@@ -416,7 +416,7 @@ for n in plot_iters:
     print(f'{t_now-t_bef:.4g}s', f'{n}th iter plotted')
 
 axs5[1,0].plot(dmo_prfl['l'], dmo_prfl['M']*Mta, color='k', ls='dashed')
-axs5[1,0].plot(resdf_prof_dmo.l, resdf_prof_dmo.M, color='purple', ls='dashed')
+axs5[1,0].plot(resdf_prof_dmo.l, resdf_prof_dmo.M/(1-fb), color='purple', ls='dashed')
 
 # ax4.set_xlabel(r'$\theta$')
 # ax4.set_ylabel(r'$M(\lambda=0)$')
