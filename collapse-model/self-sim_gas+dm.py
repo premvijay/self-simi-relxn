@@ -129,7 +129,7 @@ def odefunc_full(l, depvars):
 
     Tv = P/D/Vb**2
     linMat_inv = 1/Vb**2/(gam*Tv-1) * np.array([[-gam*Tv, ar1, -Tv],[ar1,-ar1,Tv],[gam*ar1,-gam*ar1,ar1]])
-    linb = np.array([2*Vb* (V-lam), (de-1)*V*lam+2/9*(M+M_bg(lam))/lam+10*(-V/(lam/disk_rad)**10), Vb*lam*((2-Lam0*D**(2-nu)*P**(nu-1))*(gam-1)+2*(de-1))])
+    linb = np.array([2*Vb* (V-lam), (de-1)*V*lam+2/9*(M+M_bg(lam))/lam+10*(-V/(lam/lamdi)**10), Vb*lam*((2-Lam0*D**(2-nu)*P**(nu-1))*(gam-1)+2*(de-1))])
 
     # if not np.isfinite(V/lam).all():
     #     print(V, lam)
@@ -204,327 +204,354 @@ fd = (1-fb)
 
 lamsh = 0.3
 disk_rad_by_shock = 0.05
-disk_rad = disk_rad_by_shock*lamsh
+lamdi = disk_rad_by_shock*lamsh
 
-descr = f'_s={s:.2g}_gam={gam:.3g}_shk={lamsh:.1g}_Rd={disk_rad_by_shock*100:.2g}%_Lam={Lam0:.1e}_nu={nu:.1g}'
+varypars=[]
 
-dmo_prfl = pd.read_hdf(f'profiles_dmo_{s}.hdf5', key='main')
+name = '_shocked_vary-s+sh+di'
+s_vals = [0.5,1,1.5,2,]
+lamsh_vals = [0.35,0.32,0.31,0.3,0.25,]
+lamdi_vals = [0.05*lamsh for lamsh in lamsh_vals]
+varypars += ['s','lamsh','lamdi']
 
-Mta = (3*np.pi/4)**2
-M_dmo = interp1d(dmo_prfl['l'], dmo_prfl['M']*Mta, fill_value=np.nan)
-# D_dmo = interp1d(dmo_prfl['l'].iloc[1:], dmo_prfl['rho'].iloc[1:], fill_value=np.nan)
+colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
 
-M_dm = lambda lam: M_dmo(lam)*(1-fb)
+for i in range(5):
+    # i=1
+    plab=''
+    try:
+        if 'gam' in varypars: gam = gam_vals[i]; plab+=r'$\gamma=$'+f"{gam:.3g} "
+        if 's' in varypars: s = s_vals[i]; plab+=f"s={s} "
+        if 'lamsh' in varypars: lamsh = lamsh_vals[i]; plab+=r'$\lambda_s=$'+f'{lamsh} '
+        if 'lamdi' in varypars: lamdi = lamdi_vals[i]; plab+=r'$\lambda_d=$'+f'{lamdi/lamsh*100:g} '+r'$\%~ \lambda_s$'
+        if 'Lam0' in varypars: Lam0 = Lam0_vals[i]; plab+=r'$\Lambda_0=$'+f'{Lam0:g} '
+        if 'nu' in varypars: nu = nu_vals[i]; plab+=r'$\nu=$'+f'{nu} '
+    except IndexError: break
 
-de = 2* (1+s/3) /3
-upsil = 1 if s >= 3/2 else 3*s/(s+3)
+    descr = f'_s={s:.2g}_gam={gam:.3g}_shk={lamsh:.1g}_Rd={disk_rad_by_shock*100:.2g}%_Lam={Lam0:.1e}_nu={nu:.1g}'
 
-plot_iters = [0,1,2,3,5,6]
+    dmo_prfl = pd.read_hdf(f'profiles_dmo_{s}.hdf5', key='main')
 
-t_bef, t_now = t_now, time()
-print(f'{t_now-t_bef:.4g}s', 'Initialised vals and funcs for iteration')
+    Mta = (3*np.pi/4)**2
+    M_dmo = interp1d(dmo_prfl['l'], dmo_prfl['M']*Mta, fill_value=np.nan)
+    # D_dmo = interp1d(dmo_prfl['l'].iloc[1:], dmo_prfl['rho'].iloc[1:], fill_value=np.nan)
 
-fig_conv, ax_conv = plt.subplots(1,2,figsize=(10,7))
+    M_dm = lambda lam: M_dmo(lam)*(1-fb)
 
-for n_i in range(-3, 7):
-    print('starting iter ', n_i)
-    if n_i>=0:
-        if n_i==0:
-            fgas = 1
-            M_bg = lambda lam: 0
-        else:
-            fgas = fb
-            M_bg = M_dm
+    de = 2* (1+s/3) /3
+    upsil = 1 if s >= 3/2 else 3*s/(s+3)
 
-        res_prof_gas_pre, res_prof_gas_post = get_soln_gas_full(lamsh=lamsh)
-        # print(f'changed from {n_true} to {n_i}')
+    plot_iters = [0,1,2,3,5,6]
 
-        lamsh_pre = res_prof_gas_pre.t
-        V_pre, D_pre, M_pre = res_prof_gas_pre.y
-        P_pre = lamsh_pre*0
+    t_bef, t_now = t_now, time()
+    print(f'{t_now-t_bef:.4g}s', 'Initialised vals and funcs for iteration')
 
-        lamsh_post = np.exp(res_prof_gas_post.t)
-        mVb_post, D_post, M_post, P_post = np.exp(res_prof_gas_post.y)
-        V_post = de*lamsh_post - mVb_post
+    fig_conv, ax_conv = plt.subplots(1,2,figsize=(10,7))
 
-        lam_all = np.concatenate([lamsh_post, lamsh_pre][::-1])
-        V_all = np.concatenate([V_post, V_pre][::-1])
-        D_all = np.concatenate([D_post, D_pre][::-1])
-        M_all = np.concatenate([M_post, M_pre][::-1])
-        P_all = np.concatenate([P_post, P_pre][::-1])
-        Vb_all = V_all - de*lam_all
+    for n_i in range(-5, 30):
+        print('starting iter ', n_i)
+        if n_i>=0:
+            if n_i==0:
+                fgas = 1
+                M_bg = lambda lam: 0
+            else:
+                fgas = fb
+                M_bg = M_dm
 
-        if n_i>=1:
-            iter_change = np.abs(M_all-M_gas(lam_all)/M_gas(1)*M_all[0])/M_all
-            ax_conv[0].loglog(lam_all, iter_change, label=f'n={n_i}')
+            res_prof_gas_pre, res_prof_gas_post = get_soln_gas_full(lamsh=lamsh)
+            # print(f'changed from {n_true} to {n_i}')
 
-        M_gas = interp1d(np.append(lam_all,0), np.append(M_all,0), fill_value=np.nan)
+            lamsh_pre = res_prof_gas_pre.t
+            V_pre, D_pre, M_pre = res_prof_gas_pre.y
+            P_pre = lamsh_pre*0
+
+            lamsh_post = np.exp(res_prof_gas_post.t)
+            mVb_post, D_post, M_post, P_post = np.exp(res_prof_gas_post.y)
+            V_post = de*lamsh_post - mVb_post
+
+            lam_all = np.concatenate([lamsh_post, lamsh_pre][::-1])
+            V_all = np.concatenate([V_post, V_pre][::-1])
+            D_all = np.concatenate([D_post, D_pre][::-1])
+            M_all = np.concatenate([M_post, M_pre][::-1])
+            P_all = np.concatenate([P_post, P_pre][::-1])
+            Vb_all = V_all - de*lam_all
+
+            if n_i>=1:
+                iter_change = np.abs(M_all-M_gas(lam_all)/M_gas(1)*M_all[0])/M_all
+                ax_conv[0].loglog(lam_all, iter_change, label=f'n={n_i}')
+
+            M_gas = interp1d(np.append(lam_all,0), np.append(M_all,0), fill_value=np.nan)
+
+            M_tot = lambda lam : M_dm(lam)+M_gas(lam)
+
+            resdf_gas = pd.DataFrame(data={'l':lam_all, 'M':M_all, 'V':V_all, 'D':D_all, 'P':P_all, 'Vb':Vb_all,})
+            resdf_gas.to_hdf(f'profiles_gasdm{descr:s}.hdf5', 'gas/main', mode='a')
+            resdf_gas.to_hdf(f'profiles_gasdm{descr:s}.hdf5', f'gas/iter{n_i}', mode='a')
+            # resdf_gas = pd.read_hdf(f'profiles_gasdm{descr:s}.hdf5', key=f'gas/iter{n}', mode='r')
+            # M_gas = interp1d(resdf_gas.l, resdf_gas.M, fill_value=np.nan)
+
+            t_bef, t_now = t_now, time()
+            print(f'{t_now-t_bef:.4g}s', f'{n_i}th iter gas profiles updated')
+            # print('M', M_tot(1), M_dm(1),M_gas(1))
+        
+        if n_i<=0:
+            M_tot = M_dmo #lambda lam : M_dm(lam)/fd
+
+        xi_max = np.log(1e-4**upsil)*-3/2/s/1.5
+
+        res_traj_dm = solve_ivp(odefunc_traj_dm, (0,xi_max), np.array([1,-de]), method='Radau', t_eval=np.concatenate([np.linspace(0,1-1e-10,1000), np.linspace(1,xi_max**4,2000000)**(1/4)]), max_step=0.02, dense_output=False, vectorized=True)
+        # res1 = solve_ivp(fun, (res.t[-1],15), np.array([res.y[0][-1],-res.y[1][-1]]), max_step=0.1, dense_output=True)
+
+        xi = res_traj_dm.t
+        lam = np.abs(res_traj_dm.y[0])
+        # v = res_traj_dm.y[1]
+        loglam = np.log(np.maximum(lam,1e-15))
+
+        resdf_traj_dm = pd.DataFrame(data={'xi':xi, 'lam':lam,})
+        resdf_traj_dm.to_hdf(f'traj_gasdm{descr:s}.hdf5', 'dm/main', mode='a')
+        resdf_traj_dm.to_hdf(f'traj_gasdm{descr:s}.hdf5', f'dm/iter{n_i}', mode='a')
+
+        t_bef, t_now = t_now, time()
+        print(f'{t_now-t_bef:.4g}s', f'{n_i}th iter DM trajectory obtained')
+
+        Dm_prof_lbins = 300
+        l_range = np.zeros(Dm_prof_lbins+1)
+        l_range[1:] = np.logspace(-2.5,0, Dm_prof_lbins)
+        M_vals = np.zeros(Dm_prof_lbins+1)
+        # rho_vals = np.zeros(301)
+        # v_xi = interp1d(xi, v, fill_value=np.nan)
+        for i in range(1,Dm_prof_lbins+1):
+            # l_range.append(l)
+            l = l_range[i]
+            # spl = InterpolatedUnivariateSpline(xi, loglam-np.log(l),k=3)
+            # roots = spl.roots()
+            roots_ind = np.nonzero(np.diff(np.sign(loglam-np.log(l))))[0]
+            roots = (xi[roots_ind]+xi[np.array(roots_ind)+1])/2
+            #Based on theory we need odd number of roots, otherwise there is a major error
+            n_roots = roots.shape[0]
+            last_root_i = n_roots if n_roots%2==1 else n_roots-1
+            Int_M = np.exp((-2*s/3)*roots[:last_root_i])
+            M_val = np.sum(Int_M[::2]) - np.sum(Int_M[1::2])
+            M_vals[i] = M_val
+        M_vals[-1] = 1
+
+        M_vals = np.asarray(M_vals)
+        # M_vals_er = np.asarray(M_vals_er)
+        # rho_vals = np.asarray(rho_vals)
+
+        M_vals *= Mta*(1-fb) / M_vals[-1]
+
+        if n_i>=-2:
+            iter_change = np.abs(M_vals-M_dm(l_range))/M_vals
+            ax_conv[1].loglog(l_range, iter_change, label=f'n={n_i}')
+
+        M_dm = interp1d(l_range, M_vals, fill_value=np.nan)
+        if n_i<=0:  #Start backreaction at iter 1
+            M_dmo = interp1d(l_range, M_vals/(1-fb), fill_value=np.nan)
+
+        resdf_dm = pd.DataFrame(data={'l':l_range, 'M':M_vals,})
+        resdf_dm.to_hdf(f'profiles_gasdm{descr:s}.hdf5', 'dm/main', mode='a')
+        resdf_dm.to_hdf(f'profiles_gasdm{descr:s}.hdf5', f'dm/iter{n_i}', mode='a')
+
+        t_bef, t_now = t_now, time()
+        print(f'{t_now-t_bef:.4g}s', f'{n_i}th iter DM mass profile updated')
+
+    ax_conv[0].legend()
+    ax_conv[1].legend()
+
+    ## %%
+    del res_traj_dm, lam, loglam, xi
+    # import dill                            #pip install dill --user
+    # filename = f'soln-globalsave{descr:s}.pkl'
+    # dill.dump_session(filename)
+
+
+    # # %%
+    # import dill                            #pip install dill --user
+    # filename = f'soln-globalsave{descr:s}.pkl'
+    # dill.load_session(filename)
+
+
+    ##%%
+    t_now = time()
+    # thtshsol = fsolve(M0, 1.5*np.pi)
+    # fig4, ax4 = plt.subplots(1, dpi=200, figsize=(7,5))
+    fig5, axs5 = plt.subplots(2,2, figsize=(10,8), sharex=True)
+    fig6, ax6 = plt.subplots(1)
+
+    fig7, (ax71,ax72) = plt.subplots(1,2, figsize=(10,5))
+    fig8, ax8 = plt.subplots(1)
+    # MiMf_min, rfri_min = np.logspace(-2.3,-0.005,300)*0
+
+    plot_iters = [0,1,2,6,10,20,28,29] #1,2,3,5,6,7]
+
+    t_bef, t_now = t_now, time()
+    print(f'{t_now-t_bef:.4g}s', 'Initialised plots and figs for iteration')
+
+    for n in plot_iters:
+        color_this = plt.cm.turbo(n/30)
+        linestyles= [':', '--', '-']
+
+        resdf_prof_gas = pd.read_hdf(f'profiles_gasdm{descr:s}.hdf5', key=f'gas/iter{n}', mode='r')
+        resdf_prof_dm = pd.read_hdf(f'profiles_gasdm{descr:s}.hdf5', key=f'dm/iter{n}', mode='r')
+        resdf_traj_dm = pd.read_hdf(f'traj_gasdm{descr:s}.hdf5', key=f'dm/iter{n}', mode='r')
+        #resdf_traj_dm_d = pd.read_hdf(f'traj_gasdm{descr:s}_desktop.hdf5', key=f'dm/iter{n}', mode='r')
+        resdf_prof_dmo = pd.read_hdf(f'profiles_gasdm{descr:s}.hdf5', key=f'dm/iter0', mode='r')
+
+        axs5[0,0].plot(resdf_prof_gas.l, -resdf_prof_gas.Vb, color=color_this, label=f'n={n}')
+        axs5[0,1].plot(resdf_prof_gas.l, resdf_prof_gas.D, color=color_this)
+        axs5[1,0].plot(resdf_prof_gas.l, resdf_prof_gas.M, color=color_this)
+        axs5[1,1].plot(resdf_prof_gas.l, resdf_prof_gas.P, color=color_this)
+
+        axs5[1,0].plot(resdf_prof_dm.l, resdf_prof_dm.M, ls='dashdot', color=color_this)
+
+
+        M_gas = interp1d(resdf_prof_gas.l, resdf_prof_gas.M)
+        M_dm = interp1d(resdf_prof_dm.l, resdf_prof_dm.M)
+        M_dmo = interp1d(resdf_prof_dmo.l, resdf_prof_dmo.M)
 
         M_tot = lambda lam : M_dm(lam)+M_gas(lam)
 
-        resdf_gas = pd.DataFrame(data={'l':lam_all, 'M':M_all, 'V':V_all, 'D':D_all, 'P':P_all, 'Vb':Vb_all,})
-        resdf_gas.to_hdf(f'profiles_gasdm{descr:s}.hdf5', 'gas/main', mode='a')
-        resdf_gas.to_hdf(f'profiles_gasdm{descr:s}.hdf5', f'gas/iter{n_i}', mode='a')
-        # resdf_gas = pd.read_hdf(f'profiles_gasdm{descr:s}.hdf5', key=f'gas/iter{n}', mode='r')
-        # M_gas = interp1d(resdf_gas.l, resdf_gas.M, fill_value=np.nan)
+        # axs5[1,0].plot(lam_all,M_all+M_dm(lam_all), color=color_this, ls='dashed')
+
+        ax6.plot(resdf_traj_dm.xi,resdf_traj_dm.lam, color=color_this, label=f'n={n}')
+        # ax6.plot(resdf_traj_dm_d.xi,resdf_traj_dm_d.lam, label=f'n={n}_desktop')
+
+        # V_intrp = interp1d(resdf_prof_gas.l, resdf_prof_gas.V, fill_value=np.nan)
+        # lamshsol, bcs = get_shock_bcs(thtshsol)
+        # taush = (thtshsol - np.sin(thtshsol)) / np.pi
+        # xish = np.log(taush)
+        # res_traj_gas = solve_ivp(odefunc_traj_gas, (1,4), np.array([1]), method='Radau', max_step=0.001, dense_output=False, vectorized=True)
+        # # res1 = solve_ivp(fun, (res.t[-1],15), np.array([res.y[0][-1],-res.y[1][-1]]), max_step=0.1, dense_output=True)
+
+        # t_bef, t_now = t_now, time()
+        # print(f'{t_now-t_bef:.4g}s', f's={s}: post shock trajectory obtained')
+
+        # xires = res_traj_gas.t
+        # lamres = res_traj_gas.y[0]
+        # # vres = res.y[1]
+
+        # taures = np.exp(xires)
+        # lamFres = lamres*taures**de
+
+        # # ax6.plot(taures,lamFres, color=color_this, label=f's={s}')
+        # ax6.plot(xires,lamres, color=color_this)
+        ax6.plot(cumtrapz(1/(resdf_prof_gas.V-de*resdf_prof_gas.l), x=resdf_prof_gas.l), resdf_prof_gas.l[1:], c=color_this, ls='-.')
+
 
         t_bef, t_now = t_now, time()
-        print(f'{t_now-t_bef:.4g}s', f'{n_i}th iter gas profiles updated')
-        # print('M', M_tot(1), M_dm(1),M_gas(1))
-    
-    if n_i<=0:
-        M_tot = M_dmo #lambda lam : M_dm(lam)/fd
+        print(f'{t_now-t_bef:.4g}s', f'{n}th iter plotted')
 
-    xi_max = np.log(1e-4**upsil)*-3/2/s/1.5
+        if n>=1:
+            # lamr_full = np.logspace(-2.3,-0.001,400)
+            # lamr = np.logspace(-2.3,-0.01,100)
 
-    res_traj_dm = solve_ivp(odefunc_traj_dm, (0,xi_max), np.array([1,-de]), method='Radau', t_eval=np.concatenate([np.linspace(0,1-1e-10,1000), np.linspace(1,xi_max**4,2000000)**(1/4)]), max_step=0.02, dense_output=False, vectorized=True)
-    # res1 = solve_ivp(fun, (res.t[-1],15), np.array([res.y[0][-1],-res.y[1][-1]]), max_step=0.1, dense_output=True)
+            # r, ri_pre = lamr, lamr_full
+            r, ri_pre = resdf_prof_dm.l[1:-5], resdf_prof_dmo.l[1:]
 
-    xi = res_traj_dm.t
-    lam = np.abs(res_traj_dm.y[0])
-    # v = res_traj_dm.y[1]
-    loglam = np.log(np.maximum(lam,1e-15))
-
-    resdf_traj_dm = pd.DataFrame(data={'xi':xi, 'lam':lam,})
-    resdf_traj_dm.to_hdf(f'traj_gasdm{descr:s}.hdf5', 'dm/main', mode='a')
-    resdf_traj_dm.to_hdf(f'traj_gasdm{descr:s}.hdf5', f'dm/iter{n_i}', mode='a')
-
-    t_bef, t_now = t_now, time()
-    print(f'{t_now-t_bef:.4g}s', f'{n_i}th iter DM trajectory obtained')
-
-    Dm_prof_lbins = 300
-    l_range = np.zeros(Dm_prof_lbins+1)
-    l_range[1:] = np.logspace(-2.5,0, Dm_prof_lbins)
-    M_vals = np.zeros(Dm_prof_lbins+1)
-    # rho_vals = np.zeros(301)
-    # v_xi = interp1d(xi, v, fill_value=np.nan)
-    for i in range(1,Dm_prof_lbins+1):
-        # l_range.append(l)
-        l = l_range[i]
-        # spl = InterpolatedUnivariateSpline(xi, loglam-np.log(l),k=3)
-        # roots = spl.roots()
-        roots_ind = np.nonzero(np.diff(np.sign(loglam-np.log(l))))[0]
-        roots = (xi[roots_ind]+xi[np.array(roots_ind)+1])/2
-        #Based on theory we need odd number of roots, otherwise there is a major error
-        n_roots = roots.shape[0]
-        last_root_i = n_roots if n_roots%2==1 else n_roots-1
-        Int_M = np.exp((-2*s/3)*roots[:last_root_i])
-        M_val = np.sum(Int_M[::2]) - np.sum(Int_M[1::2])
-        M_vals[i] = M_val
-    M_vals[-1] = 1
-
-    M_vals = np.asarray(M_vals)
-    # M_vals_er = np.asarray(M_vals_er)
-    # rho_vals = np.asarray(rho_vals)
-
-    M_vals *= Mta*(1-fb) / M_vals[-1]
-
-    if n_i>=-2:
-        iter_change = np.abs(M_vals-M_dm(l_range))/M_vals
-        ax_conv[1].loglog(l_range, iter_change, label=f'n={n_i}')
-
-    M_dm = interp1d(l_range, M_vals, fill_value=np.nan)
-    if n_i<=0:  #Start backreaction at iter 1
-        M_dmo = interp1d(l_range, M_vals/(1-fb), fill_value=np.nan)
-
-    resdf_dm = pd.DataFrame(data={'l':l_range, 'M':M_vals,})
-    resdf_dm.to_hdf(f'profiles_gasdm{descr:s}.hdf5', 'dm/main', mode='a')
-    resdf_dm.to_hdf(f'profiles_gasdm{descr:s}.hdf5', f'dm/iter{n_i}', mode='a')
-
-    t_bef, t_now = t_now, time()
-    print(f'{t_now-t_bef:.4g}s', f'{n_i}th iter DM mass profile updated')
-
-ax_conv[0].legend()
-ax_conv[1].legend()
-
-#%%
-del res_traj_dm, lam, loglam, xi
-# import dill                            #pip install dill --user
-# filename = f'soln-globalsave{descr:s}.pkl'
-# dill.dump_session(filename)
+            Mdr, Mbr, Mdr_dmo = M_dm(r), M_gas(r), M_dmo(ri_pre)
+            # Mdr, Mbr, Mdr_dmo = resdf_prof_dm.M, M_gas(r), resdf_prof_dmo.M 
 
 
-# # %%
-# import dill                            #pip install dill --user
-# filename = f'soln-globalsave{descr:s}.pkl'
-# dill.load_session(filename)
+            ax71.plot(r,Mdr/Mta, ls='-', c=color_this)
+            ax71.plot(r,Mbr*fd/fb/Mta, ls='-.', c=color_this)
+            ax71.plot(ri_pre,Mdr_dmo/Mta, ls='--', c=color_this)
+            # plt.plot(r,Mdr+Mbr)
+            ax71.set_xscale('log')
+            ax71.set_yscale('log')
 
+            rf = r.copy()
 
-#%%
-t_now = time()
-# thtshsol = fsolve(M0, 1.5*np.pi)
-# fig4, ax4 = plt.subplots(1, dpi=200, figsize=(7,5))
-fig5, axs5 = plt.subplots(2,2, figsize=(10,8), sharex=True)
-fig6, ax6 = plt.subplots(1)
+            logri_logM = interp1d(np.log10(Mdr_dmo),np.log10(ri_pre), fill_value='extrapolate')
 
-fig7, (ax71,ax72) = plt.subplots(1,2, figsize=(13,6))
+            # assert (ri_M(Mdr_dmo) == r).all()
 
-# plot_iters = [0,] #1,2,3,5,6,7]
+            ri = 10**logri_logM(np.log10(Mdr))
 
-t_bef, t_now = t_now, time()
-print(f'{t_now-t_bef:.4g}s', 'Initialised plots and figs for iteration')
+            Mf = Mdr+Mbr
+            Mi = Mdr/fd
 
-for n in plot_iters:
-    color_this = plt.cm.turbo(n/7)
-    linestyles= [':', '--', '-']
+            MiMf_prev, rfri_prev = MiMf, rfri
 
-    resdf_prof_gas = pd.read_hdf(f'profiles_gasdm{descr:s}.hdf5', key=f'gas/iter{n}', mode='r')
-    resdf_prof_dm = pd.read_hdf(f'profiles_gasdm{descr:s}.hdf5', key=f'dm/iter{n}', mode='r')
-    resdf_traj_dm = pd.read_hdf(f'traj_gasdm{descr:s}.hdf5', key=f'dm/iter{n}', mode='r')
-    #resdf_traj_dm_d = pd.read_hdf(f'traj_gasdm{descr:s}_desktop.hdf5', key=f'dm/iter{n}', mode='r')
-    resdf_prof_dmo = pd.read_hdf(f'profiles_gasdm{descr:s}.hdf5', key=f'dm/iter0', mode='r')
+            MiMf = ( fd* (Mbr/ Mdr + 1) )**-1
+            rfri = rf / ri
 
-    axs5[0,0].plot(resdf_prof_gas.l, -resdf_prof_gas.Vb, color=color_this, label=f'n={n}')
-    axs5[0,1].plot(resdf_prof_gas.l, resdf_prof_gas.D, color=color_this)
-    axs5[1,0].plot(resdf_prof_gas.l, resdf_prof_gas.M, color=color_this)
-    axs5[1,1].plot(resdf_prof_gas.l, resdf_prof_gas.P, color=color_this)
+            MiMf_err, rfri_err = np.abs(MiMf-MiMf_prev), np.abs(rfri-rfri_prev)
+            ax8.plot(MiMf, rfri_err, color=color_this)
 
-    axs5[1,0].plot(resdf_prof_dm.l, resdf_prof_dm.M, ls='dashdot', color=color_this)
+            if n==29: ax72.errorbar(MiMf,rfri, xerr=MiMf_err, yerr=rfri_err)
+            
+            # ax71.scatter(MiMf[60:-50],rfri[60:-50],c=rf[60:-50])
+            cplot = ax72.scatter(MiMf,rfri,c=np.log10(rf), s=60, cmap='nipy_spectral')
+            plab=f'n={n}'
+            ax72.plot(MiMf,rfri, label=plab, c=color_this, lw=3)
+            # ax71.scatter(MiMf[100:],rfri[100:],c=np.log10(rf[100:]), cmap='nipy_spectral')
+            # ax71.plot(MiMf,1+0.25*(MiMf-1),'k',label='$q=0.25$')
 
+    ax71.plot([],[], ls='-', c='k', label='DM')
+    ax71.plot([],[], ls='-.', c='k', label='Gas')
+    ax71.plot([],[], ls='--', c='k', label='DM in DMO' )
 
-    M_gas = interp1d(resdf_prof_gas.l, resdf_prof_gas.M)
-    M_dm = interp1d(resdf_prof_dm.l, resdf_prof_dm.M)
-    M_dmo = interp1d(resdf_prof_dmo.l, resdf_prof_dmo.M)
+    ax71.set_xlabel(r'$r/r_{\rm{ta}}$')
+    ax71.set_ylabel(r'$M/M_{\rm{ta}}$')
 
-    M_tot = lambda lam : M_dm(lam)+M_gas(lam)
+    # ax72.plot(MiMf,1+0.33*(MiMf-1)-0.02,'k:',label='$q=0.33$, $q_0=0.02$')
 
-    # axs5[1,0].plot(lam_all,M_all+M_dm(lam_all), color=color_this, ls='dashed')
+    ax72.set_xlabel('$M_i/M_f$')
+    ax72.set_ylabel('$r_f/r_i$')
 
-    ax6.plot(resdf_traj_dm.xi,resdf_traj_dm.lam, color=color_this, label=f'n={n}')
-    # ax6.plot(resdf_traj_dm_d.xi,resdf_traj_dm_d.lam, label=f'n={n}_desktop')
+    fig7.colorbar(cplot, ax=ax72,label=r'$r_f/r_{\rm{ta}}$')
+    ax71.legend()
+    ax72.legend()
 
-    # V_intrp = interp1d(resdf_prof_gas.l, resdf_prof_gas.V, fill_value=np.nan)
-    # lamshsol, bcs = get_shock_bcs(thtshsol)
-    # taush = (thtshsol - np.sin(thtshsol)) / np.pi
-    # xish = np.log(taush)
-    # res_traj_gas = solve_ivp(odefunc_traj_gas, (1,4), np.array([1]), method='Radau', max_step=0.001, dense_output=False, vectorized=True)
-    # # res1 = solve_ivp(fun, (res.t[-1],15), np.array([res.y[0][-1],-res.y[1][-1]]), max_step=0.1, dense_output=True)
+    axs5[1,0].plot(dmo_prfl['l'], dmo_prfl['M']*Mta, color='k', ls='dashed')
+    axs5[1,0].plot(resdf_prof_dmo.l, resdf_prof_dmo.M/(1-fb), color='purple', ls='dashed')
 
-    # t_bef, t_now = t_now, time()
-    # print(f'{t_now-t_bef:.4g}s', f's={s}: post shock trajectory obtained')
-
-    # xires = res_traj_gas.t
-    # lamres = res_traj_gas.y[0]
-    # # vres = res.y[1]
-
-    # taures = np.exp(xires)
-    # lamFres = lamres*taures**de
-
-    # # ax6.plot(taures,lamFres, color=color_this, label=f's={s}')
-    # ax6.plot(xires,lamres, color=color_this)
-    ax6.plot(cumtrapz(1/(resdf_prof_gas.V-de*resdf_prof_gas.l), x=resdf_prof_gas.l), resdf_prof_gas.l[1:], c=color_this, ls='-.')
-
-
-    t_bef, t_now = t_now, time()
-    print(f'{t_now-t_bef:.4g}s', f'{n}th iter plotted')
-
-    if n>=1:
-        lamr_full = np.logspace(-2.3,-0.005,300)
-        lamr = np.logspace(-2.3,-0.005,300)
-
-        r, ri_pre = lamr, lamr_full
-        # r, ri_pre = resdf_prof_dm.l[1:], resdf_prof_dmo.l[1:]
-
-        Mdr, Mbr, Mdr_dmo = M_dm(r), M_gas(r), M_dmo(ri_pre)
-        # Mdr, Mbr, Mdr_dmo = resdf_prof_dm.M, resdf_prof_gas.M, resdf_prof_dmo.M 
-
-
-        ax71.plot(r,Mdr/Mta, ls='-', c=color_this)
-        ax71.plot(r,Mbr*fd/fb/Mta, ls='-.', c=color_this)
-        ax71.plot(ri_pre,Mdr_dmo/Mta, ls='--', c=color_this)
-        # plt.plot(r,Mdr+Mbr)
-        ax71.set_xscale('log')
-        ax71.set_yscale('log')
-
-        rf = r.copy()
-
-        logri_logM = interp1d(np.log10(Mdr_dmo),np.log10(ri_pre), fill_value='extrapolate')
-
-        # assert (ri_M(Mdr_dmo) == r).all()
-
-        ri = 10**logri_logM(np.log10(Mdr))
-
-        Mf = Mdr+Mbr
-        Mi = Mdr/fd
-
-        MiMf_prev, rfri_prev = MiMf, rfri
-
-        MiMf = ( fd* (Mbr/ Mdr + 1) )**-1
-        rfri = rf / ri
-
-        if n==6: ax72.errorbar(MiMf,rfri, xerr=np.abs(MiMf-MiMf_prev), yerr=np.abs(rfri-rfri_prev))
+    # ax4.set_xlabel(r'$\theta$')
+    # ax4.set_ylabel(r'$M(\lambda=0)$')
+    # # ax4.set_ylim(-2,5)
+    # ax4.legend()
         
-        # ax71.scatter(MiMf[60:-50],rfri[60:-50],c=rf[60:-50])
-        cplot = ax72.scatter(MiMf,rfri,c=np.log10(rf), s=60, cmap='nipy_spectral')
-        plab=f'n={n}'
-        ax72.plot(MiMf,rfri, label=plab, c=color_this, lw=3)
-        # ax71.scatter(MiMf[100:],rfri[100:],c=np.log10(rf[100:]), cmap='nipy_spectral')
-        # ax71.plot(MiMf,1+0.25*(MiMf-1),'k',label='$q=0.25$')
+    axs5[0,0].set_xscale('log')
+    axs5[0,0].set_xlim(1e-4,1)
+    axs5[0,0].legend()
 
-ax71.plot([],[], ls='-', c='k', label='DM')
-ax71.plot([],[], ls='-.', c='k', label='Gas')
-ax71.plot([],[], ls='--', c='k', label='DM in DMO' )
+    # axs5[0,0].set_ylim(1e-60,1)
 
-ax71.set_xlabel(r'$r/r_{\rm{ta}}$')
-ax71.set_ylabel(r'$M/M_{\rm{ta}}$')
+    axs5[1,0].plot([], ls='solid', color='k', label='Gas')
+    axs5[1,0].plot([], ls='dashdot', color='k', label='DM')
+    axs5[1,0].plot([], ls='dashed', color='k', label='DMo')
+    axs5[1,0].legend()
 
-# ax72.plot(MiMf,1+0.33*(MiMf-1)-0.02,'k:',label='$q=0.33$, $q_0=0.02$')
+    if gam>1.67:
+        # axs5[0,0].set_xlim(1e-2,1)
+        axs5[0,1].set_ylim(1e-1,1e6)
+        axs5[1,0].set_ylim(1e-2,1e1)
+        axs5[1,1].set_ylim(1e0,1e7)
 
-ax72.set_xlabel('$M_i/M_f$')
-ax72.set_ylabel('$r_f/r_i$')
+    axs5[0,0].set_ylabel('-Vb')
+    axs5[0,1].set_ylabel('D')
+    axs5[1,0].set_ylabel('M')
+    axs5[1,1].set_ylabel('P')
 
-fig7.colorbar(cplot, ax=ax72,label=r'$r_f/r_{\rm{ta}}$')
-ax71.legend()
-ax72.legend()
-
-axs5[1,0].plot(dmo_prfl['l'], dmo_prfl['M']*Mta, color='k', ls='dashed')
-axs5[1,0].plot(resdf_prof_dmo.l, resdf_prof_dmo.M/(1-fb), color='purple', ls='dashed')
-
-# ax4.set_xlabel(r'$\theta$')
-# ax4.set_ylabel(r'$M(\lambda=0)$')
-# # ax4.set_ylim(-2,5)
-# ax4.legend()
-    
-axs5[0,0].set_xscale('log')
-axs5[0,0].set_xlim(1e-4,1)
-axs5[0,0].legend()
-
-# axs5[0,0].set_ylim(1e-60,1)
-
-axs5[1,0].plot([], ls='solid', color='k', label='Gas')
-axs5[1,0].plot([], ls='dashdot', color='k', label='DM')
-axs5[1,0].plot([], ls='dashed', color='k', label='DMo')
-axs5[1,0].legend()
-
-if gam>1.67:
-    # axs5[0,0].set_xlim(1e-2,1)
-    axs5[0,1].set_ylim(1e-1,1e6)
-    axs5[1,0].set_ylim(1e-2,1e1)
-    axs5[1,1].set_ylim(1e0,1e7)
-
-axs5[0,0].set_ylabel('-Vb')
-axs5[0,1].set_ylabel('D')
-axs5[1,0].set_ylabel('M')
-axs5[1,1].set_ylabel('P')
-
-axs5[0,0].set_yscale('log')
-axs5[0,1].set_yscale('log')
-axs5[1,0].set_yscale('log')
-axs5[1,1].set_yscale('log')
+    axs5[0,0].set_yscale('log')
+    axs5[0,1].set_yscale('log')
+    axs5[1,0].set_yscale('log')
+    axs5[1,1].set_yscale('log')
 
 
 
 
-ax6.set_xlim(0,6)
-ax6.set_ylim(1e-3,1)
-ax6.set_yscale('log')
-# ax6.set_ylim(resdf_prof_dm.l[1],1)
-ax6.xaxis.get_ticklocs(minor=True)     # []
-ax6.minorticks_on()
-ax6.grid(visible=True, which='both', axis='x')
-ax6.set_xlabel(r'$\xi$')
-ax6.set_ylabel(r'$\lambda$')
-ax6.legend(loc='upper right')
+    ax6.set_xlim(0,6)
+    ax6.set_ylim(1e-3,1)
+    ax6.set_yscale('log')
+    # ax6.set_ylim(resdf_prof_dm.l[1],1)
+    ax6.xaxis.get_ticklocs(minor=True)     # []
+    ax6.minorticks_on()
+    ax6.grid(visible=True, which='both', axis='x')
+    ax6.set_xlabel(r'$\xi$')
+    ax6.set_ylabel(r'$\lambda$')
+    ax6.legend(loc='upper right')
 
 # fig5.savefig(f'Eds-gas-{gam:.02f}_profiles.pdf')
 # fig5.savefig(f'Eds-gas-{gam:.02f}_trajectory.pdf')
