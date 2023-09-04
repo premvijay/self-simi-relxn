@@ -192,6 +192,17 @@ def odefunc_traj_dm(xi, arg):
 #         raise Exception
 
 #%%
+descr_list_dict = {}
+
+#%%
+name = 'cold_vary-s'
+name = 'shocked_vary-s'
+# name = 'shocked_vary-gam'
+# name = 'shocked_vary-cooling'
+# name = 'shocked_vary-lamdi'
+# name = 'shocked_vary-lamsh'
+# name = 'shocked_vary-lamsh-di'
+
 t_now = time()
 # thtshsol = fsolve(M0, 1.5*np.pi)
 s = 1
@@ -204,31 +215,55 @@ fd = (1-fb)
 
 lamsh = 0.3
 disk_rad_by_shock = 0.05
-lamdi = disk_rad_by_shock*lamsh
+lamdish = disk_rad_by_shock #*lamsh
 
 varypars=[]
 
-name = '_shocked_vary-s+sh+di'
-s_vals = [0.5,1,1.5,2,]
-lamsh_vals = [0.35,0.32,0.3,0.25,]
-lamdi_vals = [0.05*lamsh for lamsh in lamsh_vals]
-varypars += ['s','lamsh','lamdi']
+if name == 'cold_vary-s':
+    s_vals = [0.5,1,1.5,2,3,5]
+    varypars += ['s']
+    lamsh = 0.03
+
+if name == 'shocked_vary-s':
+    s_vals = [0.5,1,1.5,2,3,5]
+    varypars += ['s']
+
+if name == 'shocked_vary-gam':
+    gam_vals= [5/3,7/5,4/3,]
+    varypars += ['gam']
+
+if name == 'shocked_vary-cooling':
+    Lam0_vals = [1e-3,3e-3,1e-2,3e-2,1e-1]
+    varypars += ['Lam0']
+
+if name == 'shocked_vary-lamdi':
+    lamdish_vals = [percent/100 for percent in [2,5,10,15,25]]
+    varypars += ['lamdi']
+
+if name == 'shocked_vary-lamsh':
+    lamsh_vals = [0.35,0.3,0.25, 0.2]
+    varypars += ['lamsh']
+
+if name == 'shocked_vary-lamsh-di':
+    lamsh_vals = [0.35,0.3,0.25, 0.2]
+    lamdi_vals = [0.05*lamsh for lamsh in lamsh_vals]
+    varypars += ['lamsh','lamdi']
 
 colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
 descr_list, plab_list = [], []
-for i in range(5):
+for i in range(2):
     # i=1
     plab=''
     try:
         if 'gam' in varypars: gam = gam_vals[i]; plab+=r'$\gamma=$'+f"{gam:.3g} "
         if 's' in varypars: s = s_vals[i]; plab+=f"s={s} "
         if 'lamsh' in varypars: lamsh = lamsh_vals[i]; plab+=r'$\lambda_s=$'+f'{lamsh} '
-        if 'lamdi' in varypars: lamdi = lamdi_vals[i]; #plab+=r'$\lambda_d=$'+f'{lamdi/lamsh*100:g} '+r'$\%~ \lambda_s$'
+        if 'lamdish' in varypars: lamdish = lamdish_vals[i]; plab+=r'$\lambda_d=$'+f'{lamdish*100:g} '+r'$\%~ \lambda_s$'
         if 'Lam0' in varypars: Lam0 = Lam0_vals[i]; plab+=r'$\Lambda_0=$'+f'{Lam0:g} '
-        if 'nu' in varypars: nu = nu_vals[i]; plab+=r'$\nu=$'+f'{nu} '
+        # if 'nu' in varypars: nu = nu_vals[i]; plab+=r'$\nu=$'+f'{nu} '
     except IndexError: break
 
-    descr = f'_s={s:.2g}_gam={gam:.3g}_lamsh={lamsh:.2g}_lamdi={lamdi:.3g}_Lam0={Lam0:.1e}_nu={nu:.1g}'
+    descr = f'_s={s:.2g}_gam={gam:.3g}_lamdish={lamdish:.3g}_Lam0={Lam0:.1e}_nu={nu:.1g}'
     descr_list.append(descr)
     plab_list.append(plab)
 
@@ -259,6 +294,9 @@ for i in range(5):
             else:
                 fgas = fb
                 M_bg = M_dm
+
+            if name[:7]=='shocked': lamsh = spl_rad
+            lamdi = lamdish*lamsh
 
             res_prof_gas_pre, res_prof_gas_post = get_soln_gas_full(lamsh=lamsh)
             # print(f'changed from {n_true} to {n_i}')
@@ -316,6 +354,10 @@ for i in range(5):
         t_bef, t_now = t_now, time()
         print(f'{t_now-t_bef:.4g}s', f'{n_i}th iter DM trajectory obtained')
 
+        spl_ind = np.where(np.abs(np.diff(resdf_traj_dm.lam))<1e-4)[0][0]
+        spl_rad = resdf_traj_dm.lam[spl_ind]
+        print(s, n_i, spl_rad)
+
         Dm_prof_lbins = 300
         l_range = np.zeros(Dm_prof_lbins+1)
         l_range[1:] = np.logspace(-2.5,0, Dm_prof_lbins)
@@ -372,9 +414,21 @@ for i in range(5):
     # import dill                            #pip install dill --user
     # filename = f'soln-globalsave{descr:s}.pkl'
     # dill.load_session(filename)
+descr_list_dict[name] = descr_list
+
 
 
 #%%
+name = 'cold_vary-s'
+name = 'shocked_vary-s'
+# name = 'shocked_vary-gam'
+# name = 'shocked_vary-cooling'
+# name = 'shocked_vary-lamdi'
+# name = 'shocked_vary-lamsh'
+# name = 'shocked_vary-lamsh-di'
+
+descr_list = descr_list_dict[name]
+
 t_now = time()
 # thtshsol = fsolve(M0, 1.5*np.pi)
 # fig4, ax4 = plt.subplots(1, dpi=200, figsize=(7,5))
