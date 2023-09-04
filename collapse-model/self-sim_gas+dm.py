@@ -193,6 +193,7 @@ def odefunc_traj_dm(xi, arg):
 
 #%%
 descr_list_dict = {}
+plab_list_dict = {}
 
 #%%
 name = 'cold_vary-s'
@@ -203,224 +204,229 @@ name = 'shocked_vary-s'
 # name = 'shocked_vary-lamsh'
 # name = 'shocked_vary-lamsh-di'
 
-t_now = time()
-# thtshsol = fsolve(M0, 1.5*np.pi)
-s = 1
-gam = 5/3
-Lam0 = 3e-2
-nu=1/2
-fb = 0.156837
-# fb = 0.5
-fd = (1-fb)
+names = ['cold_vary-s', 'shocked_vary-s', 'shocked_vary-gam', 'shocked_vary-cooling', 'shocked_vary-lamdi', 'shocked_vary-lamdish', 'shocked_vary-lamsh', 'shocked_vary-lamsh-di']
 
-lamsh = 0.3
-disk_rad_by_shock = 0.05
-lamdish = disk_rad_by_shock #*lamsh
-
-varypars=[]
-
-if name == 'cold_vary-s':
-    s_vals = [0.5,1,1.5,2,3,5]
-    varypars += ['s']
-    lamsh = 0.03
-
-if name == 'shocked_vary-s':
-    s_vals = [0.5,1,1.5,2,3,5]
-    varypars += ['s']
-
-if name == 'shocked_vary-gam':
-    gam_vals= [5/3,7/5,4/3,]
-    varypars += ['gam']
-
-if name == 'shocked_vary-cooling':
-    Lam0_vals = [1e-3,3e-3,1e-2,3e-2,1e-1]
-    varypars += ['Lam0']
-
-if name == 'shocked_vary-lamdi':
-    lamdish_vals = [percent/100 for percent in [2,5,10,15,25]]
-    varypars += ['lamdi']
-
-if name == 'shocked_vary-lamsh':
-    lamsh_vals = [0.35,0.3,0.25, 0.2]
-    varypars += ['lamsh']
-
-if name == 'shocked_vary-lamsh-di':
-    lamsh_vals = [0.35,0.3,0.25, 0.2]
-    lamdi_vals = [0.05*lamsh for lamsh in lamsh_vals]
-    varypars += ['lamsh','lamdi']
-
-colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
-descr_list, plab_list = [], []
-for i in range(2):
-    # i=1
-    plab=''
+for name in names:
     try:
-        if 'gam' in varypars: gam = gam_vals[i]; plab+=r'$\gamma=$'+f"{gam:.3g} "
-        if 's' in varypars: s = s_vals[i]; plab+=f"s={s} "
-        if 'lamsh' in varypars: lamsh = lamsh_vals[i]; plab+=r'$\lambda_s=$'+f'{lamsh} '
-        if 'lamdish' in varypars: lamdish = lamdish_vals[i]; plab+=r'$\lambda_d=$'+f'{lamdish*100:g} '+r'$\%~ \lambda_s$'
-        if 'Lam0' in varypars: Lam0 = Lam0_vals[i]; plab+=r'$\Lambda_0=$'+f'{Lam0:g} '
-        # if 'nu' in varypars: nu = nu_vals[i]; plab+=r'$\nu=$'+f'{nu} '
-    except IndexError: break
+        t_now = time()
+        # thtshsol = fsolve(M0, 1.5*np.pi)
+        s = 1
+        gam = 5/3
+        Lam0 = 3e-2
+        nu=1/2
+        fb = 0.156837
+        # fb = 0.5
+        fd = (1-fb)
 
-    descr = f'_s={s:.2g}_gam={gam:.3g}_lamdish={lamdish:.3g}_Lam0={Lam0:.1e}_nu={nu:.1g}'
-    descr_list.append(descr)
-    plab_list.append(plab)
+        lamsh = 0.3
+        disk_rad_by_shock = 0.05
+        lamdish = disk_rad_by_shock #*lamsh
 
-    dmo_prfl = pd.read_hdf(f'profiles_dmo_{s}.hdf5', key='main')
+        varypars=[]
 
-    Mta = (3*np.pi/4)**2
-    M_dmo = interp1d(dmo_prfl['l'], dmo_prfl['M']*Mta, fill_value=np.nan)
-    # D_dmo = interp1d(dmo_prfl['l'].iloc[1:], dmo_prfl['rho'].iloc[1:], fill_value=np.nan)
+        if name == 'cold_vary-s':
+            s_vals = [0.5,1,1.5,2,3,5]
+            varypars += ['s']
+            lamsh = 0.03
+            lamdish = 0.5
 
-    M_dm = lambda lam: M_dmo(lam)*(1-fb)
+        if name == 'shocked_vary-s':
+            s_vals = [0.5,1,1.5,2,3,5]
+            varypars += ['s']
 
-    de = 2* (1+s/3) /3
-    upsil = 1 if s >= 3/2 else 3*s/(s+3)
+        if name == 'shocked_vary-gam':
+            gam_vals= [5/3,7/5,4/3,]
+            varypars += ['gam']
 
-    plot_iters = [0,1,2,3,5,6]
+        if name == 'shocked_vary-cooling':
+            Lam0_vals = [1e-3,3e-3,1e-2,3e-2,1e-1]
+            varypars += ['Lam0']
 
-    t_bef, t_now = t_now, time()
-    print(f'{t_now-t_bef:.4g}s', 'Initialised vals and funcs for iteration')
+        if name == 'shocked_vary-lamdish':
+            lamdish_vals = [percent/100 for percent in [2,5,10,15,25]]
+            varypars += ['lamdish']
 
-    fig_conv, ax_conv = plt.subplots(1,2,figsize=(10,7))
+        if name == 'shocked_vary-lamsh':
+            lamsh_vals = [0.35,0.3,0.25, 0.2]
+            varypars += ['lamsh']
 
-    for n_i in range(-3, 7):
-        print('starting iter ', n_i)
-        if n_i>=0:
-            if n_i==0:
-                fgas = 1
-                M_bg = lambda lam: 0
-            else:
-                fgas = fb
-                M_bg = M_dm
+        colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
+        descr_list, plab_list = [], []
+        for i in range(2):
+            # i=1
+            plab=''
+            try:
+                if 'gam' in varypars: gam = gam_vals[i]; plab+=r'$\gamma=$'+f"{gam:.3g} "
+                if 's' in varypars: s = s_vals[i]; plab+=f"s={s} "
+                if 'lamsh' in varypars: lamsh = lamsh_vals[i]; plab+=r'$\lambda_s=$'+f'{lamsh} '
+                if 'lamdish' in varypars: lamdish = lamdish_vals[i]; plab+=r'$\lambda_d=$'+f'{lamdish*100:g} '+r'$\%~ \lambda_s$'
+                if 'Lam0' in varypars: Lam0 = Lam0_vals[i]; plab+=r'$\Lambda_0=$'+f'{Lam0:g} '
+                # if 'nu' in varypars: nu = nu_vals[i]; plab+=r'$\nu=$'+f'{nu} '
+            except IndexError: break
 
-            if name[:7]=='shocked' and n_i==0: lamsh = spl_rad
-            lamdi = lamdish*lamsh
+            descr = f'_{name}_lamsh={lamsh:.2g}_s={s:.2g}_gam={gam:.3g}_lamdish={lamdish:.3g}_Lam0={Lam0:.1e}_nu={nu:.1g}'
+            descr_list.append(descr)
+            plab_list.append(plab)
 
-            res_prof_gas_pre, res_prof_gas_post = get_soln_gas_full(lamsh=lamsh)
-            # print(f'changed from {n_true} to {n_i}')
+            dmo_prfl = pd.read_hdf(f'profiles_dmo_{s}.hdf5', key='main')
 
-            lamsh_pre = res_prof_gas_pre.t
-            V_pre, D_pre, M_pre = res_prof_gas_pre.y
-            P_pre = lamsh_pre*0
+            Mta = (3*np.pi/4)**2
+            M_dmo = interp1d(dmo_prfl['l'], dmo_prfl['M']*Mta, fill_value=np.nan)
+            # D_dmo = interp1d(dmo_prfl['l'].iloc[1:], dmo_prfl['rho'].iloc[1:], fill_value=np.nan)
 
-            lamsh_post = np.exp(res_prof_gas_post.t)
-            mVb_post, D_post, M_post, P_post = np.exp(res_prof_gas_post.y)
-            V_post = de*lamsh_post - mVb_post
+            M_dm = lambda lam: M_dmo(lam)*(1-fb)
 
-            lam_all = np.concatenate([lamsh_post, lamsh_pre][::-1])
-            V_all = np.concatenate([V_post, V_pre][::-1])
-            D_all = np.concatenate([D_post, D_pre][::-1])
-            M_all = np.concatenate([M_post, M_pre][::-1])
-            P_all = np.concatenate([P_post, P_pre][::-1])
-            Vb_all = V_all - de*lam_all
+            de = 2* (1+s/3) /3
+            upsil = 1 if s >= 3/2 else 3*s/(s+3)
 
-            if n_i>=1:
-                iter_change = np.abs(M_all-M_gas(lam_all)/M_gas(1)*M_all[0])/M_all
-                ax_conv[0].loglog(lam_all, iter_change, label=f'n={n_i}')
-
-            M_gas = interp1d(np.append(lam_all,0), np.append(M_all,0), fill_value=np.nan)
-
-            M_tot = lambda lam : M_dm(lam)+M_gas(lam)
-
-            resdf_gas = pd.DataFrame(data={'l':lam_all, 'M':M_all, 'V':V_all, 'D':D_all, 'P':P_all, 'Vb':Vb_all,})
-            resdf_gas.to_hdf(f'profiles_gasdm{descr:s}.hdf5', 'gas/main', mode='a')
-            resdf_gas.to_hdf(f'profiles_gasdm{descr:s}.hdf5', f'gas/iter{n_i}', mode='a')
-            # resdf_gas = pd.read_hdf(f'profiles_gasdm{descr:s}.hdf5', key=f'gas/iter{n}', mode='r')
-            # M_gas = interp1d(resdf_gas.l, resdf_gas.M, fill_value=np.nan)
+            # plot_iters = [0,1,2,3,5,6]
 
             t_bef, t_now = t_now, time()
-            print(f'{t_now-t_bef:.4g}s', f'{n_i}th iter gas profiles updated')
-            # print('M', M_tot(1), M_dm(1),M_gas(1))
-        
-        if n_i<=0:
-            M_tot = M_dmo #lambda lam : M_dm(lam)/fd
+            print(f'{t_now-t_bef:.4g}s', 'Initialised vals and funcs for iteration')
 
-        xi_max = np.log(1e-4**upsil)*-3/2/s/1.5
+            fig_conv, ax_conv = plt.subplots(1,2,figsize=(10,7))
 
-        res_traj_dm = solve_ivp(odefunc_traj_dm, (0,xi_max), np.array([1,-de]), method='Radau', t_eval=np.concatenate([np.linspace(0,1-1e-10,1000), np.linspace(1,xi_max**4,2000000)**(1/4)]), max_step=0.02, dense_output=False, vectorized=True)
-        # res1 = solve_ivp(fun, (res.t[-1],15), np.array([res.y[0][-1],-res.y[1][-1]]), max_step=0.1, dense_output=True)
+            for n_i in range(-2, 2):
+                print('starting iter ', n_i)
+                if n_i>=0:
+                    if n_i==0:
+                        fgas = 1
+                        M_bg = lambda lam: 0
+                    else:
+                        fgas = fb
+                        M_bg = M_dm
 
-        xi = res_traj_dm.t
-        lam = np.abs(res_traj_dm.y[0])
-        # v = res_traj_dm.y[1]
-        loglam = np.log(np.maximum(lam,1e-15))
+                    if name[:7]=='shocked' and n_i==0: lamsh = spl_rad
+                    lamdi = lamdish*lamsh
 
-        resdf_traj_dm = pd.DataFrame(data={'xi':xi, 'lam':lam,})
-        resdf_traj_dm.to_hdf(f'traj_gasdm{descr:s}.hdf5', 'dm/main', mode='a')
-        resdf_traj_dm.to_hdf(f'traj_gasdm{descr:s}.hdf5', f'dm/iter{n_i}', mode='a')
+                    res_prof_gas_pre, res_prof_gas_post = get_soln_gas_full(lamsh=lamsh)
+                    # print(f'changed from {n_true} to {n_i}')
 
-        t_bef, t_now = t_now, time()
-        print(f'{t_now-t_bef:.4g}s', f'{n_i}th iter DM trajectory obtained')
+                    lamsh_pre = res_prof_gas_pre.t
+                    V_pre, D_pre, M_pre = res_prof_gas_pre.y
+                    P_pre = lamsh_pre*0
 
-        spl_ind = np.where(np.abs(np.diff(resdf_traj_dm.lam))<1e-4)[0][0]
-        spl_rad = resdf_traj_dm.lam[spl_ind]
-        print(s, n_i, spl_rad)
+                    lamsh_post = np.exp(res_prof_gas_post.t)
+                    mVb_post, D_post, M_post, P_post = np.exp(res_prof_gas_post.y)
+                    V_post = de*lamsh_post - mVb_post
 
-        Dm_prof_lbins = 300
-        l_range = np.zeros(Dm_prof_lbins+1)
-        l_range[1:] = np.logspace(-2.5,0, Dm_prof_lbins)
-        M_vals = np.zeros(Dm_prof_lbins+1)
-        # rho_vals = np.zeros(301)
-        # v_xi = interp1d(xi, v, fill_value=np.nan)
-        for i in range(1,Dm_prof_lbins+1):
-            # l_range.append(l)
-            l = l_range[i]
-            # spl = InterpolatedUnivariateSpline(xi, loglam-np.log(l),k=3)
-            # roots = spl.roots()
-            roots_ind = np.nonzero(np.diff(np.sign(loglam-np.log(l))))[0]
-            roots = (xi[roots_ind]+xi[np.array(roots_ind)+1])/2
-            #Based on theory we need odd number of roots, otherwise there is a major error
-            n_roots = roots.shape[0]
-            last_root_i = n_roots if n_roots%2==1 else n_roots-1
-            Int_M = np.exp((-2*s/3)*roots[:last_root_i])
-            M_val = np.sum(Int_M[::2]) - np.sum(Int_M[1::2])
-            M_vals[i] = M_val
-        M_vals[-1] = 1
+                    lam_all = np.concatenate([lamsh_post, lamsh_pre][::-1])
+                    V_all = np.concatenate([V_post, V_pre][::-1])
+                    D_all = np.concatenate([D_post, D_pre][::-1])
+                    M_all = np.concatenate([M_post, M_pre][::-1])
+                    P_all = np.concatenate([P_post, P_pre][::-1])
+                    Vb_all = V_all - de*lam_all
 
-        M_vals = np.asarray(M_vals)
-        # M_vals_er = np.asarray(M_vals_er)
-        # rho_vals = np.asarray(rho_vals)
+                    if n_i>=1:
+                        iter_change = np.abs(M_all-M_gas(lam_all)/M_gas(1)*M_all[0])/M_all
+                        ax_conv[0].loglog(lam_all, iter_change, label=f'n={n_i}')
 
-        M_vals *= Mta*(1-fb) / M_vals[-1]
+                    M_gas = interp1d(np.append(lam_all,0), np.append(M_all,0), fill_value=np.nan)
 
-        if n_i>=-2:
-            iter_change = np.abs(M_vals-M_dm(l_range))/M_vals
-            ax_conv[1].loglog(l_range, iter_change, label=f'n={n_i}')
+                    M_tot = lambda lam : M_dm(lam)+M_gas(lam)
 
-        M_dm = interp1d(l_range, M_vals, fill_value=np.nan)
-        if n_i<=0:  #Start backreaction at iter 1
-            M_dmo = interp1d(l_range, M_vals/(1-fb), fill_value=np.nan)
+                    resdf_gas = pd.DataFrame(data={'l':lam_all, 'M':M_all, 'V':V_all, 'D':D_all, 'P':P_all, 'Vb':Vb_all,})
+                    resdf_gas.to_hdf(f'profiles_gasdm{descr:s}.hdf5', 'gas/main', mode='a')
+                    resdf_gas.to_hdf(f'profiles_gasdm{descr:s}.hdf5', f'gas/iter{n_i}', mode='a')
+                    # resdf_gas = pd.read_hdf(f'profiles_gasdm{descr:s}.hdf5', key=f'gas/iter{n}', mode='r')
+                    # M_gas = interp1d(resdf_gas.l, resdf_gas.M, fill_value=np.nan)
 
-        resdf_dm = pd.DataFrame(data={'l':l_range, 'M':M_vals,})
-        resdf_dm.to_hdf(f'profiles_gasdm{descr:s}.hdf5', 'dm/main', mode='a')
-        resdf_dm.to_hdf(f'profiles_gasdm{descr:s}.hdf5', f'dm/iter{n_i}', mode='a')
+                    t_bef, t_now = t_now, time()
+                    print(f'{t_now-t_bef:.4g}s', f'{n_i}th iter gas profiles updated')
+                    # print('M', M_tot(1), M_dm(1),M_gas(1))
+                
+                if n_i<=0:
+                    M_tot = M_dmo #lambda lam : M_dm(lam)/fd
 
-        t_bef, t_now = t_now, time()
-        print(f'{t_now-t_bef:.4g}s', f'{n_i}th iter DM mass profile updated')
+                xi_max = np.log(1e-4**upsil)*-3/2/s/1.5
 
-    ax_conv[0].legend()
-    ax_conv[1].legend()
+                res_traj_dm = solve_ivp(odefunc_traj_dm, (0,xi_max), np.array([1,-de]), method='Radau', t_eval=np.concatenate([np.linspace(0,1-1e-10,1000), np.linspace(1,xi_max**4,2000000)**(1/4)]), max_step=0.02, dense_output=False, vectorized=True)
+                # res1 = solve_ivp(fun, (res.t[-1],15), np.array([res.y[0][-1],-res.y[1][-1]]), max_step=0.1, dense_output=True)
 
-    ## %%
-    # del res_traj_dm, lam, loglam, xi
-    # import dill                            #pip install dill --user
-    # filename = f'soln-globalsave{descr:s}.pkl'
-    # dill.dump_session(filename)
+                xi = res_traj_dm.t
+                lam = np.abs(res_traj_dm.y[0])
+                # v = res_traj_dm.y[1]
+                loglam = np.log(np.maximum(lam,1e-15))
+
+                resdf_traj_dm = pd.DataFrame(data={'xi':xi, 'lam':lam,})
+                resdf_traj_dm.to_hdf(f'traj_gasdm{descr:s}.hdf5', 'dm/main', mode='a')
+                resdf_traj_dm.to_hdf(f'traj_gasdm{descr:s}.hdf5', f'dm/iter{n_i}', mode='a')
+
+                t_bef, t_now = t_now, time()
+                print(f'{t_now-t_bef:.4g}s', f'{n_i}th iter DM trajectory obtained')
+
+                spl_ind = np.where(np.abs(np.diff(resdf_traj_dm.lam))<1e-4)[0][0]
+                spl_rad = resdf_traj_dm.lam[spl_ind]
+                print(s, n_i, spl_rad)
+
+                Dm_prof_lbins = 300
+                l_range = np.zeros(Dm_prof_lbins+1)
+                l_range[1:] = np.logspace(-2.5,0, Dm_prof_lbins)
+                M_vals = np.zeros(Dm_prof_lbins+1)
+                # rho_vals = np.zeros(301)
+                # v_xi = interp1d(xi, v, fill_value=np.nan)
+                for i in range(1,Dm_prof_lbins+1):
+                    # l_range.append(l)
+                    l = l_range[i]
+                    # spl = InterpolatedUnivariateSpline(xi, loglam-np.log(l),k=3)
+                    # roots = spl.roots()
+                    roots_ind = np.nonzero(np.diff(np.sign(loglam-np.log(l))))[0]
+                    roots = (xi[roots_ind]+xi[np.array(roots_ind)+1])/2
+                    #Based on theory we need odd number of roots, otherwise there is a major error
+                    n_roots = roots.shape[0]
+                    last_root_i = n_roots if n_roots%2==1 else n_roots-1
+                    Int_M = np.exp((-2*s/3)*roots[:last_root_i])
+                    M_val = np.sum(Int_M[::2]) - np.sum(Int_M[1::2])
+                    M_vals[i] = M_val
+                M_vals[-1] = 1
+
+                M_vals = np.asarray(M_vals)
+                # M_vals_er = np.asarray(M_vals_er)
+                # rho_vals = np.asarray(rho_vals)
+
+                M_vals *= Mta*(1-fb) / M_vals[-1]
+
+                if n_i>=-1:
+                    iter_change = np.abs(M_vals-M_dm(l_range))/M_vals
+                    ax_conv[1].loglog(l_range, iter_change, label=f'n={n_i}')
+
+                M_dm = interp1d(l_range, M_vals, fill_value=np.nan)
+                if n_i<=0:  #Start backreaction at iter 1
+                    M_dmo = interp1d(l_range, M_vals/(1-fb), fill_value=np.nan)
+
+                resdf_dm = pd.DataFrame(data={'l':l_range, 'M':M_vals,})
+                resdf_dm.to_hdf(f'profiles_gasdm{descr:s}.hdf5', 'dm/main', mode='a')
+                resdf_dm.to_hdf(f'profiles_gasdm{descr:s}.hdf5', f'dm/iter{n_i}', mode='a')
+
+                t_bef, t_now = t_now, time()
+                print(f'{t_now-t_bef:.4g}s', f'{n_i}th iter DM mass profile updated')
+
+            ax_conv[0].legend()
+            ax_conv[1].legend()
+
+            ## %%
+            # del res_traj_dm, lam, loglam, xi
+            # import dill                            #pip install dill --user
+            # filename = f'soln-globalsave{descr:s}.pkl'
+            # dill.dump_session(filename)
 
 
-    # # %%
-    # import dill                            #pip install dill --user
-    # filename = f'soln-globalsave{descr:s}.pkl'
-    # dill.load_session(filename)
-descr_list_dict[name] = descr_list
+            # # %%
+            # import dill                            #pip install dill --user
+            # filename = f'soln-globalsave{descr:s}.pkl'
+            # dill.load_session(filename)
+        descr_list_dict[name] = descr_list
+        plab_list_dict[name] = plab_list
+        print(descr_list_dict, plab_list_dict)
+    except:
+        print(f'Error occured {name}-{descr}')
+        continue
 
 
 
 #%%
-name = 'cold_vary-s'
-name = 'shocked_vary-s'
+# name = 'cold_vary-s'
+# name = 'shocked_vary-s'
 # name = 'shocked_vary-gam'
 # name = 'shocked_vary-cooling'
 # name = 'shocked_vary-lamdi'
