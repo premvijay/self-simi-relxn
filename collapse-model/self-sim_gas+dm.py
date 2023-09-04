@@ -447,8 +447,12 @@ for n in plot_iters:
         Mf = Mdr+Mbr
         Mi = Mdr/fd
 
+        MiMf_prev, rfri_prev = MiMf, rfri
+
         MiMf = ( fd* (Mbr/ Mdr + 1) )**-1
         rfri = rf / ri
+
+        if n==6: ax72.errorbar(MiMf,rfri, xerr=np.abs(MiMf-MiMf_prev), yerr=np.abs(rfri-rfri_prev))
         
         # ax71.scatter(MiMf[60:-50],rfri[60:-50],c=rf[60:-50])
         cplot = ax72.scatter(MiMf,rfri,c=np.log10(rf), s=60, cmap='nipy_spectral')
