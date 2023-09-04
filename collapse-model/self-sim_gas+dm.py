@@ -295,7 +295,7 @@ for i in range(2):
                 fgas = fb
                 M_bg = M_dm
 
-            if name[:7]=='shocked': lamsh = spl_rad
+            if name[:7]=='shocked' and n_i==0: lamsh = spl_rad
             lamdi = lamdish*lamsh
 
             res_prof_gas_pre, res_prof_gas_post = get_soln_gas_full(lamsh=lamsh)
