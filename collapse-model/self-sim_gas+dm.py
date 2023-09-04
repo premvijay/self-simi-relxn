@@ -383,7 +383,7 @@ for i in range(5):
     fig8, ax8 = plt.subplots(1)
     # MiMf_min, rfri_min = np.logspace(-2.3,-0.005,300)*0
 
-    plot_iters = [0,1,2,6,10,20,28,29] #1,2,3,5,6,7]
+    plot_iters = [0,1,2,3,5,6,10,20,28,29] #1,2,3,5,6,7]
 
     t_bef, t_now = t_now, time()
     print(f'{t_now-t_bef:.4g}s', 'Initialised plots and figs for iteration')
@@ -476,8 +476,9 @@ for i in range(5):
             MiMf = ( fd* (Mbr/ Mdr + 1) )**-1
             rfri = rf / ri
 
-            MiMf_err, rfri_err = np.abs(MiMf-MiMf_prev), np.abs(rfri-rfri_prev)
-            ax8.plot(MiMf, rfri_err, color=color_this)
+            if n>=2:
+                MiMf_err, rfri_err = np.abs(MiMf-MiMf_prev), np.abs(rfri-rfri_prev)
+                ax8.plot(MiMf, rfri_err, color=color_this, label=f'n={n}')
 
             if n==29: ax72.errorbar(MiMf,rfri, xerr=MiMf_err, yerr=rfri_err)
             
@@ -552,6 +553,11 @@ for i in range(5):
     ax6.set_xlabel(r'$\xi$')
     ax6.set_ylabel(r'$\lambda$')
     ax6.legend(loc='upper right')
+
+    ax8.legend(loc='upper right')
+    ax8.set_xlabel('Mi/Mf')
+    ax8.set_ylabel('error in rf/ri at nth iter')
+    # fig8.savefig('relx_reln_converge_issue.png', bbox_inches='tight')
 
 # fig5.savefig(f'Eds-gas-{gam:.02f}_profiles.pdf')
 # fig5.savefig(f'Eds-gas-{gam:.02f}_trajectory.pdf')
