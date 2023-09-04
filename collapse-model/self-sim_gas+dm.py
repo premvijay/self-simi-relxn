@@ -210,25 +210,27 @@ varypars=[]
 
 name = '_shocked_vary-s+sh+di'
 s_vals = [0.5,1,1.5,2,]
-lamsh_vals = [0.35,0.32,0.31,0.3,0.25,]
+lamsh_vals = [0.35,0.32,0.3,0.25,]
 lamdi_vals = [0.05*lamsh for lamsh in lamsh_vals]
 varypars += ['s','lamsh','lamdi']
 
 colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
-
-for i in range(1):
+descr_list, plab_list = [], []
+for i in range(5):
     # i=1
     plab=''
     try:
         if 'gam' in varypars: gam = gam_vals[i]; plab+=r'$\gamma=$'+f"{gam:.3g} "
         if 's' in varypars: s = s_vals[i]; plab+=f"s={s} "
         if 'lamsh' in varypars: lamsh = lamsh_vals[i]; plab+=r'$\lambda_s=$'+f'{lamsh} '
-        if 'lamdi' in varypars: lamdi = lamdi_vals[i]; plab+=r'$\lambda_d=$'+f'{lamdi/lamsh*100:g} '+r'$\%~ \lambda_s$'
+        if 'lamdi' in varypars: lamdi = lamdi_vals[i]; #plab+=r'$\lambda_d=$'+f'{lamdi/lamsh*100:g} '+r'$\%~ \lambda_s$'
         if 'Lam0' in varypars: Lam0 = Lam0_vals[i]; plab+=r'$\Lambda_0=$'+f'{Lam0:g} '
         if 'nu' in varypars: nu = nu_vals[i]; plab+=r'$\nu=$'+f'{nu} '
     except IndexError: break
 
-    descr = f'_s={s:.2g}_gam={gam:.3g}_shk={lamsh:.1g}_Rd={disk_rad_by_shock*100:.2g}%_Lam={Lam0:.1e}_nu={nu:.1g}'
+    descr = f'_s={s:.2g}_gam={gam:.3g}_lamsh={lamsh:.2g}_lamdi={lamdi:.3g}_Lam0={Lam0:.1e}_nu={nu:.1g}'
+    descr_list.append(descr)
+    plab_list.append(plab)
 
     dmo_prfl = pd.read_hdf(f'profiles_dmo_{s}.hdf5', key='main')
 
@@ -360,7 +362,7 @@ for i in range(1):
     ax_conv[1].legend()
 
     ## %%
-    del res_traj_dm, lam, loglam, xi
+    # del res_traj_dm, lam, loglam, xi
     # import dill                            #pip install dill --user
     # filename = f'soln-globalsave{descr:s}.pkl'
     # dill.dump_session(filename)
@@ -372,24 +374,28 @@ for i in range(1):
     # dill.load_session(filename)
 
 
-    ##%%
-    t_now = time()
-    # thtshsol = fsolve(M0, 1.5*np.pi)
-    # fig4, ax4 = plt.subplots(1, dpi=200, figsize=(7,5))
-    fig5, axs5 = plt.subplots(2,2, figsize=(10,8), sharex=True)
-    fig6, ax6 = plt.subplots(1)
+#%%
+t_now = time()
+# thtshsol = fsolve(M0, 1.5*np.pi)
+# fig4, ax4 = plt.subplots(1, dpi=200, figsize=(7,5))
+fig5, axs5 = plt.subplots(2,2, figsize=(10,8), sharex=True)
+fig6, ax6 = plt.subplots(1)
 
-    fig7, (ax71,ax72) = plt.subplots(1,2, figsize=(10,5))
-    fig8, ax8 = plt.subplots(1)
+fig7, (ax71,ax72) = plt.subplots(1,2, figsize=(10,5))
+fig8, ax8 = plt.subplots(1)
+
+for i,descr in enumerate(descr_list):
     MiMf_stack, rfri_stack = [], []
 
-    plot_iters = [0,1,2,3,5,6] #,10,20,28,29] #1,2,3,5,6,7]
+    plot_iters = [4,5,6] #,10,20,28,29] #1,2,3,5,6,7]
 
     t_bef, t_now = t_now, time()
     print(f'{t_now-t_bef:.4g}s', 'Initialised plots and figs for iteration')
+    plab = plab_list[i]
 
     for n in plot_iters:
-        color_this = plt.cm.turbo(n/30)
+        # color_this = plt.cm.turbo(n/30)
+        color_this = colors[i]
         linestyles= [':', '--', '-']
 
         resdf_prof_gas = pd.read_hdf(f'profiles_gasdm{descr:s}.hdf5', key=f'gas/iter{n}', mode='r')
@@ -398,7 +404,7 @@ for i in range(1):
         #resdf_traj_dm_d = pd.read_hdf(f'traj_gasdm{descr:s}_desktop.hdf5', key=f'dm/iter{n}', mode='r')
         resdf_prof_dmo = pd.read_hdf(f'profiles_gasdm{descr:s}.hdf5', key=f'dm/iter0', mode='r')
 
-        axs5[0,0].plot(resdf_prof_gas.l, -resdf_prof_gas.Vb, color=color_this, label=f'n={n}')
+        axs5[0,0].plot(resdf_prof_gas.l, -resdf_prof_gas.Vb, color=color_this, label=plab)
         axs5[0,1].plot(resdf_prof_gas.l, resdf_prof_gas.D, color=color_this)
         axs5[1,0].plot(resdf_prof_gas.l, resdf_prof_gas.M, color=color_this)
         axs5[1,1].plot(resdf_prof_gas.l, resdf_prof_gas.P, color=color_this)
@@ -414,7 +420,7 @@ for i in range(1):
 
         # axs5[1,0].plot(lam_all,M_all+M_dm(lam_all), color=color_this, ls='dashed')
 
-        ax6.plot(resdf_traj_dm.xi,resdf_traj_dm.lam, color=color_this, label=f'n={n}')
+        ax6.plot(resdf_traj_dm.xi,resdf_traj_dm.lam, color=color_this, label=plab)
         # ax6.plot(resdf_traj_dm_d.xi,resdf_traj_dm_d.lam, label=f'n={n}_desktop')
 
         # V_intrp = interp1d(resdf_prof_gas.l, resdf_prof_gas.V, fill_value=np.nan)
@@ -482,90 +488,92 @@ for i in range(1):
 
     # MiMf_err, rfri_err = np.abs(MiMf-MiMf_prev), np.abs(rfri-rfri_prev)
     MiMf_stack, rfri_stack = np.vstack(MiMf_stack), np.vstack(rfri_stack)
+    
+    MiMf, rfri = MiMf_stack.mean(axis=0), rfri_stack.mean(axis=0)
 
     MiMf_max, MiMf_min = MiMf_stack.max(axis=0), MiMf_stack.min(axis=0)
     rfri_max, rfri_min = rfri_stack.max(axis=0), rfri_stack.min(axis=0)
 
-    MiMf_err, rfri_err = np.abs(MiMf_max-MiMf_min), np.abs(rfri_max-rfri_min)
-    ax8.plot(MiMf, rfri_err, color=color_this, label=f'n={n}')
+    MiMf_err, rfri_err = np.abs(MiMf_max-MiMf_min)/2, np.abs(rfri_max-rfri_min)/2
+    ax8.plot(MiMf, rfri_err, color=color_this, label=plab)
 
-    # ax72.errorbar(MiMf,rfri, xerr=MiMf_err, yerr=rfri_err)
-    ax72.fill_between(MiMf, rfri_min, rfri_max)  
+    ax72.errorbar(MiMf[::20],rfri[::20], xerr=MiMf_err[::20], yerr=rfri_err[::20],fmt='.')
+    ax72.fill_between(MiMf, rfri_min, rfri_max, color=color_this, alpha=0.3)  
     # ax71.scatter(MiMf[60:-50],rfri[60:-50],c=rf[60:-50])
     cplot = ax72.scatter(MiMf,rfri,c=np.log10(rf), s=60, cmap='nipy_spectral')
-    plab=f'n={n}'
+    # plab=f'n={n}'
     ax72.plot(MiMf,rfri, label=plab, c=color_this, lw=3)
     # ax71.scatter(MiMf[100:],rfri[100:],c=np.log10(rf[100:]), cmap='nipy_spectral')
     # ax71.plot(MiMf,1+0.25*(MiMf-1),'k',label='$q=0.25$')
 
-    ax71.plot([],[], ls='-', c='k', label='DM')
-    ax71.plot([],[], ls='-.', c='k', label='Gas')
-    ax71.plot([],[], ls='--', c='k', label='DM in DMO' )
+ax71.plot([],[], ls='-', c='k', label='DM')
+ax71.plot([],[], ls='-.', c='k', label='Gas')
+ax71.plot([],[], ls='--', c='k', label='DM in DMO' )
 
-    ax71.set_xlabel(r'$r/r_{\rm{ta}}$')
-    ax71.set_ylabel(r'$M/M_{\rm{ta}}$')
+ax71.set_xlabel(r'$r/r_{\rm{ta}}$')
+ax71.set_ylabel(r'$M/M_{\rm{ta}}$')
 
-    # ax72.plot(MiMf,1+0.33*(MiMf-1)-0.02,'k:',label='$q=0.33$, $q_0=0.02$')
+# ax72.plot(MiMf,1+0.33*(MiMf-1)-0.02,'k:',label='$q=0.33$, $q_0=0.02$')
 
-    ax72.set_xlabel('$M_i/M_f$')
-    ax72.set_ylabel('$r_f/r_i$')
+ax72.set_xlabel('$M_i/M_f$')
+ax72.set_ylabel('$r_f/r_i$')
 
-    fig7.colorbar(cplot, ax=ax72,label=r'$r_f/r_{\rm{ta}}$')
-    ax71.legend()
-    ax72.legend()
+fig7.colorbar(cplot, ax=ax72,label=r'$r_f/r_{\rm{ta}}$')
+ax71.legend()
+ax72.legend()
 
-    axs5[1,0].plot(dmo_prfl['l'], dmo_prfl['M']*Mta, color='k', ls='dashed')
-    axs5[1,0].plot(resdf_prof_dmo.l, resdf_prof_dmo.M/(1-fb), color='purple', ls='dashed')
+# axs5[1,0].plot(dmo_prfl['l'], dmo_prfl['M']*Mta, color='k', ls='dashed')
+axs5[1,0].plot(resdf_prof_dmo.l, resdf_prof_dmo.M, color='purple', ls='dashed')
 
-    # ax4.set_xlabel(r'$\theta$')
-    # ax4.set_ylabel(r'$M(\lambda=0)$')
-    # # ax4.set_ylim(-2,5)
-    # ax4.legend()
-        
-    axs5[0,0].set_xscale('log')
-    axs5[0,0].set_xlim(1e-4,1)
-    axs5[0,0].legend()
+# ax4.set_xlabel(r'$\theta$')
+# ax4.set_ylabel(r'$M(\lambda=0)$')
+# # ax4.set_ylim(-2,5)
+# ax4.legend()
+    
+axs5[0,0].set_xscale('log')
+axs5[0,0].set_xlim(1e-4,1)
+axs5[0,0].legend()
 
-    # axs5[0,0].set_ylim(1e-60,1)
+# axs5[0,0].set_ylim(1e-60,1)
 
-    axs5[1,0].plot([], ls='solid', color='k', label='Gas')
-    axs5[1,0].plot([], ls='dashdot', color='k', label='DM')
-    axs5[1,0].plot([], ls='dashed', color='k', label='DMo')
-    axs5[1,0].legend()
+axs5[1,0].plot([], ls='solid', color='k', label='Gas')
+axs5[1,0].plot([], ls='dashdot', color='k', label='DM')
+axs5[1,0].plot([], ls='dashed', color='k', label='DMo')
+axs5[1,0].legend()
 
-    if gam>1.67:
-        # axs5[0,0].set_xlim(1e-2,1)
-        axs5[0,1].set_ylim(1e-1,1e6)
-        axs5[1,0].set_ylim(1e-2,1e1)
-        axs5[1,1].set_ylim(1e0,1e7)
+if gam>1.67:
+    # axs5[0,0].set_xlim(1e-2,1)
+    axs5[0,1].set_ylim(1e-1,1e6)
+    axs5[1,0].set_ylim(1e-2,1e1)
+    axs5[1,1].set_ylim(1e0,1e7)
 
-    axs5[0,0].set_ylabel('-Vb')
-    axs5[0,1].set_ylabel('D')
-    axs5[1,0].set_ylabel('M')
-    axs5[1,1].set_ylabel('P')
+axs5[0,0].set_ylabel('-Vb')
+axs5[0,1].set_ylabel('D')
+axs5[1,0].set_ylabel('M')
+axs5[1,1].set_ylabel('P')
 
-    axs5[0,0].set_yscale('log')
-    axs5[0,1].set_yscale('log')
-    axs5[1,0].set_yscale('log')
-    axs5[1,1].set_yscale('log')
-
-
+axs5[0,0].set_yscale('log')
+axs5[0,1].set_yscale('log')
+axs5[1,0].set_yscale('log')
+axs5[1,1].set_yscale('log')
 
 
-    ax6.set_xlim(0,6)
-    ax6.set_ylim(1e-3,1)
-    ax6.set_yscale('log')
-    # ax6.set_ylim(resdf_prof_dm.l[1],1)
-    ax6.xaxis.get_ticklocs(minor=True)     # []
-    ax6.minorticks_on()
-    ax6.grid(visible=True, which='both', axis='x')
-    ax6.set_xlabel(r'$\xi$')
-    ax6.set_ylabel(r'$\lambda$')
-    ax6.legend(loc='upper right')
 
-    ax8.legend(loc='upper right')
-    ax8.set_xlabel('Mi/Mf')
-    ax8.set_ylabel('error in rf/ri at nth iter')
+
+ax6.set_xlim(0,6)
+ax6.set_ylim(1e-3,1)
+ax6.set_yscale('log')
+# ax6.set_ylim(resdf_prof_dm.l[1],1)
+ax6.xaxis.get_ticklocs(minor=True)     # []
+ax6.minorticks_on()
+ax6.grid(visible=True, which='both', axis='x')
+ax6.set_xlabel(r'$\xi$')
+ax6.set_ylabel(r'$\lambda$')
+ax6.legend(loc='upper right')
+
+ax8.legend(loc='upper right')
+ax8.set_xlabel('Mi/Mf')
+ax8.set_ylabel('error in rf/ri at nth iter')
     # fig8.savefig('relx_reln_converge_issue.png', bbox_inches='tight')
 
 # fig5.savefig(f'Eds-gas-{gam:.02f}_profiles.pdf')
