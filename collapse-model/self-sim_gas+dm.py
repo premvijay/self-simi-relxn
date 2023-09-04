@@ -216,7 +216,7 @@ varypars += ['s','lamsh','lamdi']
 
 colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
 
-for i in range(5):
+for i in range(1):
     # i=1
     plab=''
     try:
@@ -248,7 +248,7 @@ for i in range(5):
 
     fig_conv, ax_conv = plt.subplots(1,2,figsize=(10,7))
 
-    for n_i in range(-5, 30):
+    for n_i in range(-3, 7):
         print('starting iter ', n_i)
         if n_i>=0:
             if n_i==0:
@@ -381,9 +381,9 @@ for i in range(5):
 
     fig7, (ax71,ax72) = plt.subplots(1,2, figsize=(10,5))
     fig8, ax8 = plt.subplots(1)
-    # MiMf_min, rfri_min = np.logspace(-2.3,-0.005,300)*0
+    MiMf_stack, rfri_stack = [], []
 
-    plot_iters = [0,1,2,3,5,6,10,20,28,29] #1,2,3,5,6,7]
+    plot_iters = [0,1,2,3,5,6] #,10,20,28,29] #1,2,3,5,6,7]
 
     t_bef, t_now = t_now, time()
     print(f'{t_now-t_bef:.4g}s', 'Initialised plots and figs for iteration')
@@ -442,7 +442,7 @@ for i in range(5):
         t_bef, t_now = t_now, time()
         print(f'{t_now-t_bef:.4g}s', f'{n}th iter plotted')
 
-        if n>=1:
+        if n>=4:
             # lamr_full = np.logspace(-2.3,-0.001,400)
             # lamr = np.logspace(-2.3,-0.01,100)
 
@@ -471,23 +471,32 @@ for i in range(5):
             Mf = Mdr+Mbr
             Mi = Mdr/fd
 
-            MiMf_prev, rfri_prev = MiMf, rfri
+            # MiMf_prev, rfri_prev = MiMf, rfri
 
             MiMf = ( fd* (Mbr/ Mdr + 1) )**-1
             rfri = rf / ri
 
-            if n>=2:
-                MiMf_err, rfri_err = np.abs(MiMf-MiMf_prev), np.abs(rfri-rfri_prev)
-                ax8.plot(MiMf, rfri_err, color=color_this, label=f'n={n}')
+            MiMf_stack.append(MiMf)
+            rfri_stack.append(rfri)
 
-            if n==29: ax72.errorbar(MiMf,rfri, xerr=MiMf_err, yerr=rfri_err)
-            
-            # ax71.scatter(MiMf[60:-50],rfri[60:-50],c=rf[60:-50])
-            cplot = ax72.scatter(MiMf,rfri,c=np.log10(rf), s=60, cmap='nipy_spectral')
-            plab=f'n={n}'
-            ax72.plot(MiMf,rfri, label=plab, c=color_this, lw=3)
-            # ax71.scatter(MiMf[100:],rfri[100:],c=np.log10(rf[100:]), cmap='nipy_spectral')
-            # ax71.plot(MiMf,1+0.25*(MiMf-1),'k',label='$q=0.25$')
+
+    # MiMf_err, rfri_err = np.abs(MiMf-MiMf_prev), np.abs(rfri-rfri_prev)
+    MiMf_stack, rfri_stack = np.vstack(MiMf_stack), np.vstack(rfri_stack)
+
+    MiMf_max, MiMf_min = MiMf_stack.max(axis=0), MiMf_stack.min(axis=0)
+    rfri_max, rfri_min = rfri_stack.max(axis=0), rfri_stack.min(axis=0)
+
+    MiMf_err, rfri_err = np.abs(MiMf_max-MiMf_min), np.abs(rfri_max-rfri_min)
+    ax8.plot(MiMf, rfri_err, color=color_this, label=f'n={n}')
+
+    # ax72.errorbar(MiMf,rfri, xerr=MiMf_err, yerr=rfri_err)
+    ax72.fill_between(MiMf, rfri_min, rfri_max)  
+    # ax71.scatter(MiMf[60:-50],rfri[60:-50],c=rf[60:-50])
+    cplot = ax72.scatter(MiMf,rfri,c=np.log10(rf), s=60, cmap='nipy_spectral')
+    plab=f'n={n}'
+    ax72.plot(MiMf,rfri, label=plab, c=color_this, lw=3)
+    # ax71.scatter(MiMf[100:],rfri[100:],c=np.log10(rf[100:]), cmap='nipy_spectral')
+    # ax71.plot(MiMf,1+0.25*(MiMf-1),'k',label='$q=0.25$')
 
     ax71.plot([],[], ls='-', c='k', label='DM')
     ax71.plot([],[], ls='-.', c='k', label='Gas')
