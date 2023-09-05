@@ -204,7 +204,7 @@ name = 'shocked_vary-s'
 # name = 'shocked_vary-lamsh'
 # name = 'shocked_vary-lamsh-di'
 
-names = ['cold_vary-s', 'shocked_vary-s', 'shocked_vary-gam', 'shocked_vary-cooling', 'shocked_vary-lamdi', 'shocked_vary-lamdish', 'shocked_vary-lamsh', 'shocked_vary-lamsh-di']
+names = ['cold_vary-s', 'shocked_vary-s', 'shocked_vary-gam', 'shocked_vary-cooling', 'shocked_vary-lamdish', 'shocked_vary-lamsh']
 
 for name in names:
     try:
@@ -252,7 +252,7 @@ for name in names:
 
         colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
         descr_list, plab_list = [], []
-        for i in range(2):
+        for i in range(5):
             # i=1
             plab=''
             try:
@@ -286,7 +286,7 @@ for name in names:
 
             fig_conv, ax_conv = plt.subplots(1,2,figsize=(10,7))
 
-            for n_i in range(-2, 2):
+            for n_i in range(-3, 7):
                 print('starting iter ', n_i)
                 if n_i>=0:
                     if n_i==0:
