@@ -426,14 +426,14 @@ for name in names:
 
 #%%
 # name = 'cold_vary-s'
-# name = 'shocked_vary-s'
+name = 'shocked_vary-s'
 # name = 'shocked_vary-gam'
 # name = 'shocked_vary-cooling'
-# name = 'shocked_vary-lamdi'
+# name = 'shocked_vary-lamdish'
 # name = 'shocked_vary-lamsh'
-# name = 'shocked_vary-lamsh-di'
 
 descr_list = descr_list_dict[name]
+plab_list= plab_list_dict[name]
 
 t_now = time()
 # thtshsol = fsolve(M0, 1.5*np.pi)
