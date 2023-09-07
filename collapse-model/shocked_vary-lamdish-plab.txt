@@ -1,0 +1,1 @@
+['$\\lambda_d=$2 $\\%~ \\lambda_s$', '$\\lambda_d=$5 $\\%~ \\lambda_s$', '$\\lambda_d=$10 $\\%~ \\lambda_s$', '$\\lambda_d=$15 $\\%~ \\lambda_s$', '$\\lambda_d=$25 $\\%~ \\lambda_s$']

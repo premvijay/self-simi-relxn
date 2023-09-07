@@ -9,6 +9,7 @@ import pandas as pd
 from scipy.optimize import fsolve, bisect
 from time import time
 from copy import copy
+import dill   
 # %%
 
 # %%
@@ -252,7 +253,7 @@ for name in names:
 
         colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
         descr_list, plab_list = [], []
-        for i in range(5):
+        for i in range(10):
             # i=1
             plab=''
             try:
@@ -286,7 +287,7 @@ for name in names:
 
             fig_conv, ax_conv = plt.subplots(1,2,figsize=(10,7))
 
-            for n_i in range(-3, 7):
+            for n_i in range(-5, 50):
                 print('starting iter ', n_i)
                 if n_i>=0:
                     if n_i==0:
@@ -404,17 +405,11 @@ for name in names:
             ax_conv[0].legend()
             ax_conv[1].legend()
 
-            ## %%
-            # del res_traj_dm, lam, loglam, xi
-            # import dill                            #pip install dill --user
-            # filename = f'soln-globalsave{descr:s}.pkl'
-            # dill.dump_session(filename)
+        del res_traj_dm, lam, loglam, xi
+        dill.dump_session(f'soln-globalsave{descr:s}.pkl')
 
-
-            # # %%
-            # import dill                            #pip install dill --user
-            # filename = f'soln-globalsave{descr:s}.pkl'
-            # dill.load_session(filename)
+        with open(f'{name}-descr.txt', 'tw') as file: file.write(str(descr_list))
+        with open(f'{name}-plab.txt', 'tw') as file: file.write(str(plab_list))
         descr_list_dict[name] = descr_list
         plab_list_dict[name] = plab_list
         print(descr_list_dict, plab_list_dict)
@@ -422,7 +417,12 @@ for name in names:
         print(f'Error occured {name}-{descr}')
         continue
 
+# %%                    #pip install dill --user
+dill.dump_session(f'soln-globalsave{descr:s}.pkl')
 
+
+# %%                           #pip install dill --user
+dill.load_session(f'soln-globalsave{descr:s}.pkl')
 
 #%%
 # name = 'cold_vary-s'

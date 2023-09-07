@@ -1,0 +1,1 @@
+['_shocked_vary-lamsh_lamsh=0.35_s=1_gam=1.67_lamdish=0.05_Lam0=3.0e-02_nu=0.5', '_shocked_vary-lamsh_lamsh=0.3_s=1_gam=1.67_lamdish=0.05_Lam0=3.0e-02_nu=0.5', '_shocked_vary-lamsh_lamsh=0.25_s=1_gam=1.67_lamdish=0.05_Lam0=3.0e-02_nu=0.5', '_shocked_vary-lamsh_lamsh=0.2_s=1_gam=1.67_lamdish=0.05_Lam0=3.0e-02_nu=0.5']

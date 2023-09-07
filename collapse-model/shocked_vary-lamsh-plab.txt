@@ -1,0 +1,1 @@
+['$\\lambda_s=$0.35 ', '$\\lambda_s=$0.3 ', '$\\lambda_s=$0.25 ', '$\\lambda_s=$0.2 ']
