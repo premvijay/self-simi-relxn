@@ -252,7 +252,7 @@ for name in names:
             varypars += ['lamshsp']
 
         colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
-        descr_list, plab_list = [], []
+        descr_list, plab_list, conv_iters = [], [], []
         for i in range(10):
             # i=1
             plab=''
@@ -289,8 +289,10 @@ for name in names:
             print(f'{t_now-t_bef:.4g}s', 'Initialised vals and funcs for iteration')
 
             # fig_conv, ax_conv = plt.subplots(1,2,figsize=(10,7))
-
-            for n_i in range(-2, 7):
+            err = 1
+            err_tol = 0.01
+            conv_iter = 1000
+            for n_i in range(-2, 50):
                 print('starting iter ', n_i)
                 if n_i>=0:
                     if n_i==0:
@@ -405,10 +407,49 @@ for name in names:
                 t_bef, t_now = t_now, time()
                 print(f'{t_now-t_bef:.4g}s', f'{n_i}th iter DM mass profile updated')
 
+                if n_i>=0:
+                    resdf_prof_gas = pd.read_hdf(f'profiles_gasdm{descr:s}.hdf5', key=f'gas/iter{n_i}', mode='r')
+                    resdf_prof_dm = pd.read_hdf(f'profiles_gasdm{descr:s}.hdf5', key=f'dm/iter{n_i}', mode='r')
+                    resdf_prof_dmo = pd.read_hdf(f'profiles_gasdm{descr:s}.hdf5', key=f'dm/iter{0}', mode='r')
+                    # lamr_full = np.logspace(-2.3,-0.001,400)
+                    # lamr = np.logspace(-2.3,-0.01,100)
+
+                    # r, ri_pre = lamr, lamr_full
+                    if n_i==0: min_lam = 1e-2
+                    if n_i<=1: min_lam = max(resdf_prof_gas.l.iloc[-1],min_lam)
+                    # if n<=10: min_lam = resdf_prof_gas.l.iloc[-1]
+                    # print(resdf_prof_gas.l.iloc[-1])
+                    r, ri_pre = resdf_prof_dm.l[2:-3][resdf_prof_dm.l>min_lam], resdf_prof_dmo.l[1:]
+
+                    Mdr, Mbr, Mdr_dmo = M_dm(r), M_gas(r), M_dmo(ri_pre)*fd
+                    # Mdr, Mbr, Mdr_dmo = resdf_prof_dm.M, M_gas(r), resdf_prof_dmo.M 
+                    rf = r.copy()
+                    logri_logM = interp1d(np.log10(Mdr_dmo),np.log10(ri_pre)) #, fill_value='extrapolate')
+
+                    ri = 10**logri_logM(np.log10(Mdr))
+                    Mf = Mdr+Mbr
+                    Mi = Mdr/fd
+
+                    if n_i>=2: MiMf_prev, rfri_prev = MiMf, rfri
+                    MiMf = ( fd* (Mbr/ Mdr + 1) )**-1
+                    rfri = rf / ri
+
+                    if n_i>=2: 
+                        MiMf_err, rfri_err = np.abs(MiMf-MiMf_prev), np.abs(rfri-rfri_prev)
+
+                    if n_i>2: err_prev = err
+                    if n_i>=2: err = np.median(rfri_err)
+                    if n_i>2:
+                        # print(err_prev, err)
+                        if err_prev<err_tol and err<err_tol:
+                            print('converged at ',n_i)
+                            conv_iter = n_i
+                            break
+            conv_iters.append(conv_iter)
             # ax_conv[0].legend()
             # ax_conv[1].legend()
 
-
+        with open(f'{name}-conv_iters.txt', 'tw') as file: file.write(str(conv_iters))
         with open(f'{name}-descr.txt', 'tw') as file: file.write(str(descr_list))
         with open(f'{name}-plab.txt', 'tw') as file: file.write(str(plab_list))
         descr_list_dict[name] = descr_list
