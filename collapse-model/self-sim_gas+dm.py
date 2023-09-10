@@ -455,7 +455,7 @@ fig5, axs5 = plt.subplots(2,2, figsize=(10,8), sharex=True)
 fig6, ax6 = plt.subplots(1)
 
 fig7, (ax71,ax72) = plt.subplots(1,2, figsize=(10,5))
-fig8, (ax8,ax82) = plt.subplots(2)
+fig8, (ax8,ax82) = plt.subplots(2, figsize=(7,10))
 
 for i,descr in enumerate(descr_list):
     MiMf_stack, rfri_stack = [], []
@@ -486,7 +486,7 @@ for i,descr in enumerate(descr_list):
             axs5[1,0].plot(resdf_prof_dm.l, resdf_prof_dm.M, ls='dashdot', color=color_this)
 
 
-        M_gas = interp1d(resdf_prof_gas.l, resdf_prof_gas.M, fill_value='extrapolate')
+        M_gas = interp1d(resdf_prof_gas.l, resdf_prof_gas.M) #, fill_value='extrapolate')
         M_dm = interp1d(resdf_prof_dm.l, resdf_prof_dm.M)
         M_dmo = interp1d(resdf_prof_dmo.l, resdf_prof_dmo.M)
 
@@ -528,7 +528,11 @@ for i,descr in enumerate(descr_list):
             # lamr = np.logspace(-2.3,-0.01,100)
 
             # r, ri_pre = lamr, lamr_full
-            r, ri_pre = resdf_prof_dm.l[10:-5], resdf_prof_dmo.l[1:]
+            if n==0: min_lam = 1e-2
+            if n<=1: min_lam = max(resdf_prof_gas.l.iloc[-1],min_lam)
+            # if n<=10: min_lam = resdf_prof_gas.l.iloc[-1]
+            # print(resdf_prof_gas.l.iloc[-1])
+            r, ri_pre = resdf_prof_dm.l[2:-3][resdf_prof_dm.l>min_lam], resdf_prof_dmo.l[1:]
 
             Mdr, Mbr, Mdr_dmo = M_dm(r), M_gas(r), M_dmo(ri_pre)
             # Mdr, Mbr, Mdr_dmo = resdf_prof_dm.M, M_gas(r), resdf_prof_dmo.M 
@@ -557,13 +561,15 @@ for i,descr in enumerate(descr_list):
 
             MiMf = ( fd* (Mbr/ Mdr + 1) )**-1
             rfri = rf / ri
+            # leng = MiMf.shape[0]
 
             if n>=11: 
                 MiMf_err, rfri_err = np.abs(MiMf-MiMf_prev), np.abs(rfri-rfri_prev)
                 if n in plot_iters: ax8.plot(MiMf, rfri_err, color=color_this, label=plab+f' n={n}', ls=linestyles[n%4])
 
-            MiMf_stack.append(MiMf)
-            rfri_stack.append(rfri)
+            if n>0:
+                MiMf_stack.append(MiMf)
+                rfri_stack.append(rfri)
 
 
     # MiMf_err, rfri_err = np.abs(MiMf-MiMf_prev), np.abs(rfri-rfri_prev)
@@ -576,7 +582,7 @@ for i,descr in enumerate(descr_list):
 
     MiMf_err, rfri_err = np.abs(MiMf_max-MiMf_min)/2, np.abs(rfri_max-rfri_min)/2
     # ax8.plot(MiMf, rfri_err, color=color_this, label=plab)
-    ax82.plot(np.median(np.abs(rfri_stack[1:]-rfri_stack[:-1]), axis=1), color=color_this)
+    ax82.plot(np.arange(2,50), np.median(np.abs(rfri_stack[1:]-rfri_stack[:-1]), axis=1), color=color_this)
 
     ax72.errorbar(MiMf[::20],rfri[::20], xerr=MiMf_err[::20], yerr=rfri_err[::20],fmt='.')
     ax72.fill_between(MiMf, rfri_min, rfri_max, color=color_this, alpha=0.3)  
