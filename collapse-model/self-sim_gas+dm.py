@@ -226,13 +226,13 @@ for name in names:
         varypars=[]
 
         if name == 'cold_vary-s':
-            s_vals = [0.5,1,1.5,2,3,5]
+            s_vals = [0.5,1,1.5,2,3,]
             varypars += ['s']
             lamshsp = 0.1
             lamdish = 0.5
 
         if name == 'shocked_vary-s':
-            s_vals = [0.5,1,1.5,2,3,5]
+            s_vals = [0.5,1,1.5,2,3,]
             varypars += ['s']
 
         if name == 'shocked_vary-gam':
@@ -268,6 +268,9 @@ for name in names:
             descr = f'_{name}_lamshsp={lamshsp:.3g}_s={s:.2g}_gam={gam:.3g}_lamdish={lamdish:.3g}_Lam0={Lam0:.1e}_nu={nu:.1g}'
             descr_list.append(descr)
             plab_list.append(plab)
+            with open(f'{name}-descr.txt', 'tw') as file: file.write(str(descr_list))
+            with open(f'{name}-plab.txt', 'tw') as file: file.write(str(plab_list))
+            # continue
 
             dmo_prfl = pd.read_hdf(f'profiles_dmo_{s}.hdf5', key='main')
 
@@ -430,12 +433,12 @@ colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
 Mta = (3*np.pi/4)**2
 
 #%%
-# name = 'cold_vary-s'
-# name = 'shocked_vary-s'
+name = 'cold_vary-s'
+name = 'shocked_vary-s'
 # name = 'shocked_vary-gam'
-name = 'shocked_vary-cooling'
-name = 'shocked_vary-lamdish'
-name = 'shocked_vary-lamshsp'
+# name = 'shocked_vary-cooling'
+# name = 'shocked_vary-lamdish'
+# name = 'shocked_vary-lamshsp'
 
 with open(f'{name}-descr.txt', 'tr') as file: descr_list = eval(file.read())
 with open(f'{name}-plab.txt', 'tr') as file: plab_list = eval(file.read())

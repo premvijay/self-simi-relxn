@@ -1,0 +1,1 @@
+['_cold_vary-s_lamshsp=0.1_s=0.5_gam=1.67_lamdish=0.5_Lam0=3.0e-02_nu=0.5', '_cold_vary-s_lamshsp=0.1_s=1_gam=1.67_lamdish=0.5_Lam0=3.0e-02_nu=0.5', '_cold_vary-s_lamshsp=0.1_s=1.5_gam=1.67_lamdish=0.5_Lam0=3.0e-02_nu=0.5', '_cold_vary-s_lamshsp=0.1_s=2_gam=1.67_lamdish=0.5_Lam0=3.0e-02_nu=0.5', '_cold_vary-s_lamshsp=0.1_s=3_gam=1.67_lamdish=0.5_Lam0=3.0e-02_nu=0.5']
