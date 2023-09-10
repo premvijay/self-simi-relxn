@@ -426,11 +426,11 @@ dill.load_session(f'soln-globalsave{descr:s}.pkl')
 
 #%%
 # name = 'cold_vary-s'
-name = 'shocked_vary-s'
+# name = 'shocked_vary-s'
 # name = 'shocked_vary-gam'
-# name = 'shocked_vary-cooling'
-# name = 'shocked_vary-lamdish'
-# name = 'shocked_vary-lamsh'
+name = 'shocked_vary-cooling'
+name = 'shocked_vary-lamdish'
+name = 'shocked_vary-lamshsp'
 
 descr_list = descr_list_dict[name]
 plab_list= plab_list_dict[name]
@@ -442,21 +442,21 @@ fig5, axs5 = plt.subplots(2,2, figsize=(10,8), sharex=True)
 fig6, ax6 = plt.subplots(1)
 
 fig7, (ax71,ax72) = plt.subplots(1,2, figsize=(10,5))
-fig8, ax8 = plt.subplots(1)
+fig8, (ax8,ax82) = plt.subplots(2)
 
 for i,descr in enumerate(descr_list):
     MiMf_stack, rfri_stack = [], []
 
-    plot_iters = [4,5,6] #,10,20,28,29] #1,2,3,5,6,7]
+    plot_iters = [5,40,49] #,10,20,28,29] #1,2,3,5,6,7]
 
     t_bef, t_now = t_now, time()
     print(f'{t_now-t_bef:.4g}s', 'Initialised plots and figs for iteration')
     plab = plab_list[i]
 
-    for n in plot_iters:
+    for n in range(0,50): #plot_iters:
         # color_this = plt.cm.turbo(n/30)
         color_this = colors[i]
-        linestyles= [':', '--', '-']
+        linestyles= [':', '--', '-','-.']
 
         resdf_prof_gas = pd.read_hdf(f'profiles_gasdm{descr:s}.hdf5', key=f'gas/iter{n}', mode='r')
         resdf_prof_dm = pd.read_hdf(f'profiles_gasdm{descr:s}.hdf5', key=f'dm/iter{n}', mode='r')
@@ -464,15 +464,16 @@ for i,descr in enumerate(descr_list):
         #resdf_traj_dm_d = pd.read_hdf(f'traj_gasdm{descr:s}_desktop.hdf5', key=f'dm/iter{n}', mode='r')
         resdf_prof_dmo = pd.read_hdf(f'profiles_gasdm{descr:s}.hdf5', key=f'dm/iter0', mode='r')
 
-        axs5[0,0].plot(resdf_prof_gas.l, -resdf_prof_gas.Vb, color=color_this, label=plab)
-        axs5[0,1].plot(resdf_prof_gas.l, resdf_prof_gas.D, color=color_this)
-        axs5[1,0].plot(resdf_prof_gas.l, resdf_prof_gas.M, color=color_this)
-        axs5[1,1].plot(resdf_prof_gas.l, resdf_prof_gas.P, color=color_this)
+        if n in plot_iters:
+            axs5[0,0].plot(resdf_prof_gas.l, -resdf_prof_gas.Vb, color=color_this, label=plab)
+            axs5[0,1].plot(resdf_prof_gas.l, resdf_prof_gas.D, color=color_this)
+            axs5[1,0].plot(resdf_prof_gas.l, resdf_prof_gas.M, color=color_this)
+            axs5[1,1].plot(resdf_prof_gas.l, resdf_prof_gas.P, color=color_this)
 
-        axs5[1,0].plot(resdf_prof_dm.l, resdf_prof_dm.M, ls='dashdot', color=color_this)
+            axs5[1,0].plot(resdf_prof_dm.l, resdf_prof_dm.M, ls='dashdot', color=color_this)
 
 
-        M_gas = interp1d(resdf_prof_gas.l, resdf_prof_gas.M)
+        M_gas = interp1d(resdf_prof_gas.l, resdf_prof_gas.M, fill_value='extrapolate')
         M_dm = interp1d(resdf_prof_dm.l, resdf_prof_dm.M)
         M_dmo = interp1d(resdf_prof_dmo.l, resdf_prof_dmo.M)
 
@@ -480,51 +481,53 @@ for i,descr in enumerate(descr_list):
 
         # axs5[1,0].plot(lam_all,M_all+M_dm(lam_all), color=color_this, ls='dashed')
 
-        ax6.plot(resdf_traj_dm.xi,resdf_traj_dm.lam, color=color_this, label=plab)
-        # ax6.plot(resdf_traj_dm_d.xi,resdf_traj_dm_d.lam, label=f'n={n}_desktop')
+        if n in plot_iters: 
+            ax6.plot(resdf_traj_dm.xi,resdf_traj_dm.lam, color=color_this, label=plab)
+            # ax6.plot(resdf_traj_dm_d.xi,resdf_traj_dm_d.lam, label=f'n={n}_desktop')
 
-        # V_intrp = interp1d(resdf_prof_gas.l, resdf_prof_gas.V, fill_value=np.nan)
-        # lamshsol, bcs = get_shock_bcs(thtshsol)
-        # taush = (thtshsol - np.sin(thtshsol)) / np.pi
-        # xish = np.log(taush)
-        # res_traj_gas = solve_ivp(odefunc_traj_gas, (1,4), np.array([1]), method='Radau', max_step=0.001, dense_output=False, vectorized=True)
-        # # res1 = solve_ivp(fun, (res.t[-1],15), np.array([res.y[0][-1],-res.y[1][-1]]), max_step=0.1, dense_output=True)
+            # V_intrp = interp1d(resdf_prof_gas.l, resdf_prof_gas.V, fill_value=np.nan)
+            # lamshsol, bcs = get_shock_bcs(thtshsol)
+            # taush = (thtshsol - np.sin(thtshsol)) / np.pi
+            # xish = np.log(taush)
+            # res_traj_gas = solve_ivp(odefunc_traj_gas, (1,4), np.array([1]), method='Radau', max_step=0.001, dense_output=False, vectorized=True)
+            # # res1 = solve_ivp(fun, (res.t[-1],15), np.array([res.y[0][-1],-res.y[1][-1]]), max_step=0.1, dense_output=True)
 
-        # t_bef, t_now = t_now, time()
-        # print(f'{t_now-t_bef:.4g}s', f's={s}: post shock trajectory obtained')
+            # t_bef, t_now = t_now, time()
+            # print(f'{t_now-t_bef:.4g}s', f's={s}: post shock trajectory obtained')
 
-        # xires = res_traj_gas.t
-        # lamres = res_traj_gas.y[0]
-        # # vres = res.y[1]
+            # xires = res_traj_gas.t
+            # lamres = res_traj_gas.y[0]
+            # # vres = res.y[1]
 
-        # taures = np.exp(xires)
-        # lamFres = lamres*taures**de
+            # taures = np.exp(xires)
+            # lamFres = lamres*taures**de
 
-        # # ax6.plot(taures,lamFres, color=color_this, label=f's={s}')
-        # ax6.plot(xires,lamres, color=color_this)
-        ax6.plot(cumtrapz(1/(resdf_prof_gas.V-de*resdf_prof_gas.l), x=resdf_prof_gas.l), resdf_prof_gas.l[1:], c=color_this, ls='-.')
+            # # ax6.plot(taures,lamFres, color=color_this, label=f's={s}')
+            # ax6.plot(xires,lamres, color=color_this)
+            ax6.plot(cumtrapz(1/(resdf_prof_gas.V-de*resdf_prof_gas.l), x=resdf_prof_gas.l), resdf_prof_gas.l[1:], c=color_this, ls='-.')
 
 
-        t_bef, t_now = t_now, time()
-        print(f'{t_now-t_bef:.4g}s', f'{n}th iter plotted')
+            t_bef, t_now = t_now, time()
+            print(f'{t_now-t_bef:.4g}s', f'{n}th iter plotted')
 
-        if n>=4:
+        if n>=0:
             # lamr_full = np.logspace(-2.3,-0.001,400)
             # lamr = np.logspace(-2.3,-0.01,100)
 
             # r, ri_pre = lamr, lamr_full
-            r, ri_pre = resdf_prof_dm.l[1:-5], resdf_prof_dmo.l[1:]
+            r, ri_pre = resdf_prof_dm.l[10:-5], resdf_prof_dmo.l[1:]
 
             Mdr, Mbr, Mdr_dmo = M_dm(r), M_gas(r), M_dmo(ri_pre)
             # Mdr, Mbr, Mdr_dmo = resdf_prof_dm.M, M_gas(r), resdf_prof_dmo.M 
 
 
-            ax71.plot(r,Mdr/Mta, ls='-', c=color_this)
-            ax71.plot(r,Mbr*fd/fb/Mta, ls='-.', c=color_this)
-            ax71.plot(ri_pre,Mdr_dmo/Mta, ls='--', c=color_this)
-            # plt.plot(r,Mdr+Mbr)
-            ax71.set_xscale('log')
-            ax71.set_yscale('log')
+            if n in plot_iters:
+                ax71.plot(r,Mdr/Mta, ls='-', c=color_this)
+                ax71.plot(r,Mbr*fd/fb/Mta, ls='-.', c=color_this)
+                ax71.plot(ri_pre,Mdr_dmo/Mta, ls='--', c=color_this)
+                # plt.plot(r,Mdr+Mbr)
+                ax71.set_xscale('log')
+                ax71.set_yscale('log')
 
             rf = r.copy()
 
@@ -537,10 +540,14 @@ for i,descr in enumerate(descr_list):
             Mf = Mdr+Mbr
             Mi = Mdr/fd
 
-            # MiMf_prev, rfri_prev = MiMf, rfri
+            if n>=11: MiMf_prev, rfri_prev = MiMf, rfri
 
             MiMf = ( fd* (Mbr/ Mdr + 1) )**-1
             rfri = rf / ri
+
+            if n>=11: 
+                MiMf_err, rfri_err = np.abs(MiMf-MiMf_prev), np.abs(rfri-rfri_prev)
+                if n in plot_iters: ax8.plot(MiMf, rfri_err, color=color_this, label=plab+f' n={n}', ls=linestyles[n%4])
 
             MiMf_stack.append(MiMf)
             rfri_stack.append(rfri)
@@ -555,7 +562,8 @@ for i,descr in enumerate(descr_list):
     rfri_max, rfri_min = rfri_stack.max(axis=0), rfri_stack.min(axis=0)
 
     MiMf_err, rfri_err = np.abs(MiMf_max-MiMf_min)/2, np.abs(rfri_max-rfri_min)/2
-    ax8.plot(MiMf, rfri_err, color=color_this, label=plab)
+    # ax8.plot(MiMf, rfri_err, color=color_this, label=plab)
+    ax82.plot(np.median(np.abs(rfri_stack[1:]-rfri_stack[:-1]), axis=1), color=color_this)
 
     ax72.errorbar(MiMf[::20],rfri[::20], xerr=MiMf_err[::20], yerr=rfri_err[::20],fmt='.')
     ax72.fill_between(MiMf, rfri_min, rfri_max, color=color_this, alpha=0.3)  
