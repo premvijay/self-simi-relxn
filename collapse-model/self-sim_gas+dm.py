@@ -219,7 +219,7 @@ for name in names:
         # fb = 0.5
         fd = (1-fb)
 
-        lamshsp = 0.8
+        lamshsp = 0.9
         disk_rad_by_shock = 0.05
         lamdish = disk_rad_by_shock #*lamsh
 
@@ -288,9 +288,9 @@ for name in names:
             t_bef, t_now = t_now, time()
             print(f'{t_now-t_bef:.4g}s', 'Initialised vals and funcs for iteration')
 
-            fig_conv, ax_conv = plt.subplots(1,2,figsize=(10,7))
+            # fig_conv, ax_conv = plt.subplots(1,2,figsize=(10,7))
 
-            for n_i in range(-5, 50):
+            for n_i in range(-2, 7):
                 print('starting iter ', n_i)
                 if n_i>=0:
                     if n_i==0:
@@ -323,7 +323,7 @@ for name in names:
 
                     if n_i>=1:
                         iter_change = np.abs(M_all-M_gas(lam_all)/M_gas(1)*M_all[0])/M_all
-                        ax_conv[0].loglog(lam_all, iter_change, label=f'n={n_i}')
+                        # ax_conv[0].loglog(lam_all, iter_change, label=f'n={n_i}')
 
                     M_gas = interp1d(np.append(lam_all,0), np.append(M_all,0), fill_value=np.nan)
 
@@ -392,7 +392,7 @@ for name in names:
 
                 if n_i>=-1:
                     iter_change = np.abs(M_vals-M_dm(l_range))/M_vals
-                    ax_conv[1].loglog(l_range, iter_change, label=f'n={n_i}')
+                    # ax_conv[1].loglog(l_range, iter_change, label=f'n={n_i}')
 
                 M_dm = interp1d(l_range, M_vals, fill_value=np.nan)
                 if n_i<=0:  #Start backreaction at iter 1
@@ -405,8 +405,8 @@ for name in names:
                 t_bef, t_now = t_now, time()
                 print(f'{t_now-t_bef:.4g}s', f'{n_i}th iter DM mass profile updated')
 
-            ax_conv[0].legend()
-            ax_conv[1].legend()
+            # ax_conv[0].legend()
+            # ax_conv[1].legend()
 
 
         with open(f'{name}-descr.txt', 'tw') as file: file.write(str(descr_list))
@@ -460,13 +460,15 @@ fig8, (ax8,ax82) = plt.subplots(2, figsize=(7,10))
 for i,descr in enumerate(descr_list):
     MiMf_stack, rfri_stack = [], []
 
-    plot_iters = [5,40,49] #,10,20,28,29] #1,2,3,5,6,7]
+    plot_iters = [3,4,5,6,40,49] #,10,20,28,29] #1,2,3,5,6,7]
 
     t_bef, t_now = t_now, time()
     print(f'{t_now-t_bef:.4g}s', 'Initialised plots and figs for iteration')
     plab = plab_list[i]
+    err = 1
+    err_tol = 0.02
 
-    for n in range(0,50): #plot_iters:
+    for n in range(0,7): #plot_iters:
         # color_this = plt.cm.turbo(n/30)
         color_this = colors[i]
         linestyles= [':', '--', '-','-.']
@@ -557,13 +559,13 @@ for i,descr in enumerate(descr_list):
             Mf = Mdr+Mbr
             Mi = Mdr/fd
 
-            if n>=11: MiMf_prev, rfri_prev = MiMf, rfri
+            if n>=2: MiMf_prev, rfri_prev = MiMf, rfri
 
             MiMf = ( fd* (Mbr/ Mdr + 1) )**-1
             rfri = rf / ri
             # leng = MiMf.shape[0]
 
-            if n>=11: 
+            if n>=2: 
                 MiMf_err, rfri_err = np.abs(MiMf-MiMf_prev), np.abs(rfri-rfri_prev)
                 if n in plot_iters: ax8.plot(MiMf, rfri_err, color=color_this, label=plab+f' n={n}', ls=linestyles[n%4])
 
@@ -571,21 +573,35 @@ for i,descr in enumerate(descr_list):
                 MiMf_stack.append(MiMf)
                 rfri_stack.append(rfri)
 
+            if n>2: err_prev = err
+            if n>=2: err = np.median(rfri_err)
+            if n>2:
+                # print(err_prev, err)
+                if err_prev<err_tol and err<err_tol:
+                    print('converged at ',n)
+                    break
+
 
     # MiMf_err, rfri_err = np.abs(MiMf-MiMf_prev), np.abs(rfri-rfri_prev)
     MiMf_stack, rfri_stack = np.vstack(MiMf_stack), np.vstack(rfri_stack)
     
-    MiMf, rfri = MiMf_stack.mean(axis=0), rfri_stack.mean(axis=0)
+    # MiMf, rfri = MiMf_stack.mean(axis=0), rfri_stack.mean(axis=0)
 
-    MiMf_max, MiMf_min = MiMf_stack.max(axis=0), MiMf_stack.min(axis=0)
-    rfri_max, rfri_min = rfri_stack.max(axis=0), rfri_stack.min(axis=0)
+    # MiMf_max, MiMf_min = MiMf_stack.max(axis=0), MiMf_stack.min(axis=0)
+    # rfri_max, rfri_min = rfri_stack.max(axis=0), rfri_stack.min(axis=0)
 
-    MiMf_err, rfri_err = np.abs(MiMf_max-MiMf_min)/2, np.abs(rfri_max-rfri_min)/2
+    # MiMf_err, rfri_err = np.abs(MiMf_max-MiMf_min)/2, np.abs(rfri_max-rfri_min)/2
     # ax8.plot(MiMf, rfri_err, color=color_this, label=plab)
-    ax82.plot(np.arange(2,50), np.median(np.abs(rfri_stack[1:]-rfri_stack[:-1]), axis=1), color=color_this)
+    iter_diff = np.median(np.abs(rfri_stack[1:]-rfri_stack[:-1]), axis=1)
+    conv_bool = iter_diff<err_tol
+    iter_end = np.where(conv_bool[1:]*conv_bool[:-1])[0][0]+3
+    print('converged at', iter_end)
+    ax82.scatter(iter_end, iter_diff[iter_end-2], color=color_this)
+    ax82.plot(np.arange(2,rfri_stack.shape[0]+1), iter_diff, color=color_this)
+
 
     ax72.errorbar(MiMf[::20],rfri[::20], xerr=MiMf_err[::20], yerr=rfri_err[::20],fmt='.')
-    ax72.fill_between(MiMf, rfri_min, rfri_max, color=color_this, alpha=0.3)  
+    # ax72.fill_between(MiMf, rfri_min, rfri_max, color=color_this, alpha=0.3)  
     # ax71.scatter(MiMf[60:-50],rfri[60:-50],c=rf[60:-50])
     cplot = ax72.scatter(MiMf,rfri,c=np.log10(rf), s=60, cmap='nipy_spectral')
     # plab=f'n={n}'
