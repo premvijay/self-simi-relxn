@@ -431,6 +431,8 @@ for name in names:
 # dill.load_session(f'soln-globalsave_all1.pkl')
 colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
 Mta = (3*np.pi/4)**2
+fb = 0.156837
+fd = 1-fb
 
 #%%
 name = 'cold_vary-s'
