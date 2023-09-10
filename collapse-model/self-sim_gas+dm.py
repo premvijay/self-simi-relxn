@@ -424,8 +424,10 @@ for name in names:
 
 
 # %%                           #pip install dill --user
-import dill  
-dill.load_session(f'soln-globalsave_all1.pkl')
+# import dill  
+# dill.load_session(f'soln-globalsave_all1.pkl')
+colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
+Mta = (3*np.pi/4)**2
 
 #%%
 # name = 'cold_vary-s'
@@ -435,8 +437,11 @@ name = 'shocked_vary-cooling'
 name = 'shocked_vary-lamdish'
 name = 'shocked_vary-lamshsp'
 
-descr_list = descr_list_dict[name]
-plab_list= plab_list_dict[name]
+with open(f'{name}-descr.txt', 'tr') as file: descr_list = eval(file.read())
+with open(f'{name}-plab.txt', 'tr') as file: plab_list = eval(file.read())
+
+# descr_list = descr_list_dict[name]
+# plab_list= plab_list_dict[name]
 
 t_now = time()
 # thtshsol = fsolve(M0, 1.5*np.pi)
@@ -507,7 +512,7 @@ for i,descr in enumerate(descr_list):
 
             # # ax6.plot(taures,lamFres, color=color_this, label=f's={s}')
             # ax6.plot(xires,lamres, color=color_this)
-            ax6.plot(cumtrapz(1/(resdf_prof_gas.V-de*resdf_prof_gas.l), x=resdf_prof_gas.l), resdf_prof_gas.l[1:], c=color_this, ls='-.')
+            # ax6.plot(cumtrapz(1/(resdf_prof_gas.V-de*resdf_prof_gas.l), x=resdf_prof_gas.l), resdf_prof_gas.l[1:], c=color_this, ls='-.')
 
 
             t_bef, t_now = t_now, time()
@@ -612,11 +617,11 @@ axs5[1,0].plot([], ls='dashdot', color='k', label='DM')
 axs5[1,0].plot([], ls='dashed', color='k', label='DMo')
 axs5[1,0].legend()
 
-if gam>1.67:
-    # axs5[0,0].set_xlim(1e-2,1)
-    axs5[0,1].set_ylim(1e-1,1e6)
-    axs5[1,0].set_ylim(1e-2,1e1)
-    axs5[1,1].set_ylim(1e0,1e7)
+# if gam>1.67:
+# axs5[0,0].set_xlim(1e-2,1)
+axs5[0,1].set_ylim(1e-1,1e6)
+axs5[1,0].set_ylim(1e-2,1e1)
+axs5[1,1].set_ylim(1e0,1e7)
 
 axs5[0,0].set_ylabel('-Vb')
 axs5[0,1].set_ylabel('D')
