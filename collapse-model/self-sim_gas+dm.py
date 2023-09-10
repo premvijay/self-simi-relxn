@@ -202,10 +202,10 @@ name = 'shocked_vary-s'
 # name = 'shocked_vary-gam'
 # name = 'shocked_vary-cooling'
 # name = 'shocked_vary-lamdi'
-# name = 'shocked_vary-lamsh'
+# name = 'shocked_vary-lamshsp'
 # name = 'shocked_vary-lamsh-di'
 
-names = ['cold_vary-s', 'shocked_vary-s', 'shocked_vary-gam', 'shocked_vary-cooling', 'shocked_vary-lamdish', 'shocked_vary-lamsh']
+names = ['cold_vary-s', 'shocked_vary-s', 'shocked_vary-gam', 'shocked_vary-cooling', 'shocked_vary-lamdish', 'shocked_vary-lamshsp']
 
 for name in names:
     try:
@@ -219,7 +219,7 @@ for name in names:
         # fb = 0.5
         fd = (1-fb)
 
-        lamsh = 0.3
+        lamshsp = 0.8
         disk_rad_by_shock = 0.05
         lamdish = disk_rad_by_shock #*lamsh
 
@@ -228,7 +228,7 @@ for name in names:
         if name == 'cold_vary-s':
             s_vals = [0.5,1,1.5,2,3,5]
             varypars += ['s']
-            lamsh = 0.03
+            lamshsp = 0.1
             lamdish = 0.5
 
         if name == 'shocked_vary-s':
@@ -236,20 +236,20 @@ for name in names:
             varypars += ['s']
 
         if name == 'shocked_vary-gam':
-            gam_vals= [5/3,7/5,4/3,]
+            gam_vals= [2,5/3,7/5,4/3,]
             varypars += ['gam']
 
         if name == 'shocked_vary-cooling':
-            Lam0_vals = [1e-3,3e-3,1e-2,3e-2,1e-1]
+            Lam0_vals = [1e-3,3e-3,1e-2,3e-2,1e-1,3e-1]
             varypars += ['Lam0']
 
         if name == 'shocked_vary-lamdish':
             lamdish_vals = [percent/100 for percent in [2,5,10,15,25]]
             varypars += ['lamdish']
 
-        if name == 'shocked_vary-lamsh':
-            lamsh_vals = [0.35,0.3,0.25, 0.2]
-            varypars += ['lamsh']
+        if name == 'shocked_vary-lamshsp':
+            lamshsp_vals = [1,.9,.8,.7,.6,.5]#[0.35,0.3,0.25, 0.2]
+            varypars += ['lamshsp']
 
         colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
         descr_list, plab_list = [], []
@@ -259,13 +259,13 @@ for name in names:
             try:
                 if 'gam' in varypars: gam = gam_vals[i]; plab+=r'$\gamma=$'+f"{gam:.3g} "
                 if 's' in varypars: s = s_vals[i]; plab+=f"s={s} "
-                if 'lamsh' in varypars: lamsh = lamsh_vals[i]; plab+=r'$\lambda_s=$'+f'{lamsh} '
+                if 'lamshsp' in varypars: lamshsp = lamshsp_vals[i]; plab+=r'$\lambda_s=$'+f'{lamshsp*100:g} '+r'$\%~ \lambda_{sp}$'
                 if 'lamdish' in varypars: lamdish = lamdish_vals[i]; plab+=r'$\lambda_d=$'+f'{lamdish*100:g} '+r'$\%~ \lambda_s$'
                 if 'Lam0' in varypars: Lam0 = Lam0_vals[i]; plab+=r'$\Lambda_0=$'+f'{Lam0:g} '
                 # if 'nu' in varypars: nu = nu_vals[i]; plab+=r'$\nu=$'+f'{nu} '
             except IndexError: break
 
-            descr = f'_{name}_lamsh={lamsh:.2g}_s={s:.2g}_gam={gam:.3g}_lamdish={lamdish:.3g}_Lam0={Lam0:.1e}_nu={nu:.1g}'
+            descr = f'_{name}_lamshsp={lamshsp:.3g}_s={s:.2g}_gam={gam:.3g}_lamdish={lamdish:.3g}_Lam0={Lam0:.1e}_nu={nu:.1g}'
             descr_list.append(descr)
             plab_list.append(plab)
 
@@ -297,7 +297,7 @@ for name in names:
                         fgas = fb
                         M_bg = M_dm
 
-                    if name[:7]=='shocked' and n_i==0: lamsh = spl_rad
+                    if n_i==0: lamsh = lamshsp*spl_rad
                     lamdi = lamdish*lamsh
 
                     res_prof_gas_pre, res_prof_gas_post = get_soln_gas_full(lamsh=lamsh)
@@ -405,24 +405,27 @@ for name in names:
             ax_conv[0].legend()
             ax_conv[1].legend()
 
-        del res_traj_dm, lam, loglam, xi
-        dill.dump_session(f'soln-globalsave{descr:s}.pkl')
 
         with open(f'{name}-descr.txt', 'tw') as file: file.write(str(descr_list))
         with open(f'{name}-plab.txt', 'tw') as file: file.write(str(plab_list))
         descr_list_dict[name] = descr_list
         plab_list_dict[name] = plab_list
         print(descr_list_dict, plab_list_dict)
+
+        del res_traj_dm, lam, loglam, xi
+        dill.dump_session(f'soln-globalsave_all1.pkl')
+
     except:
         print(f'Error occured {name}-{descr}')
         continue
 
-# %%                    #pip install dill --user
-dill.dump_session(f'soln-globalsave{descr:s}.pkl')
+## %%                    #pip install dill --user
+# dill.dump_session(f'soln-globalsave_all.pkl')
 
 
 # %%                           #pip install dill --user
-dill.load_session(f'soln-globalsave{descr:s}.pkl')
+import dill  
+dill.load_session(f'soln-globalsave_all1.pkl')
 
 #%%
 # name = 'cold_vary-s'
