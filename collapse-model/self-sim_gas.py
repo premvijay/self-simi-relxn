@@ -286,7 +286,7 @@ def my_bisect(f, a, b, xtol=1e-4):
 #%%
 # thtshsol = fsolve(M0, 1.5*np.pi)
 s = 1
-gam = 4.5/3
+gam = 5/3
 s_vals = [0.5,1,1.5,2,3,5]
 
 #%%
@@ -338,10 +338,10 @@ for s in s_vals[::]:
     de = 2* (1+s/3) /3
     alpha_D = -9/(s+3)
     aD, aP, aM = alpha_D, (2*alpha_D+2), alpha_D+3
-    aD, aP, aM = 0,0,0
+    # aD, aP, aM = 0,0,0
     print(s, aD, aP, aM)
 
-    lamshsol = my_bisect(lam_atM0, lambins[0], lambins[-1], xtol=1e-7)#+1e-5
+    lamshsol = my_bisect(lam_atM0, lambins[0], lambins[-1], xtol=1e-8)#+1e-5
     # lamshsol = thetbins[idx_M0neg+1]
     t_bef, t_now = t_now, time()
     print(f'{t_now-t_bef:.4g}s', f's={s}: root thetsh obtained')
@@ -355,13 +355,13 @@ for s in s_vals[::]:
 fig5, axs5 = plt.subplots(2,3, dpi=100, figsize=(18,12), sharex=True)
 fig6, (ax62,ax6) = plt.subplots(1,2, dpi=100, figsize=(10,5))
 
-for s in s_vals[:2:]:
+for s in s_vals[::]:
     t_now = time()
     de = 2* (1+s/3) /3
     alpha_D = -9/(s+3)
     aD, aP, aM = alpha_D, 1*(2*alpha_D+2), alpha_D+3
-    aD, aP, aM = 0,0,0
-    lamshsol = lamsh_sols[s] +1e-2 # 0.338976 #
+    # aD, aP, aM = 0,0,0
+    lamshsol = lamsh_sols[s] #-1e-8 # 0.338976 #
     res_pre, res_post = get_soln_gas_full_tilde(lamshsol)
     print(res_post.y[2][-1])
     # print(M0(lamshsol))
@@ -388,6 +388,10 @@ for s in s_vals[:2:]:
     M_all = np.concatenate([M_post, M_pre][::-1])
     P_all = np.concatenate([P_post, P_pre][::-1])
     Vb_all = V_all - de*lam_all
+
+    resdf_gas = pd.DataFrame(data={'l':lam_all, 'M':M_all, 'V':V_all, 'D':D_all, 'P':P_all, 'Vb':Vb_all,})
+    descr = f'_s={s:.2g}_gam={gam:.3g}'
+    resdf_gas.to_hdf(f'profiles_gaso_bertshi{descr:s}.hdf5', 'gas/main', mode='a')
 
     color_this = plt.cm.turbo(s/4)
 
