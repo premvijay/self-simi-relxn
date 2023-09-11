@@ -434,9 +434,15 @@ for name in names:
                     MiMf = ( fd* (Mbr/ Mdr + 1) )**-1
                     rfri = rf / ri
 
+                    resdf_relx = pd.DataFrame(data={'rf':rf, 'MiMf':MiMf, 'rfri':rfri})
+
                     if n_i>=2: 
                         MiMf_err, rfri_err = np.abs(MiMf-MiMf_prev), np.abs(rfri-rfri_prev)
-
+                        resdf_relx['MiMf_err'] = MiMf_err
+                        resdf_relx['rfri_err'] = rfri_err
+                    
+                    resdf_relx.to_hdf(f'profiles_gasdm{descr:s}.hdf5', 'relx/main', mode='a')
+                    resdf_relx.to_hdf(f'profiles_gasdm{descr:s}.hdf5', f'relx/iter{n_i}', mode='a')
                     if n_i>2: err_prev = err
                     if n_i>=2: err = np.median(rfri_err)
                     if n_i>2:
@@ -478,10 +484,10 @@ fd = 1-fb
 #%%
 name = 'cold_vary-s'
 name = 'shocked_vary-s'
-# name = 'shocked_vary-gam'
-# name = 'shocked_vary-cooling'
-# name = 'shocked_vary-lamdish'
-# name = 'shocked_vary-lamshsp'
+name = 'shocked_vary-gam'
+name = 'shocked_vary-cooling'
+name = 'shocked_vary-lamdish'
+name = 'shocked_vary-lamshsp'
 
 with open(f'{name}-descr.txt', 'tr') as file: descr_list = eval(file.read())
 with open(f'{name}-plab.txt', 'tr') as file: plab_list = eval(file.read())
@@ -507,7 +513,7 @@ for i,descr in enumerate(descr_list):
     print(f'{t_now-t_bef:.4g}s', 'Initialised plots and figs for iteration')
     plab = plab_list[i]
     err = 1
-    err_tol = 0.02
+    err_tol = 0.01
 
     for n in range(0,7): #plot_iters:
         # color_this = plt.cm.turbo(n/30)
