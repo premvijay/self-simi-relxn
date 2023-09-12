@@ -286,7 +286,7 @@ def my_bisect(f, a, b, xtol=1e-4):
 #%%
 # thtshsol = fsolve(M0, 1.5*np.pi)
 s = 1
-gam = 5/3
+gam = 4/3
 s_vals = [0.5,1,1.5,2,3,5]
 
 #%%
@@ -331,7 +331,7 @@ ax4.legend()
 #%%
 lamsh_sols = {}
 lam_atM0_sols = {}
-lambins = np.linspace(0.01, 0.5, 8)
+lambins = np.linspace(0.02, 0.5, 8)
 
 for s in s_vals[::]:
     t_now = time()
