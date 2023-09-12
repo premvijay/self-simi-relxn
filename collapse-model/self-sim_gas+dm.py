@@ -447,7 +447,7 @@ for name in names[2:3]:
                     resdf_relx.to_hdf(f'profiles_gasdm{descr:s}.hdf5', 'relx/main', mode='a')
                     resdf_relx.to_hdf(f'profiles_gasdm{descr:s}.hdf5', f'relx/iter{n_i}', mode='a')
                     if n_i>2: err_prev = err
-                    if n_i>=2: err = np.median(rfri_err)
+                    if n_i>=2: err = rfri_err.quantile(0.5)
                     if n_i>2:
                         # print(err_prev, err)
                         if err_prev<err_tol and err<err_tol:
