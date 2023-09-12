@@ -1,1 +1,1 @@
-['_shocked_vary-gam_lamshsp=0.9_s=1_gam=2_lamdish=0.05_Lam0=3.0e-02_nu=0.5', '_shocked_vary-gam_lamshsp=0.9_s=1_gam=1.67_lamdish=0.05_Lam0=3.0e-02_nu=0.5', '_shocked_vary-gam_lamshsp=0.9_s=1_gam=1.4_lamdish=0.05_Lam0=3.0e-02_nu=0.5', '_shocked_vary-gam_lamshsp=0.9_s=1_gam=1.33_lamdish=0.05_Lam0=3.0e-02_nu=0.5']
+['_shocked_vary-gam_lamshsp=0.9_s=1_gam=1.67_lamdish=0.05_Lam0=3.0e-02_nu=0.5', '_shocked_vary-gam_lamshsp=0.5_s=1_gam=1.4_lamdish=0.05_Lam0=3.0e-02_nu=0.5', '_shocked_vary-gam_lamshsp=0.3_s=1_gam=1.33_lamdish=0.05_Lam0=3.0e-02_nu=0.5']

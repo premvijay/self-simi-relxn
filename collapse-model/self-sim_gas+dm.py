@@ -207,7 +207,7 @@ name = 'shocked_vary-s'
 
 names = ['cold_vary-s', 'shocked_vary-s', 'shocked_vary-gam', 'shocked_vary-cooling', 'shocked_vary-lamdish', 'shocked_vary-lamshsp']
 
-for name in names:
+for name in names[2:3]:
     try:
         t_now = time()
         # thtshsol = fsolve(M0, 1.5*np.pi)
@@ -236,8 +236,9 @@ for name in names:
             varypars += ['s']
 
         if name == 'shocked_vary-gam':
-            gam_vals= [2,5/3,7/5,4/3,]
-            varypars += ['gam']
+            gam_vals= [5/3,7/5,4/3,]
+            lamshsp_vals = [0.9,0.5,0.3]
+            varypars += ['gam','lamshsp']
 
         if name == 'shocked_vary-cooling':
             Lam0_vals = [1e-3,3e-3,1e-2,3e-2,1e-1,3e-1]
@@ -252,7 +253,7 @@ for name in names:
             varypars += ['lamshsp']
 
         colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
-        descr_list, plab_list, conv_iters = [], [], []
+        descr_list, plab_list, conv_iters, rads = [], [], [], []
         for i in range(10):
             # i=1
             plab=''
@@ -302,7 +303,9 @@ for name in names:
                         fgas = fb
                         M_bg = M_dm
 
-                    if n_i==0: lamsh = lamshsp*spl_rad
+                    resdf_prof_gaso_bertshi = pd.read_hdf(f'profiles_gaso_bertshi_s={s:.2g}_gam={gam:.3g}.hdf5', key=f'gas/main', mode='r')
+                    lamsh_bert = resdf_prof_gaso_bertshi.l[np.diff(resdf_prof_gaso_bertshi.Vb).argmax()]
+                    if n_i==0: lamsh = lamshsp*spl_rad #lamsh_bert
                     lamdi = lamdish*lamsh
 
                     res_prof_gas_pre, res_prof_gas_post = get_soln_gas_full(lamsh=lamsh)
@@ -451,10 +454,11 @@ for name in names:
                             print('converged at ',n_i)
                             conv_iter = n_i
                             break
+            rads.append((lamsh,lamsh_bert,spl_rad,))
             conv_iters.append(conv_iter)
             # ax_conv[0].legend()
             # ax_conv[1].legend()
-
+        with open(f'{name}-rads.txt', 'tw') as file: file.write(str(rads))
         with open(f'{name}-conv_iters.txt', 'tw') as file: file.write(str(conv_iters))
         with open(f'{name}-descr.txt', 'tw') as file: file.write(str(descr_list))
         with open(f'{name}-plab.txt', 'tw') as file: file.write(str(plab_list))
@@ -463,7 +467,7 @@ for name in names:
         print(descr_list_dict, plab_list_dict)
 
         del res_traj_dm, lam, loglam, xi
-        dill.dump_session(f'soln-globalsave_all1.pkl')
+        dill.dump_session(f'soln-globalsave_all.pkl')
 
     except:
         print(f'Error occured {name}-{descr}')
@@ -485,9 +489,9 @@ fd = 1-fb
 name = 'cold_vary-s'
 name = 'shocked_vary-s'
 name = 'shocked_vary-gam'
-name = 'shocked_vary-cooling'
-name = 'shocked_vary-lamdish'
-name = 'shocked_vary-lamshsp'
+# name = 'shocked_vary-cooling'
+# name = 'shocked_vary-lamdish'
+# name = 'shocked_vary-lamshsp'
 
 with open(f'{name}-descr.txt', 'tr') as file: descr_list = eval(file.read())
 with open(f'{name}-plab.txt', 'tr') as file: plab_list = eval(file.read())
@@ -515,7 +519,7 @@ for i,descr in enumerate(descr_list):
     err = 1
     err_tol = 0.01
 
-    for n in range(0,7): #plot_iters:
+    for n in range(0,50): #plot_iters:
         # color_this = plt.cm.turbo(n/30)
         color_this = colors[i]
         linestyles= [':', '--', '-','-.']

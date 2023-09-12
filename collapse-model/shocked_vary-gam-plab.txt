@@ -1,1 +1,1 @@
-['$\\gamma=$2 ', '$\\gamma=$1.67 ', '$\\gamma=$1.4 ', '$\\gamma=$1.33 ']
+['$\\gamma=$1.67 $\\lambda_s=$90 $\\%~ \\lambda_{sp}$', '$\\gamma=$1.4 $\\lambda_s=$50 $\\%~ \\lambda_{sp}$', '$\\gamma=$1.33 $\\lambda_s=$30 $\\%~ \\lambda_{sp}$']
