@@ -207,7 +207,7 @@ name = 'shocked_vary-s'
 
 names = ['cold_vary-s', 'shocked_vary-s', 'shocked_vary-gam', 'shocked_vary-cooling', 'shocked_vary-lamdish', 'shocked_vary-lamshsp']
 
-for name in names[2:3]:
+for name in names:
     try:
         t_now = time()
         # thtshsol = fsolve(M0, 1.5*np.pi)
@@ -249,7 +249,7 @@ for name in names[2:3]:
             varypars += ['lamdish']
 
         if name == 'shocked_vary-lamshsp':
-            lamshsp_vals = [1,.9,.8,.7,.6,.5]#[0.35,0.3,0.25, 0.2]
+            lamshsp_vals = [1.1,1,.9,.8,.7,.6,.5]#[0.35,0.3,0.25, 0.2]
             varypars += ['lamshsp']
 
         colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
@@ -293,7 +293,7 @@ for name in names[2:3]:
             err = 1
             err_tol = 0.01
             conv_iter = 1000
-            for n_i in range(-2, 50):
+            for n_i in range(-3, 50):
                 print('starting iter ', n_i)
                 if n_i>=0:
                     if n_i==0:
