@@ -157,15 +157,56 @@ def lam_atM0(lamsh):
 
 
 #%%
+name = 'cold_vary-s'
+# name = 'shocked_vary-s'
+# name = 'shocked_vary-gam'
+# name = 'shocked_vary-cooling'
+# name = 'shocked_vary-lamdish'
+# name = 'shocked_vary-lamshsp'
+
+with open(f'{name}-rads.txt', 'tr') as file: rads_list = eval(file.read())
+
 s = 1
 gam = 5/3
 Lam0 = 3e-2
 nu=1/2
+fb = 0.156837
+# fb = 0.5
+fd = (1-fb)
 
-lamsh = 0.3
-lamdi = 0.05*lamsh
+lamshsp = 0.9
+disk_rad_by_shock = 0.05
+lamdish = disk_rad_by_shock #*lamsh
 
 varypars=[]
+
+if name == 'cold_vary-s':
+    s_vals = [0.5,1,1.5,2,3,]
+    varypars += ['s']
+    lamshsp = 0.1
+    lamdish = 0.5
+
+if name == 'shocked_vary-s':
+    s_vals = [0.5,1,1.5,2,3,][:-1]
+    varypars += ['s']
+
+if name == 'shocked_vary-gam':
+    gam_vals= [5/3,7/5,4/3,]
+    lamshsp_vals = [0.9,0.5,0.3]
+    varypars += ['gam','lamshsp']
+
+if name == 'shocked_vary-cooling':
+    Lam0_vals = [1e-3,3e-3,1e-2,3e-2,1e-1,3e-1]
+    varypars += ['Lam0']
+
+if name == 'shocked_vary-lamdish':
+    lamdish_vals = [percent/100 for percent in [2,5,10,15,25]]
+    varypars += ['lamdish']
+
+if name == 'shocked_vary-lamshsp':
+    lamshsp_vals = [1.1,1,.9,.8,.7,.6,.5]#[0.35,0.3,0.25, 0.2]
+    varypars += ['lamshsp']
+
 
 # name = '_cold_vary-s'
 # s_vals = [0.5,1,1.5,2,3,5]
@@ -187,9 +228,9 @@ varypars=[]
 # lamdi_vals = [0.05*lamsh for lamsh in lamsh_vals]
 # varypars += ['s','lamsh','lamdi']
 
-name = '_shocked_vary-gam'
-gam_vals= [5/3,7/5,4/3,]
-varypars += ['gam']
+# name = '_shocked_vary-gam'
+# gam_vals= [5/3,7/5,4/3,]
+# varypars += ['gam']
 
 # name = '_shocked_vary-gam+sh'
 # gam_vals= [5/3,7/5,4/3,]
@@ -249,21 +290,22 @@ for i in range(5):
     try:
         if 'gam' in varypars: gam = gam_vals[i]; plab+=r'$\gamma=$'+f"{gam:.3g} "
         if 's' in varypars: s = s_vals[i]; plab+=f"s={s} "
-        if 'lamsh' in varypars: lamsh = lamsh_vals[i]; plab+=r'$\lambda_s=$'+f'{lamsh} '
-        if 'lamdi' in varypars: lamdi = lamdi_vals[i]; plab+=r'$\lambda_d=$'+f'{lamdi/lamsh*100:g} '+r'$\%~ \lambda_s$'
+        if 'lamshsp' in varypars: lamshsp = lamshsp_vals[i]; plab+=r'$\lambda_s=$'+f'{lamshsp*100:g} '+r'$\%~ \lambda_{sp}$'
+        if 'lamdish' in varypars: lamdish = lamdish_vals[i]; plab+=r'$\lambda_d=$'+f'{lamdish*100:g} '+r'$\%~ \lambda_s$'
         if 'Lam0' in varypars: Lam0 = Lam0_vals[i]; plab+=r'$\Lambda_0=$'+f'{Lam0:g} '
-        if 'nu' in varypars: nu = nu_vals[i]; plab+=r'$\nu=$'+f'{nu} '
+        # if 'nu' in varypars: nu = nu_vals[i]; plab+=r'$\nu=$'+f'{nu} '
     except IndexError: break
 
     t_now = time()
     de = 2* (1+s/3) /3
     alpha_D = -9/(s+3)
-    # descr = f'_{name}_lamshsp=0.9_s={s:.2g}_gam={gam:.3g}_lamdish={lamdish:.3g}_Lam0={Lam0:.1e}_nu={nu:.1g}'
+    descr = f'_{name}_lamshsp={lamshsp:.3g}_s={s:.2g}_gam={gam:.3g}_lamdish={lamdish:.3g}_Lam0={Lam0:.1e}_nu={nu:.1g}'
 
     resdf_prof_gaso_bertshi = pd.read_hdf(f'profiles_gaso_bertshi_s={s:.2g}_gam={gam:.3g}.hdf5', key=f'gas/main', mode='r')
     # resdf_prof_gaso_bertshi = pd.read_hdf(f'profiles_gasdm_{name}{descr}.hdf5', key=f'gas/iter0', mode='r')
-    lamsh = resdf_prof_gaso_bertshi.l[np.diff(resdf_prof_gaso_bertshi.Vb).argmax()]
-    lamdi = 0.1*lamsh
+    # lamsh = resdf_prof_gaso_bertshi.l[np.diff(resdf_prof_gaso_bertshi.Vb).argmax()]
+    lamsh = lamshsp*rads_list[i][2] #rads_list[i][1]  #
+    lamdi = lamdish*lamsh
     
     # lamshsol = 0.35 #lamsh_sols[s] #+5e-3 # 0.338976 #
     res_pre, res_post = get_soln_gas_full(lamsh)
@@ -435,8 +477,8 @@ ax62.set_xlim(0,5)
 fig5.tight_layout()
 fig6.tight_layout()
 
-fig5.savefig(f'Eds-gas-{gam:.02f}_profiles{name}.pdf')
-fig6.savefig(f'Eds-gas-{gam:.02f}_trajectory{name}.pdf')
+fig5.savefig(f'Eds-gaso_profiles_{name}.pdf')
+fig6.savefig(f'Eds-gaso_trajectory_{name}.pdf')
 # axs5[0,0].set_xlim(1e-6,1)
 # axs5[1,0].set_ylim(1e-4,1e1)
 
