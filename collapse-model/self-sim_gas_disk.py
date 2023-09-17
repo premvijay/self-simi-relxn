@@ -187,9 +187,9 @@ varypars=[]
 # lamdi_vals = [0.05*lamsh for lamsh in lamsh_vals]
 # varypars += ['s','lamsh','lamdi']
 
-# name = '_shocked_vary-gam'
-# gam_vals= [5/3,7/5,4/3,]
-# varypars += ['gam']
+name = '_shocked_vary-gam'
+gam_vals= [5/3,7/5,4/3,]
+varypars += ['gam']
 
 # name = '_shocked_vary-gam+sh'
 # gam_vals= [5/3,7/5,4/3,]
@@ -212,10 +212,10 @@ varypars=[]
 # lamsh_vals = [0.35,0.3,0.25, 0.2]
 # varypars += ['lamsh']
 
-name = '_shocked_vary-lamsh-di'
-lamsh_vals = [0.35,0.3,0.25, 0.2]
-lamdi_vals = [0.05*lamsh for lamsh in lamsh_vals]
-varypars += ['lamsh','lamdi']
+# name = '_shocked_vary-lamsh-di'
+# lamsh_vals = [0.35,0.3,0.25, 0.2]
+# lamdi_vals = [0.05*lamsh for lamsh in lamsh_vals]
+# varypars += ['lamsh','lamdi']
 
 # lamsh_sols = {}
 # lam_atM0_sols = {}
@@ -258,6 +258,12 @@ for i in range(5):
     t_now = time()
     de = 2* (1+s/3) /3
     alpha_D = -9/(s+3)
+    # descr = f'_{name}_lamshsp=0.9_s={s:.2g}_gam={gam:.3g}_lamdish={lamdish:.3g}_Lam0={Lam0:.1e}_nu={nu:.1g}'
+
+    resdf_prof_gaso_bertshi = pd.read_hdf(f'profiles_gaso_bertshi_s={s:.2g}_gam={gam:.3g}.hdf5', key=f'gas/main', mode='r')
+    # resdf_prof_gaso_bertshi = pd.read_hdf(f'profiles_gasdm_{name}{descr}.hdf5', key=f'gas/iter0', mode='r')
+    lamsh = resdf_prof_gaso_bertshi.l[np.diff(resdf_prof_gaso_bertshi.Vb).argmax()]
+    lamdi = 0.1*lamsh
     
     # lamshsol = 0.35 #lamsh_sols[s] #+5e-3 # 0.338976 #
     res_pre, res_post = get_soln_gas_full(lamsh)
@@ -298,7 +304,13 @@ for i in range(5):
     # axs5[1,2].plot(lam_all, P_all/D_all**gam, color=color_this)
     # axs5[1,2].plot(lam_all, D_all*Vb_all**2-gam*P_all, color=color_this)
 
-
+    # resdf_prof_gaso_bertshi = pd.read_hdf(f'profiles_gaso_bertshi_s={s:.2g}_gam={gam:.3g}.hdf5', key=f'gas/main', mode='r')
+    # resdf_prof_gaso_bertshi = pd.read_hdf(f'profiles_gasdm_shocked_vary-s_lamshsp=0.9_s={s:.2g}_gam={gam:.3g}_lamdish=0.05_Lam0=3.0e-02_nu=0.5.hdf5', key=f'gas/main', mode='r')
+    axs5[0,0].plot(resdf_prof_gaso_bertshi.l, -resdf_prof_gaso_bertshi.Vb, color=color_this, ls='--')
+    axs5[0,1].plot(resdf_prof_gaso_bertshi.l, resdf_prof_gaso_bertshi.D, color=color_this, ls='--')
+    axs5[1,0].plot(resdf_prof_gaso_bertshi.l, resdf_prof_gaso_bertshi.M, color=color_this, ls='--')
+    axs5[1,1].plot(resdf_prof_gaso_bertshi.l, resdf_prof_gaso_bertshi.P, color=color_this, ls='--')
+    print(resdf_prof_gaso_bertshi.l[np.diff(resdf_prof_gaso_bertshi.Vb).argmax()])
     # PderD_post = np.gradient(P_post,lamsh_post)/D_post
 
     M_intrp = interp1d(lam_all, M_all, fill_value="extrapolate")
@@ -333,6 +345,11 @@ for i in range(5):
 
     ax6.plot(taures,lamFres, color=color_this, label=plab)
     ax62.plot(xires,lamres, color=color_this)
+    xio,lamo = cumtrapz(1/(resdf_prof_gaso_bertshi.V-de*resdf_prof_gaso_bertshi.l), x=resdf_prof_gaso_bertshi.l), resdf_prof_gaso_bertshi.l[1:]
+    tauo = np.exp(xio)
+    lamFo = lamo*tauo**de
+    ax62.plot(xio,lamo, c=color_this, ls='-.')
+    ax6.plot(tauo,lamFo, color=color_this, ls='-.')
 
     #trajectory analytical
     thet_range = np.linspace(0.5, 1.2*np.pi,2000)
@@ -360,8 +377,8 @@ ax6.legend(loc='best')
 ax6.set_xlabel(r'$\tau$')
 ax6.set_ylabel('$\lambda_F$')
 ax6.set_xlim(-1,10)
-ax6.set_ylim(-0.01,1.1)
-# ax6.set_yscale('log')
+ax6.set_ylim(0.001,1.1)
+ax6.set_yscale('log')
 
 ax62.set_xlabel(r'$\xi$')
 ax62.set_ylabel('$\lambda$')
@@ -380,8 +397,8 @@ axs5[1,1].set_xlabel('$\lambda$')
 if gam==5/3:
     axs5[0,0].set_xlim(7e-5,1)
     axs5[0,0].set_ylim(5e-6,1e1)
-    # axs5[0,1].set_ylim(1e-1,1e11)
-    # axs5[1,0].set_ylim(1e-3,1e1)
+    axs5[0,1].set_ylim(1e-1,1e11)
+    axs5[1,0].set_ylim(1e-3,1e1)
     # axs5[1,1].set_ylim(1e0,1e14)
     # axs5[0,2].set_ylim(1e-1,1e2)
     # axs5[1,2].set_ylim(1e-5,5e-1)
@@ -406,6 +423,7 @@ axs5[0,0].set_yscale('log')
 axs5[0,1].set_yscale('log')
 axs5[1,0].set_yscale('log')
 axs5[1,1].set_yscale('log')
+ax62.set_xlim(0,5)
 # axs5[0,2].set_yscale('log')
 # axs5[1,2].set_yscale('log')
 
