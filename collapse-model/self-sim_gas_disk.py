@@ -142,7 +142,7 @@ def get_soln_gas_full(lamsh):
     # print(bcs)
     bcs = np.log(bcs)
     # bcs[3] = 0
-    res_post = solve_ivp(odefunc, (np.log(lamsh),np.log(1e-7)), bcs, method='Radau', max_step=0.5, vectorized=True, events=stop_event)
+    res_post = solve_ivp(odefunc, (np.log(lamsh),np.log(1e-7)), bcs, method='Radau', max_step=0.1, vectorized=True, events=stop_event)
     return res_pre, res_post
 
 def M0_num(lamsh):
@@ -159,7 +159,7 @@ def lam_atM0(lamsh):
 #%%
 name = 'cold_vary-s'
 # name = 'shocked_vary-s'
-# name = 'shocked_vary-gam'
+name = 'shocked_vary-gam'
 # name = 'shocked_vary-cooling'
 # name = 'shocked_vary-lamdish'
 # name = 'shocked_vary-lamshsp'
@@ -372,15 +372,16 @@ for i in range(5):
 
     # taush = (thtshsol - np.sin(thtshsol)) / np.pi
     # xish = np.log(taush)
-    res = solve_ivp(odefunc_traj, (0,5), (1,), method='Radau', max_step=0.01, dense_output=False, vectorized=True)
+    # res = solve_ivp(odefunc_traj, (0,5), (1,), method='Radau', max_step=0.01, dense_output=False, vectorized=True)
     # res1 = solve_ivp(fun, (res.t[-1],15), np.array([res.y[0][-1],-res.y[1][-1]]), max_step=0.1, dense_output=True)
 
     t_bef, t_now = t_now, time()
     print(f'{t_now-t_bef:.4g}s', f's={s}: post shock trajectory obtained')
     
-    xires = res.t
-    lamres = res.y[0]
+    # xires = res.t
+    # lamres = res.y[0]
     # vres = res.y[1]
+    xires,lamres = cumtrapz(1/(V_all-de*lam_all), x=lam_all), lam_all[1:]
 
     taures = np.exp(xires)
     lamFres = lamres*taures**de
