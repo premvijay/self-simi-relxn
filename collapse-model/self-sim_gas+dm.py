@@ -495,6 +495,7 @@ name = 'shocked_vary-gam'
 
 with open(f'{name}-descr.txt', 'tr') as file: descr_list = eval(file.read())
 with open(f'{name}-plab.txt', 'tr') as file: plab_list = eval(file.read())
+with open(f'{name}-conv_iters.txt', 'tr') as file: conv_iter_list = eval(file.read())
 
 # descr_list = descr_list_dict[name]
 # plab_list= plab_list_dict[name]
@@ -516,6 +517,8 @@ for i,descr in enumerate(descr_list):
     t_bef, t_now = t_now, time()
     print(f'{t_now-t_bef:.4g}s', 'Initialised plots and figs for iteration')
     plab = plab_list[i]
+    conv_iter = conv_iter_list[i]
+    plot_iters = [0,conv_iter]
     err = 1
     err_tol = 0.01
 
@@ -531,9 +534,9 @@ for i,descr in enumerate(descr_list):
         resdf_prof_dmo = pd.read_hdf(f'profiles_gasdm{descr:s}.hdf5', key=f'dm/iter0', mode='r')
 
         if n in plot_iters:
-            axs5[0,0].plot(resdf_prof_gas.l, -resdf_prof_gas.Vb, color=color_this, label=plab)
-            axs5[0,1].plot(resdf_prof_gas.l, resdf_prof_gas.D, color=color_this)
-            axs5[1,0].plot(resdf_prof_gas.l, resdf_prof_gas.M, color=color_this)
+            axs5[0,0].plot(resdf_prof_gas.l, -resdf_prof_gas.Vb, color=color_this)
+            axs5[0,1].plot(resdf_prof_gas.l, resdf_prof_gas.D, color=color_this, label=plab)
+            axs5[1,0].plot(resdf_prof_gas.l, resdf_prof_gas.M/resdf_prof_gas.M[0], color=color_this)
             axs5[1,1].plot(resdf_prof_gas.l, resdf_prof_gas.P, color=color_this)
 
             axs5[1,0].plot(resdf_prof_dm.l, resdf_prof_dm.M, ls='dashdot', color=color_this)
