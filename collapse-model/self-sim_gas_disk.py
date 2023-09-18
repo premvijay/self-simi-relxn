@@ -302,7 +302,7 @@ for i in range(5):
     descr = f'_{name}_lamshsp={lamshsp:.3g}_s={s:.2g}_gam={gam:.3g}_lamdish={lamdish:.3g}_Lam0={Lam0:.1e}_nu={nu:.1g}'
 
     resdf_prof_gaso_bertshi = pd.read_hdf(f'profiles_gaso_bertshi_s={s:.2g}_gam={gam:.3g}.hdf5', key=f'gas/main', mode='r')
-    # resdf_prof_gaso_bertshi = pd.read_hdf(f'profiles_gasdm_{name}{descr}.hdf5', key=f'gas/iter0', mode='r')
+    # resdf_prof_gaso_bertshi = pd.read_hdf(f'profiles_gasdm{descr}.hdf5', key=f'gas/iter0', mode='r')
     # lamsh = resdf_prof_gaso_bertshi.l[np.diff(resdf_prof_gaso_bertshi.Vb).argmax()]
     lamsh = lamshsp*rads_list[i][2] #rads_list[i][1]  #
     lamdi = lamdish*lamsh
