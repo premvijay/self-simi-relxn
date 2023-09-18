@@ -613,7 +613,7 @@ plt.xlabel('t')
 
 
 # %%
-plt.plot(res.t, res.y[2])
+# plt.plot(res.t, res.y[2])
 # plt.xscale('log')
 # plt.yscale('log')
 # plt.xlim(1e-2,1)
