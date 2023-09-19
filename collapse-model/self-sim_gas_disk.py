@@ -142,7 +142,7 @@ def get_soln_gas_full(lamsh):
     # print(bcs)
     bcs = np.log(bcs)
     # bcs[3] = 0
-    res_post = solve_ivp(odefunc, (np.log(lamsh),np.log(1e-7)), bcs, method='Radau', max_step=0.1, vectorized=True, events=stop_event)
+    res_post = solve_ivp(odefunc, (np.log(lamsh),np.log(1e-7)), bcs, method='Radau', max_step=0.05, vectorized=True, events=stop_event)
     return res_pre, res_post
 
 def M0_num(lamsh):
@@ -187,12 +187,12 @@ if name == 'cold_vary-s':
     lamdish = 0.5
 
 if name == 'shocked_vary-s':
-    s_vals = [0.5,1,1.5,2,3,][:-1]
+    s_vals = [0.5,1,1.5,2,3,]#[:-1]
     varypars += ['s']
 
 if name == 'shocked_vary-gam':
-    gam_vals= [5/3,7/5,4/3,]
-    lamshsp_vals = [0.9,0.5,0.3]
+    gam_vals= [2,1.8,5/3,1.5,7/5,4/3,]
+    lamshsp_vals = [1.2,1.05,0.9,0.7,0.5,0.3]
     varypars += ['gam','lamshsp']
 
 if name == 'shocked_vary-cooling':
@@ -281,16 +281,16 @@ if name == 'shocked_vary-lamshsp':
 
 
 fig5, axs5 = plt.subplots(2,2, dpi=100, figsize=(12,8), sharex=True)
-fig6, (ax62,ax6) = plt.subplots(1,2, dpi=100, figsize=(10,5))
+fig6, (ax62,ax6) = plt.subplots(1,2, dpi=100, figsize=(14,7))
 
 colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
 
-for i in range(5):
+for i in range(10):
     plab=''
     try:
-        if 'gam' in varypars: gam = gam_vals[i]; plab+=r'$\gamma=$'+f"{gam:.3g} "
+        if 'gam' in varypars: gam = gam_vals[i]; plab+=r'$\gamma=$'+f"{gam:.3g}, "
         if 's' in varypars: s = s_vals[i]; plab+=f"s={s} "
-        if 'lamshsp' in varypars: lamshsp = lamshsp_vals[i]; plab+=r'$\lambda_s=$'+f'{lamshsp*100:g} '+r'$\%~ \lambda_{sp}$'
+        if 'lamshsp' in varypars: lamshsp = lamshsp_vals[i]; plab+=r'$R_s=$'+f'{lamshsp:g}'#plab+=r'$\lambda_s=$'+f'{lamshsp*100:g} '+r'$\%~ \lambda_{sp}$'
         if 'lamdish' in varypars: lamdish = lamdish_vals[i]; plab+=r'$\lambda_d=$'+f'{lamdish*100:g} '+r'$\%~ \lambda_s$'
         if 'Lam0' in varypars: Lam0 = Lam0_vals[i]; plab+=r'$\Lambda_0=$'+f'{Lam0:g} '
         # if 'nu' in varypars: nu = nu_vals[i]; plab+=r'$\nu=$'+f'{nu} '
@@ -419,8 +419,9 @@ axs5[0,0].plot(lam_all,de*lam_all, c='k', ls='--', label='V=0')
 ax6.legend(loc='best')
 ax6.set_xlabel(r'$\tau$')
 ax6.set_ylabel('$\lambda_F$')
-ax6.set_xlim(-1,10)
-ax6.set_ylim(0.001,1.1)
+ax6.set_xlim(0,12)
+ax6.set_ylim(0.0001,1.1)
+# ax6.set_xscale('log')
 ax6.set_yscale('log')
 
 ax62.set_xlabel(r'$\xi$')
@@ -453,6 +454,12 @@ elif gam==4/3:
     axs5[1,1].set_ylim(1e1,1e14)
     # axs5[0,2].set_ylim(1e0,1e3)
     # axs5[1,2].set_ylim(1e-2,5e-1)
+
+axs5[0,0].set_xlim(7e-5,1)
+axs5[0,0].set_ylim(5e-6,1e1)
+axs5[0,1].set_ylim(1e-1,1e11)
+axs5[1,0].set_ylim(1e-3,1e1)
+# axs5[1,1].set_ylim(1e0,1e14)
 
 
 axs5[0,0].set_ylabel(r'$-\bar{V}$')
