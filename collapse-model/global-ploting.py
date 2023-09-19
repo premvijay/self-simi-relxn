@@ -47,9 +47,9 @@ fd = 1-fb
 
 #%%
 name = 'cold_vary-s'
-# name = 'shocked_vary-s'
-# name = 'shocked_vary-gam'
-# name = 'shocked_vary-cooling'
+name = 'shocked_vary-s'
+name = 'shocked_vary-gam'
+name = 'shocked_vary-cooling'
 name = 'shocked_vary-lamdish'
 name = 'shocked_vary-lamshsp'
 
@@ -87,7 +87,7 @@ for i,descr in enumerate(descr_list):
     resdf_prof_dm = pd.read_hdf(f'profiles_gasdm{descr:s}.hdf5', key=f'dm/iter{n}', mode='r')
     resdf_traj_dm = pd.read_hdf(f'traj_gasdm{descr:s}.hdf5', key=f'dm/iter{n}', mode='r')
     #resdf_traj_dm_d = pd.read_hdf(f'traj_gasdm{descr:s}_desktop.hdf5', key=f'dm/iter{n}', mode='r')
-    resdf_prof_dmo = pd.read_hdf(f'profiles_gasdm{descr:s}.hdf5', key=f'dm/iter0', mode='r')
+    resdf_prof_dmo = pd.read_hdf(f'profiles_gasdm{descr:s}.hdf5', key=f'dm/iter-1', mode='r')
 
     axs5[0,0].plot(resdf_prof_gas.l, -resdf_prof_gas.Vb, color=color_this, ls='--')
     axs5[0,1].plot(resdf_prof_gas.l, resdf_prof_gas.D, color=color_this, ls='--')
@@ -96,7 +96,7 @@ for i,descr in enumerate(descr_list):
 
     ax6.plot(cumtrapz(1/(resdf_prof_gas.V-de*resdf_prof_gas.l), x=resdf_prof_gas.l), resdf_prof_gas.l[1:], c=color_this, ls=':')
 
-    ax71.plot(resdf_prof_dm.l[1:], resdf_prof_dm.M[1:]/fd, ls='--', color=color_this)
+    ax71.plot(resdf_prof_dmo.l[1:], resdf_prof_dmo.M[1:], ls='--', color=color_this)
 
     n=conv_iter
     resdf_prof_gas = pd.read_hdf(f'profiles_gasdm{descr:s}.hdf5', key=f'gas/iter{n}', mode='r')

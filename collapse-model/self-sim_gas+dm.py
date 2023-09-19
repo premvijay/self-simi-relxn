@@ -169,7 +169,7 @@ def get_soln_gas_full(lamsh):
     bcs[0] = - bcs[0] + de*lamsh
     # print(bcs)
     bcs = np.log(bcs)
-    res_post = solve_ivp(odefunc, (np.log(lamsh),np.log(1e-7)), bcs, method='Radau', max_step=0.05, vectorized=True, events=stop_event)
+    res_post = solve_ivp(odefunc, (np.log(lamsh),np.log(1e-7)), bcs, method='Radau', max_step=0.01, vectorized=True, events=stop_event)
     return res_pre, res_post
 
 def M0_num(lamsh):
@@ -236,8 +236,8 @@ for name in names:
             varypars += ['s']
 
         if name == 'shocked_vary-gam':
-            gam_vals= [5/3,7/5,4/3,]
-            lamshsp_vals = [0.9,0.5,0.3]
+            gam_vals= [2,1.8,5/3,1.5,7/5,4/3,]
+            lamshsp_vals = [1.2,1.05,0.9,0.7,0.5,0.3]
             varypars += ['gam','lamshsp']
 
         if name == 'shocked_vary-cooling':
@@ -293,7 +293,7 @@ for name in names:
             err = 1
             err_tol = 0.01
             conv_iter = 1000
-            for n_i in range(-3, 50):
+            for n_i in range(-5, 50):
                 print('starting iter ', n_i)
                 if n_i>=0:
                     if n_i==0:
@@ -344,7 +344,7 @@ for name in names:
                     print(f'{t_now-t_bef:.4g}s', f'{n_i}th iter gas profiles updated')
                     # print('M', M_tot(1), M_dm(1),M_gas(1))
                 
-                if n_i<=0:
+                if n_i<0:
                     M_tot = M_dmo #lambda lam : M_dm(lam)/fd
 
                 xi_max = np.log(1e-4**upsil)*-3/2/s/1.5
@@ -365,10 +365,11 @@ for name in names:
                 print(f'{t_now-t_bef:.4g}s', f'{n_i}th iter DM trajectory obtained')
 
                 spl_ind = np.where(np.abs(np.diff(resdf_traj_dm.lam))<1e-4)[0][0]
-                spl_rad = resdf_traj_dm.lam[spl_ind]
-                print(s, n_i, spl_rad)
+                spl_rad_i = resdf_traj_dm.lam[spl_ind]
+                print(s, n_i, spl_rad_i)
+                if n_i==-1: spl_rad = spl_rad_i
 
-                Dm_prof_lbins = 300
+                Dm_prof_lbins = 500
                 l_range = np.zeros(Dm_prof_lbins+1)
                 l_range[1:] = np.logspace(-2.5,0, Dm_prof_lbins)
                 M_vals = np.zeros(Dm_prof_lbins+1)
@@ -400,7 +401,7 @@ for name in names:
                     # ax_conv[1].loglog(l_range, iter_change, label=f'n={n_i}')
 
                 M_dm = interp1d(l_range, M_vals, fill_value=np.nan)
-                if n_i<=0:  #Start backreaction at iter 1
+                if n_i<0:  #Start backreaction at iter 0
                     M_dmo = interp1d(l_range, M_vals/(1-fb), fill_value=np.nan)
 
                 resdf_dm = pd.DataFrame(data={'l':l_range, 'M':M_vals,})
@@ -413,7 +414,7 @@ for name in names:
                 if n_i>=0:
                     resdf_prof_gas = pd.read_hdf(f'profiles_gasdm{descr:s}.hdf5', key=f'gas/iter{n_i}', mode='r')
                     resdf_prof_dm = pd.read_hdf(f'profiles_gasdm{descr:s}.hdf5', key=f'dm/iter{n_i}', mode='r')
-                    resdf_prof_dmo = pd.read_hdf(f'profiles_gasdm{descr:s}.hdf5', key=f'dm/iter{0}', mode='r')
+                    resdf_prof_dmo = pd.read_hdf(f'profiles_gasdm{descr:s}.hdf5', key=f'dm/iter{-1}', mode='r')
                     # lamr_full = np.logspace(-2.3,-0.001,400)
                     # lamr = np.logspace(-2.3,-0.01,100)
 
@@ -531,7 +532,7 @@ for i,descr in enumerate(descr_list):
         resdf_prof_dm = pd.read_hdf(f'profiles_gasdm{descr:s}.hdf5', key=f'dm/iter{n}', mode='r')
         resdf_traj_dm = pd.read_hdf(f'traj_gasdm{descr:s}.hdf5', key=f'dm/iter{n}', mode='r')
         #resdf_traj_dm_d = pd.read_hdf(f'traj_gasdm{descr:s}_desktop.hdf5', key=f'dm/iter{n}', mode='r')
-        resdf_prof_dmo = pd.read_hdf(f'profiles_gasdm{descr:s}.hdf5', key=f'dm/iter0', mode='r')
+        resdf_prof_dmo = pd.read_hdf(f'profiles_gasdm{descr:s}.hdf5', key=f'dm/iter-1', mode='r')
 
         if n in plot_iters:
             axs5[0,0].plot(resdf_prof_gas.l, -resdf_prof_gas.Vb, color=color_this)
