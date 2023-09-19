@@ -208,80 +208,11 @@ if name == 'shocked_vary-lamshsp':
     varypars += ['lamshsp']
 
 
-# name = '_cold_vary-s'
-# s_vals = [0.5,1,1.5,2,3,5]
-# varypars += ['s']
-# lamsh = 0.03
-
-# name = '_shocked_vary-s'
-# s_vals = [0.5,1,1.5,2,3,5]
-# varypars += ['s']
-
-# name = '_shocked_vary-s+sh'
-# s_vals = [0.5,1,1.5,2,3,5]
-# lamsh_vals = [0.35,0.32,0.3,0.25,0.2,0.1]
-# varypars += ['s','lamsh']
-
-# name = '_shocked_vary-s+sh+di'
-# s_vals = [0.5,1,1.5,2,]
-# lamsh_vals = [0.35,0.32,0.3,0.25,]
-# lamdi_vals = [0.05*lamsh for lamsh in lamsh_vals]
-# varypars += ['s','lamsh','lamdi']
-
-# name = '_shocked_vary-gam'
-# gam_vals= [5/3,7/5,4/3,]
-# varypars += ['gam']
-
-# name = '_shocked_vary-gam+sh'
-# gam_vals= [5/3,7/5,4/3,]
-# lamsh_vals = [0.35,0.3,0.25]
-# varypars += ['gam','lamsh']
-
-# name = '_shocked_vary-cooling'
-# Lam0_vals = [1e-3,3e-3,1e-2,3e-2,1e-1]
-# varypars += ['Lam0']
-
-# name = '_shocked_vary-cooling_fn'
-# nu_vals = [-1/2,1/2]
-# varypars += ['nu']
-
-# name = '_shocked_vary-lamdi'
-# lamdi_vals = [percent/100*lamsh for percent in [2,5,10,15,25]]
-# varypars += ['lamdi']
-
-# name = '_shocked_vary-lamsh'
-# lamsh_vals = [0.35,0.3,0.25, 0.2]
-# varypars += ['lamsh']
-
-# name = '_shocked_vary-lamsh-di'
-# lamsh_vals = [0.35,0.3,0.25, 0.2]
-# lamdi_vals = [0.05*lamsh for lamsh in lamsh_vals]
-# varypars += ['lamsh','lamdi']
-
-# lamsh_sols = {}
-# lam_atM0_sols = {}
-# lambins = np.linspace(0.01, 0.5, 8)
-
-# for s in s_vals[::]:
-#     t_now = time()
-#     de = 2* (1+s/3) /3
-#     alpha_D = -9/(s+3)
-#     aD, aP, aM = alpha_D, (2*alpha_D+2), alpha_D+3
-#     aD, aP, aM = 0,0,0
-#     print(s, aD, aP, aM)
-
-#     lamshsol = my_bisect(lam_atM0, lambins[0], lambins[-1], xtol=1e-7)#+1e-5
-#     # lamshsol = thetbins[idx_M0neg+1]
-#     t_bef, t_now = t_now, time()
-#     print(f'{t_now-t_bef:.4g}s', f's={s}: root thetsh obtained')
-#     # lamshsol1 = minimize_scalar(M0, method='bounded', bounds=(1.5*np.pi, 1.9*np.pi))
-#     lamsh_sols[s] = lamshsol
-#     lam_atM0_sols[s] = lam_atM0(lamshsol)
-#     print(f's={s}', lamshsol, lam_atM0_sols[s])
-
-
-fig5, axs5 = plt.subplots(2,2, dpi=100, figsize=(12,8), sharex=True)
-fig6, (ax62,ax6) = plt.subplots(1,2, dpi=100, figsize=(14,7))
+fig5, axs5 = plt.subplots(1,2, dpi=100, figsize=(13,6), sharex=True)
+fig51, axs51 = plt.subplots(1,2, dpi=100, figsize=(13,6), sharex=True)
+axs5 = np.vstack([axs5,axs51])
+fig6, ax6 = plt.subplots(1, dpi=100, figsize=(7,7))
+fig62, ax62 = plt.subplots(1, dpi=100, figsize=(7,7))
 
 colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
 
@@ -348,11 +279,14 @@ for i in range(10):
 
     # resdf_prof_gaso_bertshi = pd.read_hdf(f'profiles_gaso_bertshi_s={s:.2g}_gam={gam:.3g}.hdf5', key=f'gas/main', mode='r')
     # resdf_prof_gaso_bertshi = pd.read_hdf(f'profiles_gasdm_shocked_vary-s_lamshsp=0.9_s={s:.2g}_gam={gam:.3g}_lamdish=0.05_Lam0=3.0e-02_nu=0.5.hdf5', key=f'gas/main', mode='r')
-    axs5[0,0].plot(resdf_prof_gaso_bertshi.l, -resdf_prof_gaso_bertshi.Vb, color=color_this, ls='--')
-    axs5[0,1].plot(resdf_prof_gaso_bertshi.l, resdf_prof_gaso_bertshi.D, color=color_this, ls='--')
-    axs5[1,0].plot(resdf_prof_gaso_bertshi.l, resdf_prof_gaso_bertshi.M, color=color_this, ls='--')
-    axs5[1,1].plot(resdf_prof_gaso_bertshi.l, resdf_prof_gaso_bertshi.P, color=color_this, ls='--')
-    print(resdf_prof_gaso_bertshi.l[np.diff(resdf_prof_gaso_bertshi.Vb).argmax()])
+    bertshi_vary = True if name.split('-')[-1] in ['gam','s'] else False
+    color_this_bertshi = color_this if bertshi_vary else 'k'
+    if bertshi_vary or i==0:
+        axs5[0,0].plot(resdf_prof_gaso_bertshi.l, -resdf_prof_gaso_bertshi.Vb, color=color_this_bertshi, ls='--')
+        axs5[0,1].plot(resdf_prof_gaso_bertshi.l, resdf_prof_gaso_bertshi.D, color=color_this_bertshi, ls='--')
+        axs5[1,0].plot(resdf_prof_gaso_bertshi.l, resdf_prof_gaso_bertshi.M, color=color_this_bertshi, ls='--')
+        axs5[1,1].plot(resdf_prof_gaso_bertshi.l, resdf_prof_gaso_bertshi.P, color=color_this_bertshi, ls='--')
+        print(resdf_prof_gaso_bertshi.l[np.diff(resdf_prof_gaso_bertshi.Vb).argmax()])
     # PderD_post = np.gradient(P_post,lamsh_post)/D_post
 
     M_intrp = interp1d(lam_all, M_all, fill_value="extrapolate")
@@ -391,8 +325,9 @@ for i in range(10):
     xio,lamo = cumtrapz(1/(resdf_prof_gaso_bertshi.V-de*resdf_prof_gaso_bertshi.l), x=resdf_prof_gaso_bertshi.l), resdf_prof_gaso_bertshi.l[1:]
     tauo = np.exp(xio)
     lamFo = lamo*tauo**de
-    ax62.plot(xio,lamo, c=color_this, ls='-.')
-    ax6.plot(tauo,lamFo, color=color_this, ls='-.')
+    if bertshi_vary or i==0:
+        ax62.plot(xio,lamo, c=color_this_bertshi, ls='-.')
+        ax6.plot(tauo,lamFo, color=color_this_bertshi, ls='-.')
 
     #trajectory analytical
     thet_range = np.linspace(0.5, 1.2*np.pi,2000)
@@ -414,7 +349,9 @@ for i in range(10):
 
 #Loop ends
 
-axs5[0,0].plot(lam_all,de*lam_all, c='k', ls='--', label='V=0')
+axs5[0,0].plot([],[], c='k', ls='-', label='This work')
+axs5[0,0].plot([],[], c='k', ls='--', label='Bertshinger')
+axs5[0,0].plot(lam_all,de*lam_all, c='k', ls=':', label='V=0')
 
 ax6.legend(loc='best')
 ax6.set_xlabel(r'$\tau$')
@@ -434,6 +371,8 @@ axs5[0,0].set_xscale('log')
 axs5[0,0].set_xlim(1e-5,1)
 axs5[0,0].legend()
 axs5[0,1].legend()
+axs5[0,0].set_xlabel('$\lambda$')
+axs5[0,1].set_xlabel('$\lambda$')
 axs5[1,0].set_xlabel('$\lambda$')
 axs5[1,1].set_xlabel('$\lambda$')
 # axs5[1,2].set_xlabel('$\lambda$')
