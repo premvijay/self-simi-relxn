@@ -255,6 +255,10 @@ def solver_minimize_lam_M0(lamsh):
     res = get_soln_gas_full_tilde(lamsh)[1]
     return np.exp(res.t[-1])+np.exp(res.y[2][-1] + (aM*res.t[-1]))
 
+def shell_velocity_phys_end(lamsh):
+    res = get_soln_gas_full_tilde(lamsh)[1]
+    return np.exp(res.y[0][-1])-de*np.exp(res.t[-1])
+
 #%%
 def solve_bisect(func,bounds):
     b0, b1 = bounds
@@ -290,7 +294,7 @@ def my_bisect(f, a, b, xtol=1e-4):
 #%%
 # thtshsol = fsolve(M0, 1.5*np.pi)
 s = 1
-gam = 1.5
+gam = 1.3334
 s_vals = [0.5,1,1.5,2,3,5]
 
 # #%%
@@ -346,8 +350,9 @@ for s in s_vals[::]:
     print(s, aD, aP, aM)
 
     # lamshsol = my_bisect(lam_atM0, lambins[0], lambins[-1], xtol=1e-8)#+1e-5
-    lamsh_root_res = minimize_scalar(solver_minimize_lam_M0,bracket=(0.02,0.5),tol=1e-12)
-    lamshsol = lamsh_root_res.x
+    # lamsh_root_res = minimize_scalar(solver_minimize_lam_M0,bracket=(0.02,0.5),tol=1e-12)
+    # lamshsol = lamsh_root_res.x
+    lamshsol = bisect(shell_velocity_phys_end, 0.02,0.6, xtol=1e-15)
     # lamshsol = thetbins[idx_M0neg+1]
     t_bef, t_now = t_now, time()
     print(f'{t_now-t_bef:.4g}s', f's={s}: root thetsh obtained')
@@ -357,7 +362,7 @@ for s in s_vals[::]:
     print(f's={s}', lamshsol, lam_atM0_sols[s])
 
 
-#%%
+##%%
 fig5, axs5 = plt.subplots(2,3, dpi=100, figsize=(18,12), sharex=True)
 fig6, (ax62,ax6) = plt.subplots(1,2, dpi=100, figsize=(10,5))
 
@@ -367,7 +372,7 @@ for s in s_vals[::]:
     alpha_D = -9/(s+3)
     aD, aP, aM = alpha_D, 1*(2*alpha_D+2), alpha_D+3
     # aD, aP, aM = 0,0,0
-    lamshsol = lamsh_sols[s] #-1e-8 # 0.338976 #
+    lamshsol = lamsh_sols[s] #+1e-12 # 0.338976 #
     res_pre, res_post = get_soln_gas_full_tilde(lamshsol)
     print(res_post.y[2][-1])
     # print(M0(lamshsol))
