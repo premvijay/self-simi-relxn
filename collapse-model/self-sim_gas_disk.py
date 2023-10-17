@@ -353,7 +353,7 @@ axs5[0,0].plot([],[], c='k', ls='-', label='This work')
 axs5[0,0].plot([],[], c='k', ls='--', label='Bertshinger')
 axs5[0,0].plot(lam_all,de*lam_all, c='k', ls=':', label='V=0')
 
-ax6.legend(loc='best')
+ax6.legend(loc='best',frameon=True, framealpha=0.6)
 ax6.set_xlabel(r'$\tau$')
 ax6.set_ylabel('$\lambda_F$')
 ax6.set_xlim(0,12)
