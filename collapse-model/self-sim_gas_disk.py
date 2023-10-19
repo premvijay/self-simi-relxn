@@ -208,10 +208,10 @@ if name == 'shocked_vary-lamshsp':
     varypars += ['lamshsp']
 
 
-fig5, axs5 = plt.subplots(1,2, dpi=100, figsize=(13,6), sharex=True)
+fig5, axs5 = plt.subplots(1,2, dpi=100, figsize=(10,5), sharex=True)
 fig51, axs51 = plt.subplots(1,2, dpi=100, figsize=(13,6), sharex=True)
 axs5 = np.vstack([axs5,axs51])
-fig6, ax6 = plt.subplots(1, dpi=100, figsize=(7,7))
+fig6, ax6 = plt.subplots(1, dpi=100, figsize=(5,5))
 fig62, ax62 = plt.subplots(1, dpi=100, figsize=(7,7))
 
 colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
@@ -370,33 +370,33 @@ ax62.set_yscale('log')
 axs5[0,0].set_xscale('log')
 axs5[0,0].set_xlim(1e-5,1)
 axs5[0,0].legend()
-axs5[0,1].legend()
+# axs5[0,1].legend()
 axs5[0,0].set_xlabel('$\lambda$')
 axs5[0,1].set_xlabel('$\lambda$')
 axs5[1,0].set_xlabel('$\lambda$')
 axs5[1,1].set_xlabel('$\lambda$')
 # axs5[1,2].set_xlabel('$\lambda$')
 
-if gam==5/3:
-    axs5[0,0].set_xlim(7e-5,1)
-    axs5[0,0].set_ylim(5e-6,1e1)
-    axs5[0,1].set_ylim(1e-1,1e11)
-    axs5[1,0].set_ylim(1e-3,1e1)
-    # axs5[1,1].set_ylim(1e0,1e14)
-    # axs5[0,2].set_ylim(1e-1,1e2)
-    # axs5[1,2].set_ylim(1e-5,5e-1)
-elif gam==4/3:
-    axs5[0,0].set_xlim(1e-5,1)
-    axs5[0,0].set_ylim(5e-6,1e1)
-    axs5[0,1].set_ylim(1e0,1e11)
-    axs5[1,0].set_ylim(1e-2,1e1)
-    axs5[1,1].set_ylim(1e1,1e14)
-    # axs5[0,2].set_ylim(1e0,1e3)
-    # axs5[1,2].set_ylim(1e-2,5e-1)
+# if gam==5/3:
+#     axs5[0,0].set_xlim(7e-5,1)
+#     axs5[0,0].set_ylim(5e-6,1e1)
+#     axs5[0,1].set_ylim(1e-1,1e11)
+#     axs5[1,0].set_ylim(1e-3,1e1)
+#     # axs5[1,1].set_ylim(1e0,1e14)
+#     # axs5[0,2].set_ylim(1e-1,1e2)
+#     # axs5[1,2].set_ylim(1e-5,5e-1)
+# elif gam==4/3:
+#     axs5[0,0].set_xlim(1e-5,1)
+#     axs5[0,0].set_ylim(5e-6,1e1)
+#     axs5[0,1].set_ylim(1e0,1e11)
+#     axs5[1,0].set_ylim(1e-2,1e1)
+#     axs5[1,1].set_ylim(1e1,1e14)
+#     # axs5[0,2].set_ylim(1e0,1e3)
+#     # axs5[1,2].set_ylim(1e-2,5e-1)
 
 axs5[0,0].set_xlim(7e-5,1)
-axs5[0,0].set_ylim(5e-6,1e1)
-axs5[0,1].set_ylim(1e-1,1e11)
+axs5[0,0].set_ylim(5e-5,1e1)
+axs5[0,1].set_ylim(3e-1,3e11)
 axs5[1,0].set_ylim(1e-3,1e1)
 # axs5[1,1].set_ylim(1e0,1e14)
 
