@@ -350,7 +350,7 @@ for i in range(10):
 #Loop ends
 
 axs5[0,0].plot([],[], c='k', ls='-', label='This work')
-axs5[0,0].plot([],[], c='k', ls='--', label='Bertshinger')
+axs5[0,0].plot([],[], c='k', ls='--', label='Bertschinger')
 axs5[0,0].plot(lam_all,de*lam_all, c='k', ls=':', label='V=0')
 
 ax6.legend(loc='best',frameon=True, framealpha=0.6)
