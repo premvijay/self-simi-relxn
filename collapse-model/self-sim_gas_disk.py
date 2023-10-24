@@ -158,13 +158,13 @@ def lam_atM0(lamsh):
 
 #%%
 name = 'cold_vary-s'
-# name = 'shocked_vary-s'
-name = 'shocked_vary-gam'
+name = 'shocked_vary-s'
+# name = 'shocked_vary-gam'
 # name = 'shocked_vary-cooling'
 # name = 'shocked_vary-lamdish'
 # name = 'shocked_vary-lamshsp'
 
-with open(f'{name}-rads.txt', 'tr') as file: rads_list = eval(file.read())
+with open(f'{name}-rads.txt', 'tr') as file: rads_list = np.array(eval(file.read()))
 
 s = 1
 gam = 5/3
@@ -187,8 +187,9 @@ if name == 'cold_vary-s':
     lamdish = 0.5
 
 if name == 'shocked_vary-s':
-    s_vals = [0.5,1,1.5,2,3,]#[:-1]
+    s_vals = [0.5,1,2,]#[:-1]
     varypars += ['s']
+    rads_list = rads_list[[0,1,3]]
 
 if name == 'shocked_vary-gam':
     gam_vals= [2,1.8,5/3,1.5,7/5,4/3,]
