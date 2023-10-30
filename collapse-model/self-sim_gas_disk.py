@@ -214,6 +214,7 @@ fig51, axs51 = plt.subplots(1,2, dpi=100, figsize=(13,6), sharex=True)
 axs5 = np.vstack([axs5,axs51])
 fig6, ax6 = plt.subplots(1, dpi=100, figsize=(5,5))
 fig62, ax62 = plt.subplots(1, dpi=100, figsize=(7,7))
+fig7, ax7 = plt.subplots(1, dpi=100, figsize=(5,5))
 
 colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
 
@@ -269,6 +270,8 @@ for i in range(10):
 
     color_this = colors[i] #plt.cm.turbo(s/4)
 
+    ax7.plot(lam_all,-V_all, color=color_this)
+    ax7.set_xscale('log')
 
     axs5[0,0].plot(lam_all,-Vb_all, color=color_this)
     axs5[0,1].plot(lam_all,D_all, color=color_this, label=plab)
