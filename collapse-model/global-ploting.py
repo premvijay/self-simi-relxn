@@ -53,9 +53,9 @@ name = 'shocked_vary-cooling'
 name = 'shocked_vary-lamdish'
 name = 'shocked_vary-lamshsp'
 
-with open(f'{name}-descr.txt', 'tr') as file: descr_list = eval(file.read())
-with open(f'{name}-plab.txt', 'tr') as file: plab_list = eval(file.read())
-with open(f'{name}-conv_iters.txt', 'tr') as file: conv_iter_list = eval(file.read())
+with open(f'{name}-descr.txt', 'tr') as file: descr_list = eval(file.read())[::]
+with open(f'{name}-plab.txt', 'tr') as file: plab_list = eval(file.read())[::]
+with open(f'{name}-conv_iters.txt', 'tr') as file: conv_iter_list = eval(file.read())[::]
 
 # descr_list = descr_list_dict[name]
 # plab_list= plab_list_dict[name]
@@ -64,7 +64,10 @@ t_now = time()
 # thtshsol = fsolve(M0, 1.5*np.pi)
 # fig4, ax4 = plt.subplots(1, dpi=200, figsize=(7,5))
 fig5, axs5 = plt.subplots(2,2, figsize=(14,10), sharex=True)
-fig6, ax6 = plt.subplots(1)
+# fig5, axs5 = plt.subplots(1,2, dpi=100, figsize=(10,5), sharex=True)
+# fig51, axs51 = plt.subplots(1,2, dpi=100, figsize=(13,6), sharex=True)
+# axs5 = np.vstack([axs5,axs51])
+fig6, ax6 = plt.subplots(1, dpi=100, figsize=(5,5))
 
 fig7, (ax71,ax72) = plt.subplots(1,2, figsize=(14,7))
 # fig8, (ax8,ax82) = plt.subplots(2, figsize=(7,10))
@@ -90,10 +93,11 @@ for i,descr in enumerate(descr_list):
     resdf_prof_dmo = pd.read_hdf(f'profiles_gasdm{descr:s}.hdf5', key=f'dm/iter-1', mode='r')
 
     axs5[0,0].plot(resdf_prof_gas.l, -resdf_prof_gas.Vb, color=color_this, ls='--')
-    axs5[0,1].plot(resdf_prof_gas.l, resdf_prof_gas.D, color=color_this, ls='--')
-    axs5[1,0].plot(resdf_prof_gas.l, resdf_prof_gas.M/resdf_prof_gas.M[0], ls='--', color=color_this)
+    axs5[0,1].plot(resdf_prof_gas.l, resdf_prof_gas.D*fb, color=color_this, ls='--')
+    axs5[1,0].plot(resdf_prof_gas.l, resdf_prof_gas.M*fb, ls='--', color=color_this)
     axs5[1,1].plot(resdf_prof_gas.l, resdf_prof_gas.P, color=color_this, ls='--')
 
+    # ax6.plot(resdf_traj_dm.xi,resdf_traj_dm.lam, color=color_this, ls='--')
     ax6.plot(cumtrapz(1/(resdf_prof_gas.V-de*resdf_prof_gas.l), x=resdf_prof_gas.l), resdf_prof_gas.l[1:], c=color_this, ls=':')
 
     ax71.plot(resdf_prof_dmo.l[1:], resdf_prof_dmo.M[1:], ls='--', color=color_this)
@@ -107,7 +111,7 @@ for i,descr in enumerate(descr_list):
 
     axs5[0,0].plot(resdf_prof_gas.l, -resdf_prof_gas.Vb, color=color_this)
     axs5[0,1].plot(resdf_prof_gas.l, resdf_prof_gas.D, color=color_this)
-    axs5[1,0].plot(resdf_prof_gas.l, resdf_prof_gas.M/resdf_prof_gas.M[0], color=color_this)
+    axs5[1,0].plot(resdf_prof_gas.l, resdf_prof_gas.M, color=color_this)
     axs5[1,1].plot(resdf_prof_gas.l, resdf_prof_gas.P, color=color_this, label=plab)
 
     # axs5[1,0].plot(resdf_prof_dm.l, resdf_prof_dm.M, ls='dashdot', color=color_this)
