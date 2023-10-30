@@ -15,8 +15,8 @@ import dill
 # %%
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-# plt.style.use('seaborn-whitegrid')
-plt.style.use('default')
+plt.style.use('seaborn-whitegrid')
+# plt.style.use('default')
 
 #%%
 mpl.rcParams['xtick.direction'] = "in"
@@ -244,3 +244,73 @@ fig6.savefig(f'trajectory_gasdm_{name}.pdf', bbox_inches='tight')
 fig7.savefig(f'relx_reln_{name}.pdf', bbox_inches='tight')
 
 #%%
+
+
+#%%
+
+#%%
+colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
+Mta = (3*np.pi/4)**2
+fb = 0.156837
+fd = 1-fb
+
+fig5, axs5 = plt.subplots(2,3, figsize=(15,12), sharex=True, sharey='row')
+
+names = ['shocked_vary-s', 'shocked_vary-lamshsp', 'shocked_vary-gam']
+sel_inds = [[0,3],[0,2,5],[0,3,5]]
+
+for j in range(3):
+    name = names[j]
+    subsel = sel_inds[j]
+    with open(f'{name}-descr.txt', 'tr') as file: descr_list = np.asarray(eval(file.read()))[subsel]
+    with open(f'{name}-plab.txt', 'tr') as file: plab_list = np.asarray(eval(file.read()))[subsel]
+    with open(f'{name}-conv_iters.txt', 'tr') as file: conv_iter_list = np.asarray(eval(file.read()))[subsel]
+
+    for i,descr in enumerate(descr_list):
+        # s=float(descr.split('_')[4][2:])
+        for value in descr.split('_')[3:]: exec(value) 
+        de=2* (1+s/3) /3
+        plab = plab_list[i]
+        conv_iter = conv_iter_list[i]
+        color_this = colors[i]
+        linestyles= [':', '--', '-','-.']
+
+        n=0
+        resdf_prof_gas = pd.read_hdf(f'profiles_gasdm{descr:s}.hdf5', key=f'gas/iter{n}', mode='r')
+
+        axs5[0,j].plot(resdf_prof_gas.l, -resdf_prof_gas.Vb, color=color_this, ls='--')
+        axs5[1,j].plot(resdf_prof_gas.l, resdf_prof_gas.D*fb*resdf_prof_gas.l**0, color=color_this, ls='--')
+
+        n=conv_iter
+        resdf_prof_gas = pd.read_hdf(f'profiles_gasdm{descr:s}.hdf5', key=f'gas/iter{n}', mode='r')
+
+        axs5[0,j].plot(resdf_prof_gas.l, -resdf_prof_gas.Vb, color=color_this)
+        axs5[1,j].plot(resdf_prof_gas.l, resdf_prof_gas.D*resdf_prof_gas.l**0, color=color_this, label=plab)
+
+
+        axs5[1,j].legend(frameon=True, framealpha=0.6) #loc='lower left')
+
+
+axs5[0,0].plot([], ls='solid', color='k', label='with dark halo')
+# axs5[1,0].plot([], ls='dashdot', color='k', label='DM')
+axs5[0,0].plot([], ls='dashed', color='k', label='w/o dark halo')
+axs5[0,0].legend(loc='lower right',frameon=True, framealpha=0.6)
+
+
+axs5[0,0].set_xscale('log')
+axs5[0,0].set_xlim(3e-4,1)
+axs5[1,0].set_ylim(1e-1,1e8)
+
+axs5[0,0].set_ylabel(r'$-\bar{V}$')
+axs5[1,0].set_ylabel(r'$D$')
+
+axs5[0,0].set_yscale('log')
+axs5[1,0].set_yscale('log')
+plt.subplots_adjust(wspace=0.03, hspace=0.03)
+
+axs5[1,0].set_xlabel('$\lambda$')
+axs5[1,1].set_xlabel('$\lambda$')
+axs5[1,2].set_xlabel('$\lambda$')
+
+fig5.savefig(f'profiles_gas_w-wo_halo_all.pdf', bbox_inches='tight')
+
