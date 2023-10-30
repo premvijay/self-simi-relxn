@@ -78,6 +78,11 @@ for i,descr in enumerate(descr_list):
     de=2* (1+s/3) /3
     t_bef, t_now = t_now, time()
     plab = plab_list[i]
+    if 'gam'==name.split('-')[-1]: plab=r'$\gamma=$'+f"{gam:.3g}"
+    # if 's'==name.split('-')[-1]: plab=f"s={s}"
+    if 'lamshsp'==name.split('-')[-1]: plab=r'$R_s=$'+f'{lamshsp:g}'#plab+=r'$\lambda_s=$'+f'{lamshsp*100:g} '+r'$\%~ \lambda_{sp}$'
+    # if 'lamdish'==name.split('-')[-1]: plab=r'$\lambda_d=$'+f'{lamdish*100:g} '+r'$\%~ \lambda_s$'
+    # if 'cooling'==name.split('-')[-1]: plab=r'$\Lambda_0=$'+f'{Lam0:g} '
     conv_iter = conv_iter_list[i]
     plot_iters = [0,conv_iter]
     # err_tol = 0.01
@@ -176,9 +181,10 @@ ax71.plot([],[], ls='-', c='k', label='DM')
 ax71.plot([],[], ls='-.', c='k', label='Gas')
 ax71.plot([],[], ls='--', c='k', label='DM in DMO' )
 
-ax71.set_xlabel(r'$r/r_{\rm{ta}}$')
+ax71.set_xlabel(r'$r/r_{\cap}$')
 ax71.set_ylabel(r'$\mathcal{M}$')
 ax71.set_xlim(5e-4,1e0)
+ax71.set_ylim(5e-2,6e0)
 
 # ax72.plot(MiMf,1+0.33*(MiMf-1)-0.02,'k:',label='$q=0.33$, $q_0=0.02$')
 
@@ -186,8 +192,8 @@ ax72.set_xlabel('$M_i/M_f$')
 ax72.set_ylabel('$r_f/r_i$')
 
 # fig7.colorbar(cplot, ax=ax72,label=r'$r_f/r_{\rm{ta}}$')
-ax71.legend()
-ax72.legend()
+ax71.legend(frameon=True, framealpha=0.6)
+ax72.legend(frameon=True, framealpha=0.6)
 
 # axs5[1,0].plot(dmo_prfl['l'], dmo_prfl['M']*Mta, color='k', ls='dashed')
 # axs5[1,0].plot(resdf_prof_dmo.l, resdf_prof_dmo.M, color='purple', ls='dashed')
@@ -238,10 +244,12 @@ ax6.set_xlabel(r'$\xi$')
 ax6.set_ylabel(r'$\lambda$')
 ax6.legend(loc='upper right')
 
-fig5.savefig(f'profiles_gas_{name}.pdf', bbox_inches='tight')
-fig6.savefig(f'trajectory_gasdm_{name}.pdf', bbox_inches='tight')
+# fig5.savefig(f'profiles_gas_{name}.pdf', bbox_inches='tight')
+# fig6.savefig(f'trajectory_gasdm_{name}.pdf', bbox_inches='tight')
 
 fig7.savefig(f'relx_reln_{name}.pdf', bbox_inches='tight')
+plt.close(fig5)
+plt.close(fig6)
 
 #%%
 
