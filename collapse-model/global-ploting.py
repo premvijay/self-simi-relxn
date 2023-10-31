@@ -69,7 +69,8 @@ fig5, axs5 = plt.subplots(2,2, figsize=(14,10), sharex=True)
 # axs5 = np.vstack([axs5,axs51])
 fig6, ax6 = plt.subplots(1, dpi=100, figsize=(5,5))
 
-fig7, (ax71,ax72) = plt.subplots(1,2, figsize=(14,7))
+fig7, (ax71,ax72) = plt.subplots(2,1, figsize=(5,10))
+# fig7, (ax71,ax72) = plt.subplots(1,2, figsize=(14,7))
 # fig8, (ax8,ax82) = plt.subplots(2, figsize=(7,10))
 
 for i,descr in enumerate(descr_list):
@@ -193,7 +194,7 @@ ax72.set_ylabel('$r_f/r_i$')
 
 # fig7.colorbar(cplot, ax=ax72,label=r'$r_f/r_{\rm{ta}}$')
 ax71.legend(frameon=True, framealpha=0.6)
-ax72.legend(frameon=True, framealpha=0.6)
+ax72.legend(loc='lower right', frameon=True, framealpha=0.6)
 
 # axs5[1,0].plot(dmo_prfl['l'], dmo_prfl['M']*Mta, color='k', ls='dashed')
 # axs5[1,0].plot(resdf_prof_dmo.l, resdf_prof_dmo.M, color='purple', ls='dashed')
