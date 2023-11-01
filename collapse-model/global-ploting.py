@@ -27,7 +27,7 @@ mpl.rcParams['ytick.right'] = True
 mpl.rcParams['xtick.labelsize'] = 16
 mpl.rcParams['ytick.labelsize'] = 16
 mpl.rcParams['axes.labelsize'] = 22
-mpl.rcParams['legend.fontsize'] = 18
+mpl.rcParams['legend.fontsize'] = 15
 #mpl.rcParams['figure.constrained_layout.use'] = True
 mpl.rcParams['xtick.minor.visible'] = True
 mpl.rcParams['ytick.minor.visible'] = True
@@ -70,13 +70,13 @@ fig5, axs5 = plt.subplots(2,2, figsize=(14,10), sharex=True)
 # axs5 = np.vstack([axs5,axs51])
 fig6, ax6 = plt.subplots(1, dpi=100, figsize=(5,5))
 
-# fig7, (ax71,ax72) = plt.subplots(2,1, figsize=(5,10))
-fig7, (ax71,ax72) = plt.subplots(1,2, figsize=(14,7))
+fig7, (ax71,ax72) = plt.subplots(2,1, figsize=(5,10))
+# fig7, (ax71,ax72) = plt.subplots(1,2, figsize=(14,7))
 # fig8, (ax8,ax82) = plt.subplots(2, figsize=(7,10))
 
 for i,descr in enumerate(descr_list):
-    if i!=1:
-        continue
+    # if i!=1:
+    #     continue
     # s=float(descr.split('_')[4][2:])
     for value in descr.split('_')[3:]: exec(value) 
     de=2* (1+s/3) /3
@@ -92,7 +92,7 @@ for i,descr in enumerate(descr_list):
     # err_tol = 0.01
     # color_this = plt.cm.turbo(n/30)
     color_this = colors[i]
-    color_this = 'k'
+    # color_this = 'k'
     linestyles= [':', '--', '-','-.']
 
     n=0
@@ -127,7 +127,7 @@ for i,descr in enumerate(descr_list):
     # axs5[1,0].plot(resdf_prof_dm.l, resdf_prof_dm.M, ls='dashdot', color=color_this)
 
     ax71.plot(resdf_prof_dm.l[1:], resdf_prof_dm.M[1:], ls='-', c=color_this)
-    ax71.plot(resdf_prof_dm.l[1:], resdf_prof_dm.M[1:]/fd*fb, ls=':', c=color_this)
+    # ax71.plot(resdf_prof_dm.l[1:], resdf_prof_dm.M[1:]/fd*fb, ls=':', c=color_this)
     ax71.plot(resdf_prof_gas.l, resdf_prof_gas.M, ls='-.', c=color_this)
     # ax71.plot(ri_pre,Mdr_dmo/Mta, ls='--', c=color_this)
     # plt.plot(r,Mdr+Mbr)
@@ -177,16 +177,16 @@ for i,descr in enumerate(descr_list):
     ax72.errorbar(MiMf[::20],rfri[::20], xerr=MiMf_err[::20], yerr=rfri_err[::20],fmt='.', c=color_this)
     # ax72.fill_between(MiMf, rfri_min, rfri_max, color=color_this, alpha=0.3)  
     # ax71.scatter(MiMf[60:-50],rfri[60:-50],c=rf[60:-50])
-    cplot = ax72.scatter(MiMf,rfri,c=rf, s=60, cmap='nipy_spectral', norm=LogNorm(8e-3,1e0))
+    # cplot = ax72.scatter(MiMf,rfri,c=rf, s=60, cmap='nipy_spectral', norm=LogNorm(8e-3,1e0))
     # plab=f'n={n}'
-    # ax72.plot(MiMf,rfri, label=plab, c=color_this, lw=3)
+    ax72.plot(MiMf,rfri, label=plab, c=color_this, lw=2)
     # ax71.scatter(MiMf[100:],rfri[100:],c=np.log10(rf[100:]), cmap='nipy_spectral')
     # ax71.plot(MiMf,1+0.25*(MiMf-1),'k',label='$q=0.25$')
 
 ax71.plot([],[], ls='-', c='k', label=r'$M_d$') #'DM')
 ax71.plot([],[], ls='--', c='k', label=r'$f_d M_{\rm DMo}$')
 ax71.plot([],[], ls='-.', c='k', label=r'$M_g$')
-ax71.plot([],[], ls=':', c='k', label=r'$f_b M_{\rm DMo}$')
+# ax71.plot([],[], ls=':', c='k', label=r'$f_b M_{\rm DMo}$')
 ax71.axhline(Mta, lw=3, c='k', label=r'$\bar{M}_{\cap}$')
 
 ax71.set_xlabel(r'$\lambda = r/r_{\cap}$')
@@ -200,9 +200,10 @@ ax72.set_xlabel('$M_i/M_f$')
 ax72.set_ylabel('$r_f/r_i$')
 
 # formatter = mpl.ticker.LogFormatter(10, labelOnlyBase=True)
-fig7.colorbar(cplot, ax=ax72,label=r'$r_f/r_{\cap}$')#, ticks=[0.01, 0.1, 0.5, 1,10], format=formatter)
-ax71.legend(frameon=True, framealpha=0.9, handlelength=2)
-# ax72.legend(loc='lower right', frameon=True, framealpha=0.6, handlelength=1)
+# fig7.colorbar(cplot, ax=ax72,label=r'$r_f/r_{\cap}$')#, ticks=[0.01, 0.1, 0.5, 1,10], format=formatter)
+if name=='shocked_vary-s':
+    ax71.legend(frameon=True, framealpha=0.9, handlelength=2)
+ax72.legend(loc='best', frameon=True, framealpha=0.6, handlelength=0.7)
 
 # axs5[1,0].plot(dmo_prfl['l'], dmo_prfl['M']*Mta, color='k', ls='dashed')
 # axs5[1,0].plot(resdf_prof_dmo.l, resdf_prof_dmo.M, color='purple', ls='dashed')
@@ -256,8 +257,8 @@ ax6.legend(loc='upper right')
 # fig5.savefig(f'profiles_gas_{name}.pdf', bbox_inches='tight')
 # fig6.savefig(f'trajectory_gasdm_{name}.pdf', bbox_inches='tight')
 
-# fig7.savefig(f'relx_reln_{name}.pdf', bbox_inches='tight')
-fig7.savefig(f'relx_reln_ref.pdf', bbox_inches='tight')
+fig7.savefig(f'relx_reln_{name}.pdf', bbox_inches='tight')
+# fig7.savefig(f'relx_reln_ref.pdf', bbox_inches='tight')
 plt.close(fig5)
 plt.close(fig6)
 
