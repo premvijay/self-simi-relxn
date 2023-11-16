@@ -98,7 +98,7 @@ for i,descr in enumerate(descr_list):
     n=0
     resdf_prof_gas = pd.read_hdf(f'profiles_gasdm{descr:s}.hdf5', key=f'gas/iter{n}', mode='r')
     resdf_prof_dm = pd.read_hdf(f'profiles_gasdm{descr:s}.hdf5', key=f'dm/iter{n}', mode='r')
-    resdf_traj_dm = pd.read_hdf(f'traj_gasdm{descr:s}.hdf5', key=f'dm/iter{n}', mode='r')
+    # resdf_traj_dm = pd.read_hdf(f'traj_gasdm{descr:s}.hdf5', key=f'dm/iter{n}', mode='r')
     #resdf_traj_dm_d = pd.read_hdf(f'traj_gasdm{descr:s}_desktop.hdf5', key=f'dm/iter{n}', mode='r')
     resdf_prof_dmo = pd.read_hdf(f'profiles_gasdm{descr:s}.hdf5', key=f'dm/iter-1', mode='r')
 
@@ -115,7 +115,7 @@ for i,descr in enumerate(descr_list):
     n=conv_iter
     resdf_prof_gas = pd.read_hdf(f'profiles_gasdm{descr:s}.hdf5', key=f'gas/iter{n}', mode='r')
     resdf_prof_dm = pd.read_hdf(f'profiles_gasdm{descr:s}.hdf5', key=f'dm/iter{n}', mode='r')
-    resdf_traj_dm = pd.read_hdf(f'traj_gasdm{descr:s}.hdf5', key=f'dm/iter{n}', mode='r')
+    # resdf_traj_dm = pd.read_hdf(f'traj_gasdm{descr:s}.hdf5', key=f'dm/iter{n}', mode='r')
     #resdf_traj_dm_d = pd.read_hdf(f'traj_gasdm{descr:s}_desktop.hdf5', key=f'dm/iter{n}', mode='r')
     # resdf_prof_dmo = pd.read_hdf(f'profiles_gasdm{descr:s}.hdf5', key=f'dm/iter0', mode='r')
 
@@ -137,7 +137,7 @@ for i,descr in enumerate(descr_list):
 
     # axs5[1,0].plot(lam_all,M_all+M_dm(lam_all), color=color_this, ls='dashed')
 
-    ax6.plot(resdf_traj_dm.xi,resdf_traj_dm.lam, color=color_this, label=plab)
+    # ax6.plot(resdf_traj_dm.xi,resdf_traj_dm.lam, color=color_this, label=plab)
     # ax6.plot(resdf_traj_dm_d.xi,resdf_traj_dm_d.lam, label=f'n={n}_desktop')
 
     # V_intrp = interp1d(resdf_prof_gas.l, resdf_prof_gas.V, fill_value=np.nan)
@@ -191,8 +191,9 @@ ax71.axhline(Mta, lw=3, c='k', label=r'$\bar{M}_{\cap}$')
 
 ax71.set_xlabel(r'$\lambda = r/r_{\cap}$')
 ax71.set_ylabel(r'$\mathcal{M}$')
-ax71.set_xlim(5e-4,1e0)
+ax71.set_xlim(5e-4,1.3e0)
 ax71.set_ylim(5e-2,7e0)
+ax72.set_ylim(0.75,1.05)
 
 # ax72.plot(MiMf,1+0.33*(MiMf-1)-0.02,'k:',label='$q=0.33$, $q_0=0.02$')
 
@@ -203,6 +204,10 @@ ax72.set_ylabel('$r_f/r_i$')
 # fig7.colorbar(cplot, ax=ax72,label=r'$r_f/r_{\cap}$')#, ticks=[0.01, 0.1, 0.5, 1,10], format=formatter)
 if name=='shocked_vary-s':
     ax71.legend(frameon=True, framealpha=0.9, handlelength=2)
+    ax72.text(0.6,1,'$R_s=0.9$', fontsize=15)
+if name=='cold_vary-s':
+    ax72.text(0.6,1,'$R_s=0.1$', fontsize=15)
+
 ax72.legend(loc='best', frameon=True, framealpha=0.6, handlelength=0.7)
 
 # axs5[1,0].plot(dmo_prfl['l'], dmo_prfl['M']*Mta, color='k', ls='dashed')
