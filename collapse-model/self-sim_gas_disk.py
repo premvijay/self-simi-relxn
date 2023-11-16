@@ -221,9 +221,10 @@ colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
 for i in range(10):
     plab=''
     try:
-        if 'gam' in varypars: gam = gam_vals[i]; plab+=r'$\gamma=$'+f"{gam:.3g}, "
+        if 'gam' in varypars: gam = gam_vals[i]; plab+=r'$\gamma=$'+f"{gam:.3g}"
         if 's' in varypars: s = s_vals[i]; plab+=f"s={s} "
-        if 'lamshsp' in varypars[:1]: lamshsp = lamshsp_vals[i]; plab+=r'$R_s=$'+f'{lamshsp:g}'#plab+=r'$\lambda_s=$'+f'{lamshsp*100:g} '+r'$\%~ \lambda_{sp}$'
+        if 'lamshsp' in varypars: lamshsp = lamshsp_vals[i]
+        if 'lamshsp' in varypars[:1]: plab+=r'$R_s=$'+f'{lamshsp:g}'#plab+=r'$\lambda_s=$'+f'{lamshsp*100:g} '+r'$\%~ \lambda_{sp}$'
         if 'lamdish' in varypars: lamdish = lamdish_vals[i]; plab+=r'$\lambda_d=$'+f'{lamdish*100:g} '+r'$\%~ \lambda_s$'
         if 'Lam0' in varypars: Lam0 = Lam0_vals[i]; plab+=r'$\Lambda_0=$'+f'{Lam0:g} '
         # if 'nu' in varypars: nu = nu_vals[i]; plab+=r'$\nu=$'+f'{nu} '
