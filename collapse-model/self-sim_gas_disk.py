@@ -410,7 +410,7 @@ axs5[1,0].set_ylim(1e-3,1e1)
 # axs5[1,1].set_ylim(1e0,1e14)
 
 
-axs5[0,0].set_ylabel(r'$-\bar{V}$')
+axs5[0,0].set_ylabel(r'$\bar{V} \equiv d \lambda/d \xi = V - \delta \lambda$')
 axs5[0,1].set_ylabel('D')
 axs5[1,0].set_ylabel('M')
 axs5[1,1].set_ylabel('P')
