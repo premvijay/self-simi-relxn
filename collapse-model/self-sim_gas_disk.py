@@ -223,7 +223,7 @@ for i in range(10):
     try:
         if 'gam' in varypars: gam = gam_vals[i]; plab+=r'$\gamma=$'+f"{gam:.3g}, "
         if 's' in varypars: s = s_vals[i]; plab+=f"s={s} "
-        if 'lamshsp' in varypars: lamshsp = lamshsp_vals[i]; plab+=r'$R_s=$'+f'{lamshsp:g}'#plab+=r'$\lambda_s=$'+f'{lamshsp*100:g} '+r'$\%~ \lambda_{sp}$'
+        if 'lamshsp' in varypars[:1]: lamshsp = lamshsp_vals[i]; plab+=r'$R_s=$'+f'{lamshsp:g}'#plab+=r'$\lambda_s=$'+f'{lamshsp*100:g} '+r'$\%~ \lambda_{sp}$'
         if 'lamdish' in varypars: lamdish = lamdish_vals[i]; plab+=r'$\lambda_d=$'+f'{lamdish*100:g} '+r'$\%~ \lambda_s$'
         if 'Lam0' in varypars: Lam0 = Lam0_vals[i]; plab+=r'$\Lambda_0=$'+f'{Lam0:g} '
         # if 'nu' in varypars: nu = nu_vals[i]; plab+=r'$\nu=$'+f'{nu} '
@@ -357,11 +357,11 @@ axs5[0,0].plot([],[], c='k', ls='-', label='This work')
 axs5[0,0].plot([],[], c='k', ls='--', label='Bertschinger')
 axs5[0,0].plot(lam_all,de*lam_all, c='k', ls=':', label='V=0')
 
-ax6.legend(loc='best',frameon=True, framealpha=0.6)
+# ax6.legend(loc='best',frameon=True, framealpha=0.6)
 ax6.set_xlabel(r'$\tau$')
 ax6.set_ylabel('$\lambda_F$')
 ax6.set_xlim(0,12)
-ax6.set_ylim(0.0001,1.1)
+ax6.set_ylim(0.00008,1.1)
 # ax6.set_xscale('log')
 ax6.set_yscale('log')
 
@@ -373,7 +373,11 @@ ax62.set_yscale('log')
     
 axs5[0,0].set_xscale('log')
 axs5[0,0].set_xlim(1e-5,1)
-axs5[0,0].legend()
+if name in ['shocked_vary-s','shocked_vary-lamshsp', 'shocked_vary-gam']:
+    axs5[0,0].legend(loc='best', frameon=True, framealpha=0.6, handlelength=1)
+axs5[0,1].legend(loc='best', frameon=True, framealpha=0.6, handlelength=0.7)
+if name=='cold_vary-s':
+    axs5[0,1].text(1e-3,1e9,'$R_s=0.1$', fontsize=15)
 # axs5[0,1].legend()
 axs5[0,0].set_xlabel('$\lambda$')
 axs5[0,1].set_xlabel('$\lambda$')
