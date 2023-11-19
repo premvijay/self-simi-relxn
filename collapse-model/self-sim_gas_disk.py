@@ -351,16 +351,21 @@ for i in range(10):
     # D_dmo = interp1d(dmo_prfl['l'].iloc[1:], dmo_prfl['rho'].iloc[1:], fill_value="extrapolate")
 
     # axs5[1,0].plot(lam_all, M_dmo(lam_all), color=color_this, ls='dashed')
+    if name.split('_')[-1] =='vary-s':
+        axs5[0,0].plot(lam_all,de*lam_all, c=color_this, ls=':')
 
 #Loop ends
 
 axs5[0,0].plot([],[], c='k', ls='-', label='This work')
 axs5[0,0].plot([],[], c='k', ls='--', label='Bertschinger')
-axs5[0,0].plot(lam_all,de*lam_all, c='k', ls=':', label='V=0')
+if name.split('_')[-1] !='vary-s':
+    axs5[0,0].plot(lam_all,de*lam_all, c='k', ls=':', label='V=0')
+else:
+    axs5[0,0].plot([],[], c='k', ls=':', label='V=0')
 
 # ax6.legend(loc='best',frameon=True, framealpha=0.6)
 ax6.set_xlabel(r'$\tau \equiv t/t_{\cap}$')
-ax6.set_ylabel('$\lambda^*\equiv r/r_{\cap}(t=t_{\cap})$')
+ax6.set_ylabel(r'$\lambda^*\equiv r/r_{\cap}(t=t_{\cap})$')
 ax6.set_xlim(0,12)
 ax6.set_ylim(0.00008,1.1)
 # ax6.set_xscale('log')
@@ -374,7 +379,7 @@ ax62.set_yscale('log')
     
 axs5[0,0].set_xscale('log')
 axs5[0,0].set_xlim(1e-5,1)
-if name in ['shocked_vary-s','shocked_vary-lamshsp', 'shocked_vary-gam']:
+if name in ['shocked_vary-s','shocked_vary-lamshsp', 'shocked_vary-gam','cold_vary-s']:
     axs5[0,0].legend(loc='best', frameon=True, framealpha=0.6, handlelength=1)
 axs5[0,1].legend(loc='best', frameon=True, framealpha=0.6, handlelength=0.7)
 if name=='cold_vary-s':
@@ -410,7 +415,7 @@ axs5[1,0].set_ylim(1e-3,1e1)
 # axs5[1,1].set_ylim(1e0,1e14)
 
 
-axs5[0,0].set_ylabel(r'$\bar{V} \equiv d \lambda/d \xi = V - \delta \lambda$')
+axs5[0,0].set_ylabel(r'-$\bar{V} \equiv -d \lambda/d \xi = -V + \delta \lambda$')
 axs5[0,1].set_ylabel('D')
 axs5[1,0].set_ylabel('M')
 axs5[1,1].set_ylabel('P')
@@ -425,6 +430,9 @@ ax62.set_xlim(0,5)
 # axs5[0,2].set_yscale('log')
 # axs5[1,2].set_yscale('log')
 
+if name in ['shocked_vary-gam','shocked_vary-cooling']:
+    axs5[0,0].set_ylabel(r'-$\bar{V}$')
+    ax6.set_ylabel(r'$\lambda^*$')
 # axs5[1,0].xaxis.set_minor_locator(mpl.ticker.LogLocator(base=10,subs=np.arange(2, 10)))
 # axs5[1,0].xaxis.get_ticklocs(minor=True)
 # axs5[1,0].minorticks_on()
