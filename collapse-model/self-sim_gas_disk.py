@@ -433,10 +433,16 @@ ax62.set_xlim(0,5)
 if name in ['shocked_vary-gam','shocked_vary-cooling']:
     axs5[0,0].set_ylabel(r'-$\bar{V}$')
     ax6.set_ylabel(r'$\lambda^*$')
-# axs5[1,0].xaxis.set_minor_locator(mpl.ticker.LogLocator(base=10,subs=np.arange(2, 10)))
-# axs5[1,0].xaxis.get_ticklocs(minor=True)
-# axs5[1,0].minorticks_on()
-# axs5[1,0].xaxis.set_tick_params(which='minor', bottom=True)
+# axs5[0,0].xaxis.set_minor_locator(mpl.ticker.LogLocator(base=10,subs=np.arange(-4, 1)))
+# axs5[0,0].xaxis.get_ticklocs(minor=True)
+# axs5[0,0].minorticks_on()
+# axs5[0,0].xaxis.set_tick_params(which='minor', bottom=True)
+
+# # Additional lines to set major xticks
+# axs5[0, 0].xaxis.set_major_locator(mpl.ticker.LogLocator(base=10, subs=np.arange(-4, 1,0.01)))
+# axs5[0, 0].xaxis.get_ticklocs()
+
+axs5[0,0].set_xticks([1e-4,1e-3,1e-2,1e-1,1])
 
 fig5.tight_layout()
 fig6.tight_layout()
