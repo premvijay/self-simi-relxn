@@ -218,7 +218,7 @@ fig7, ax7 = plt.subplots(1, dpi=100, figsize=(5,5))
 
 colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
 
-for i in range(10):
+for i in range(2):
     plab=''
     try:
         if 'gam' in varypars: gam = gam_vals[i]; plab+=r'$\gamma=$'+f"{gam:.3g}"
@@ -508,11 +508,15 @@ plt.plot(t_anlt,r_anlt, lw=1)
 plt.grid(visible=True,axis='y', which='minor', color='k', linestyle='-', alpha=0.2)
 plt.minorticks_on()
 
+plt.plot(ts,rs,c='k')
+# plt.plot(ts,rs*lamdi,c='k',ls='--')
+
 plt.xlim(0,10)
 # plt.ylim(3e-2,1e1)
+# plt.xscale('log')
 plt.yscale('log')
 plt.ylabel('r')
 plt.xlabel('t')
-plt.savefig(f'Eds-gas-{gam:.02f}_trajectory_phys{name}.pdf')
+plt.savefig(f'Eds-gas-{gam:.02f}_trajectory_phys_ref.pdf')
 
 #%%
