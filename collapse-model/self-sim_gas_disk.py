@@ -452,6 +452,11 @@ fig6.savefig(f'Eds-gaso_trajectory_{name}.pdf')
 # axs5[0,0].set_xlim(1e-6,1)
 # axs5[1,0].set_ylim(1e-4,1e1)
 
+# plt.close(fig6)
+plt.close(fig62)
+plt.close(fig51)
+plt.close(fig7)
+
 
 
 #%%
