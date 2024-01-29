@@ -10,14 +10,37 @@ from time import time
 # %%
 
 # %%
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+from matplotlib.colors import LogNorm
+plt.style.use('seaborn-darkgrid')
+# plt.style.use('default')
+
+#%%
+mpl.rcParams['xtick.direction'] = "in"
+mpl.rcParams['ytick.direction'] = "in"
+mpl.rcParams['xtick.top'] = True
+mpl.rcParams['ytick.right'] = True
+mpl.rcParams['xtick.labelsize'] = 16
+mpl.rcParams['ytick.labelsize'] = 16
+mpl.rcParams['axes.labelsize'] = 22
+mpl.rcParams['legend.fontsize'] = 15
+#mpl.rcParams['figure.constrained_layout.use'] = True
+mpl.rcParams['xtick.minor.visible'] = True
+mpl.rcParams['ytick.minor.visible'] = True
+mpl.rcParams['xtick.major.size'] = 6
+mpl.rcParams['xtick.minor.size'] = 3
+mpl.rcParams['ytick.major.size'] = 6
+mpl.rcParams['ytick.minor.size'] = 3
 
 # %%
 s = 1
-fig4, (ax4,ax41) = plt.subplots(2, dpi=200, figsize=(10,12), sharex=True)
+fig4, ax4 = plt.subplots(1, dpi=200, figsize=(10,6))
+fig41, ax41 = plt.subplots(1, dpi=200, figsize=(10,6))
 fig5, (ax5,ax6) = plt.subplots(1,2, dpi=200, figsize=(14,7))
 
 t_now = time()
-for s in [0.5,1,1.5,2,3][::]:
+for s in [0.5,1,1.5,2,3][1:2:]:
     de = 2* (1+s/3) /3
     upsil = 1 if s >= 3/2 else 3*s/(s+3)
 
@@ -31,7 +54,7 @@ for s in [0.5,1,1.5,2,3][::]:
 
     M_func = M_pred
 
-    color_this = plt.cm.jet(s/3)
+    color_this = 'yellow' #plt.cm.jet(s/3)
     # linestyles = [":","-.","--","-"]
     linestyles = [(0, (1, 3)), (0, (2, 3)), (0, (3, 3)), (0, (4, 3)), (0, (5, 1,1,1)), 'solid'][1:]
     ls_cycler = cycle(linestyles[::])
@@ -39,7 +62,7 @@ for s in [0.5,1,1.5,2,3][::]:
     t_bef, t_now = t_now, time()
     print(f'{t_now-t_bef:.4g}s', f's={s} Initialised vals and funcs for iteration')
 
-    for n in range(5):
+    for n in range(1):
         def ode_func(xi, arg):
             lam = arg[0]
             v = arg[1]
@@ -129,8 +152,8 @@ for s in [0.5,1,1.5,2,3][::]:
 
 
         df = pd.DataFrame(data={'l':l_range, 'M':M_vals,})
-        df.to_hdf(f'profiles_dmo_{s}.hdf5', 'main')
-        df.to_hdf(f'profiles_dmo_{s}.hdf5', f'iter{n}')
+        # df.to_hdf(f'profiles_dmo_{s}.hdf5', 'main')
+        # df.to_hdf(f'profiles_dmo_{s}.hdf5', f'iter{n}')
         
 
         if n in [0,1,2,3,4,5,7,8]:
@@ -143,7 +166,7 @@ for s in [0.5,1,1.5,2,3][::]:
             lamF = lam*tau**de
             
             ls = next(ls_cycler)
-            if n==6: ls='-'
+            if n==0: ls='-'
             
             ax4.plot(xi,lam, color=color_this, ls=ls, lw=1)
             ax41.plot(xi,v, color=color_this, ls=ls, lw=1)
@@ -186,8 +209,8 @@ for s in [0.5,1,1.5,2,3][::]:
 #     all_roots_ar[0:len(roots_ar),i] = roots_ar
 
 
-ax4.set_xlim(0,10)
-ax4.set_ylim(5e-4,1)
+ax4.set_xlim(0,5)
+ax4.set_ylim(5e-3,1)
 ax4.set_yscale('log')
 # ax4.set_ylim(l_range[1],1)
 ax4.xaxis.get_ticklocs(minor=True)     # []
@@ -195,7 +218,7 @@ ax4.minorticks_on()
 ax4.grid(visible=True, which='both', axis='x')
 ax4.set_xlabel(r'$\xi$')
 ax4.set_ylabel(r'$\lambda$')
-ax4.legend()
+# ax4.legend()
 
 ax41.set_xlabel(r'$\xi$')
 ax41.set_ylabel(r'$v$')
@@ -221,35 +244,48 @@ plt.show()
 
 
 
-#%%
-ts = np.linspace(.25,5,30)
-rs = ts**de
+# #%%
+# ts = np.linspace(.25,5,30)
+# rs = ts**de
 
-rs = np.logspace(-1,1,500)
-ts = rs**(1/de)
+# rs = np.logspace(-1,1,500)
+# ts = rs**(1/de)
 
-r = np.outer(lamF,rs)
-t = np.outer(tau,ts)
+# r = np.outer(lamF,rs)
+# t = np.outer(tau,ts)
 
-# r_anlt = np.outer(lamF_anlt,rs)
-# t_anlt = np.outer(tau_anlt,ts)
+# # r_anlt = np.outer(lamF_anlt,rs)
+# # t_anlt = np.outer(tau_anlt,ts)
 
-plt.plot(t,r, lw=1)
-# plt.plot(t_anlt,r_anlt, lw=1)
+# plt.plot(t,r, lw=1)
+# # plt.plot(t_anlt,r_anlt, lw=1)
 
-plt.grid(visible=True,axis='y', which='minor', color='k', linestyle='-', alpha=0.2)
-plt.minorticks_on()
+# plt.grid(visible=True,axis='y', which='minor', color='k', linestyle='-', alpha=0.2)
+# plt.minorticks_on()
 
-plt.xlim(0,10)
-# plt.ylim(3e-2,1e1)
-plt.yscale('log')
-plt.ylabel('r')
-plt.xlabel('t')
+# plt.xlim(0,10)
+# # plt.ylim(3e-2,1e1)
+# plt.yscale('log')
+# plt.ylabel('r')
+# plt.xlabel('t')
 
 #%%
 # fig4.tight_layout()
 # fig5.tight_layout()
-fig4.savefig('Eds-CDM_shells.pdf')
+# Set axis color
+ax4.spines['bottom'].set_color('yellow')  # x-axis
+ax4.spines['top'].set_color('yellow')
+ax4.spines['left'].set_color('yellow')   # y-axis
+ax4.spines['right'].set_color('yellow')
+
+# Set tick color
+ax4.tick_params(axis='both', which='both', color='yellow', labelcolor='yellow')
+
+# Set axis label colors
+ax4.xaxis.label.set_color('yellow')  # x-axis label color
+ax4.yaxis.label.set_color('yellow')  # y-axis label color
+
+fig4.savefig('Eds-CDM_shells.svg', transparent=True)
 fig5.savefig('Eds-CDM_M_lam.pdf')
 # %%
 
