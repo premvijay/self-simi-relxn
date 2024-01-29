@@ -109,8 +109,8 @@ for i,descr in enumerate(descr_list):
 
     # ax6.plot(resdf_traj_dm.xi,resdf_traj_dm.lam, color=color_this, ls='--')
     ax6.plot(cumtrapz(1/(resdf_prof_gas.V-de*resdf_prof_gas.l), x=resdf_prof_gas.l), resdf_prof_gas.l[1:], c=color_this, ls=':')
-
-    ax71.plot(resdf_prof_dmo.l[1:], resdf_prof_dmo.M[1:], ls='--', color=color_this)
+    start_l = 70 if s==0.5 else 35
+    ax71.plot(resdf_prof_dmo.l[start_l:], resdf_prof_dmo.M[start_l:], ls='--', color=color_this)
 
     n=conv_iter
     resdf_prof_gas = pd.read_hdf(f'profiles_gasdm{descr:s}.hdf5', key=f'gas/iter{n}', mode='r')
@@ -125,8 +125,7 @@ for i,descr in enumerate(descr_list):
     axs5[1,1].plot(resdf_prof_gas.l, resdf_prof_gas.P, color=color_this, label=plab)
 
     # axs5[1,0].plot(resdf_prof_dm.l, resdf_prof_dm.M, ls='dashdot', color=color_this)
-
-    ax71.plot(resdf_prof_dm.l[1:], resdf_prof_dm.M[1:], ls='-', c=color_this)
+    ax71.plot(resdf_prof_dm.l[start_l:], resdf_prof_dm.M[start_l:], ls='-', c=color_this)
     # ax71.plot(resdf_prof_dm.l[1:], resdf_prof_dm.M[1:]/fd*fb, ls=':', c=color_this)
     ax71.plot(resdf_prof_gas.l, resdf_prof_gas.M, ls='-.', c=color_this)
     # ax71.plot(ri_pre,Mdr_dmo/Mta, ls='--', c=color_this)
@@ -208,7 +207,10 @@ if name=='shocked_vary-s':
 if name=='cold_vary-s':
     ax72.text(0.6,1,'$R_s=0.1$', fontsize=15)
 
-ax72.legend(loc='best', frameon=True, framealpha=0.6, handlelength=0.7)
+if name=='shocked_vary-cooling':
+    ax72.legend(loc='lower right', frameon=True, framealpha=0.6, handlelength=0.7)
+else:
+    ax72.legend(loc='best', frameon=True, framealpha=0.6, handlelength=0.7)
 
 # axs5[1,0].plot(dmo_prfl['l'], dmo_prfl['M']*Mta, color='k', ls='dashed')
 # axs5[1,0].plot(resdf_prof_dmo.l, resdf_prof_dmo.M, color='purple', ls='dashed')
