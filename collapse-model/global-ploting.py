@@ -427,7 +427,7 @@ ax72.set_ylabel('$r_f/r_i$')
 # formatter = mpl.ticker.LogFormatter(10, labelOnlyBase=True)
 fig7.colorbar(cplot, ax=ax72,label=r'$r_f/r_{\cap}$')#, ticks=[0.01, 0.1, 0.5, 1,10], format=formatter)
 # if name=='shocked_vary-s':
-#     ax71.legend(frameon=True, framealpha=0.9, handlelength=2)
+ax71.legend(frameon=True, framealpha=0.9, handlelength=2)
 #     ax72.text(0.6,1,'$R_s=0.9$', fontsize=15)
 # if name=='cold_vary-s':
 #     ax72.text(0.6,1,'$R_s=0.1$', fontsize=15)
@@ -489,7 +489,7 @@ ax6.legend(loc='upper right')
 # fig5.savefig(f'profiles_gas_{name}.pdf', bbox_inches='tight')
 # fig6.savefig(f'trajectory_gasdm_{name}.pdf', bbox_inches='tight')
 
-fig7.savefig(f'relx_reln_{name}.pdf', bbox_inches='tight')
+# fig7.savefig(f'relx_reln_{name}.pdf', bbox_inches='tight')
 fig7.savefig(f'relx_reln_ref.pdf', bbox_inches='tight')
 plt.close(fig5)
 plt.close(fig6)
