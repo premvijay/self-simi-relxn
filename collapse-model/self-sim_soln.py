@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from scipy.integrate import solve_ivp, cumtrapz, quad, trapezoid, cumulative_trapezoid
 from scipy.interpolate import interp1d, InterpolatedUnivariateSpline
 from itertools import cycle
-plt.style.use('seaborn-darkgrid')
+# plt.style.use('seaborn-darkgrid')
 import pandas as pd
 from time import time
 # %%
@@ -17,7 +17,7 @@ fig4, (ax4,ax41) = plt.subplots(2, dpi=200, figsize=(10,12), sharex=True)
 fig5, (ax5,ax6) = plt.subplots(1,2, dpi=200, figsize=(14,7))
 
 t_now = time()
-for s in [0.5,1,1.5,2,3][::]:
+for s in [0.5,1,1.5,2,3][1:2:]:
     de = 2* (1+s/3) /3
     upsil = 1 if s >= 3/2 else 3*s/(s+3)
 
@@ -129,8 +129,8 @@ for s in [0.5,1,1.5,2,3][::]:
 
 
         df = pd.DataFrame(data={'l':l_range, 'M':M_vals,})
-        df.to_hdf(f'profiles_dmo_{s}.hdf5', 'main')
-        df.to_hdf(f'profiles_dmo_{s}.hdf5', f'iter{n}')
+        # df.to_hdf(f'profiles_dmo_{s}.hdf5', 'main')
+        # df.to_hdf(f'profiles_dmo_{s}.hdf5', f'iter{n}')
         
 
         if n in [0,1,2,3,4,5,7,8]:
@@ -222,35 +222,58 @@ plt.show()
 
 
 #%%
-ts = np.linspace(.25,5,30)
+def preshock(tht):
+    eps = 1/s
+    Mta = (3*np.pi/4)**2
+    # tht = np.linspace(0.01, 2*np.pi,300)
+    Mn = ((tht-np.sin(tht))/np.pi)**(-2/3*s)
+    M = Mta * Mn
+    lam = (1-np.cos(tht))/2 * Mn**(1/3+eps)
+    # D = ( 3*np.pi/8 * (1-np.cos(tht)) * Mn**(3*eps/2-1) * np.sin(tht) * Mta**-2 )**-1
+    D = 9*np.pi**2/ ( (2+6*eps) *(1-np.cos(tht))**3 - 9*eps*np.sin(tht) *(tht-np.sin(tht)) *(1-np.cos(tht)) ) * Mn**(-3*eps)
+    # D_num = np.gradient(M,lam)/lam**2
+    V = np.pi/2 * np.sin(tht)/(1-np.cos(tht)) * Mn**(1/3-eps/2)
+    return lam,V,D,M
+
+thet_range = np.linspace(0.5, 1.2*np.pi,2000)
+tau_anlt = (thet_range - np.sin(thet_range)) / np.pi
+xi_anlt = np.log(tau_anlt)
+lam_anlt = preshock(thet_range)[0]
+lamF_anlt = lam_anlt*tau_anlt**de
+
+
+ts = np.linspace(.25,5,10)
 rs = ts**de
 
-rs = np.logspace(-1,1,500)
+rs = np.logspace(-1,1,10)
 ts = rs**(1/de)
 
 r = np.outer(lamF,rs)
 t = np.outer(tau,ts)
 
-# r_anlt = np.outer(lamF_anlt,rs)
-# t_anlt = np.outer(tau_anlt,ts)
+r_anlt = np.outer(lamF_anlt,rs)
+t_anlt = np.outer(tau_anlt,ts)
 
+plt.figure()
 plt.plot(t,r, lw=1)
-# plt.plot(t_anlt,r_anlt, lw=1)
+plt.plot(t_anlt,r_anlt, lw=1)
 
-plt.grid(visible=True,axis='y', which='minor', color='k', linestyle='-', alpha=0.2)
+# plt.grid(visible=True,axis='y', which='minor', color='k', linestyle='-', alpha=0.2)
 plt.minorticks_on()
 
 plt.xlim(0,10)
-# plt.ylim(3e-2,1e1)
-plt.yscale('log')
-plt.ylabel('r')
-plt.xlabel('t')
+plt.ylim(3e-2,7)
+# plt.yscale('log')
+plt.ylabel('Shell radius, r')
+plt.xlabel('Time, t')
+plt.savefig('illustrate_self-sim_DM_shells.pdf')
+
 
 #%%
 # fig4.tight_layout()
 # fig5.tight_layout()
-fig4.savefig('Eds-CDM_shells.pdf')
-fig5.savefig('Eds-CDM_M_lam.pdf')
+# fig4.savefig('Eds-CDM_shells.pdf')
+# fig5.savefig('Eds-CDM_M_lam.pdf')
 # %%
 
 # %%
